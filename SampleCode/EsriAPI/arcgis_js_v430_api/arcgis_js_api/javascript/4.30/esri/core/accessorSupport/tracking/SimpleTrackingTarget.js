@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports"],function(c){function e(){}class f{constructor(a){this._accessed=new Set;this._handles=[];this._observerObject=new g(a);d.register(this,new WeakRef(this._observerObject),this)}destroy(){d.unregister(this._observerObject);this._accessed.clear();this._observerObject?.destroy();this.clear()}onObservableAccessed(a){this._accessed.add(a)}onTrackingEnd(){const a=this._handles,b=this._observerObject;this._accessed.forEach(h=>{a.push(h.observe(b))});this._accessed.clear()}clear(){const a=
+this._handles;for(let b=0;b<a.length;++b)a[b].remove();a.length=0}}class g{constructor(a){this._notify=a;this._invalidCount=0;this.destroyed=!1}onInvalidated(){this._invalidCount++}onCommitted(){if(!this.destroyed){var a=this._invalidCount;1===a?(this._invalidCount=0,this._notify()):this._invalidCount=0<a?a-1:0}}destroy(){this.destroyed=!0;this._notify=e}}const d=new FinalizationRegistry(a=>{a.deref()?.destroy()});c.SimpleTrackingTarget=f;Object.defineProperty(c,Symbol.toStringTag,{value:"Module"})});

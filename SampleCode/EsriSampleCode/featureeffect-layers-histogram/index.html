@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+
+    <title>Apply featureEffect to a FeatureLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+       body,
+       #viewDiv {
+         padding: 0;
+         margin: 0;
+         height: 100%;
+         width: 100%;
+       }
+
+       #controls {
+         padding: 15px;
+         width: 380px;
+       }
+
+      #description {
+        padding: 10px 10px 0px 10px;
+        font-size: 14pt;
+      }
+
+      .esri-histogram-range-slider .esri-slider .esri-slider__anchor .esri-slider__label {
+        display: inline;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/widgets/HistogramRangeSlider",
+        "esri/smartMapping/statistics/histogram", 
+        "esri/widgets/Legend",
+        "esri/widgets/Expand"
+      ], (MapView, WebMap, HistogramRangeSlider, histogram, Legend, Expand) => {
+        const map = new WebMap({
+          portalItem: {
+            id: "f3551252973c41fa868c08edceb504e6"
+          }
+        });
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv"
+        });
+
+        map.loadAll().then(async () => {
+          // get the phoenix featurelayer from the webmap
+          const layer = map.layers.getItemAt(0);
+          layer.effect = null;
+          applyFeatureEffect(layer, "MEDAGE_CY BETWEEN 25 AND 35");
+
+          const histogramResponse = await histogram({
+            layer: layer,
+            field: field,
+            numBins: 80,
+            minValue: min,
+            maxValue: max
+          });
+
+          slider.bins = histogramResponse.bins;
+        });
+
+        // medium age min, max to be used by the histogram range
+        // slider bins
+        const min = 18;
+        const max = 80;
+        const field = "MEDAGE_CY";
+
+        const slider = new HistogramRangeSlider({
+          min: min,
+          max: max,
+          values: [25, 35],
+          excludedBarColor: "#524e4e",
+          rangeType: "between",
+          container: document.getElementById("slider-container")
+        });
+
+
+        // this function is called when the map is loaded
+        // then when user changes the histogram range slider thumbs
+        function applyFeatureEffect(layer, where){
+          layer.featureEffect = {
+            filter: {
+              where
+            },
+            includedEffect: "bloom(0.9 0.6pt 0)",
+            excludedEffect: "blur(2.25pt) opacity(0.5)"
+          };
+        }
+
+        // apply a feature effect to highlight the block groups that
+        // fall within the age range
+        slider.on(["thumb-change", "thumb-drag", "segment-drag"], (event) => {
+          const layer = map.layers.getItemAt(0);
+          applyFeatureEffect(layer, slider.generateWhereClause(field))
+        });
+
+
+        view.ui.add("controls", "bottom-left");
+
+        // add a legend for the Phoenix block groups layer
+        const legendExpand = new Expand({
+          expandTooltip: "Legend",
+          view,
+          content: new Legend({
+            view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "top-left");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="controls" class="esri-widget">
+      <div id="description" class="esri-widget">Phoenix Average Age (2015-2020)</div>
+      <div style="padding: 5px 10px 0px 10px" class="esri-widget">by block groups</div>
+      <div id="outer-container" class="esri-widget">
+        <div id="slider-container"></div>
+      </div>
+    </div>
+  </body>
+</html>

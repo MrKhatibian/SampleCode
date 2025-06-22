@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>Synchronize FeatureTable highlights and selection | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+      html,
+      body,
+      #table {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #container {
+        height: 50%;
+        width: 100%;
+      }
+
+      #viewDiv {
+        height: 50%;
+        width: 100%;
+      }
+    </style>
+    
+    <script>
+      require([
+        "esri/core/Handles",
+        "esri/core/promiseUtils",
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/widgets/FeatureTable"
+      ], (Handles, promiseUtils, WebMap, MapView, FeatureTable) => {
+        // Create a map from the referenced webmap item id
+        const webmap = new WebMap({
+          portalItem: {
+            id: "209aa768f537468cb5f76f35baa7e013"
+          }
+        });
+
+        const view = new MapView({
+          map: webmap,
+          container: "viewDiv",
+          zoom: 3,
+          center: [-98, 38.5]
+        });
+
+        // Container for temporary feature highlights based on table and view interaction.
+        const highlightHandles = new Handles();
+
+        const featureTable = new FeatureTable({
+          returnGeometryEnabled: true,
+          view: view, // required to work with selection in the table and view
+          container: "tableContainer",
+          // Configuration for the ActionColumn, which can be used to display a single action for each row.
+          // In this case, an action that zooms the map to a particular feature is displayed.
+          // This allows zooming to a particular feature without changing the table's current row selection.
+          actionColumnConfig: {
+            label: "Zoom to feature",
+            icon: "zoom-to-object",
+            callback: ({ feature }) => view.goTo(feature)
+          }
+        });
+
+        webmap.when(() => {
+          featureTable.layer = webmap.layers.at(0);
+        });
+
+        // When the active layer changes, clear all active highlights.
+        featureTable.watch("layer", () => highlightHandles?.removeAll());
+
+        // Highlight a feature on the view while hovering over a cell in the table.
+        featureTable.on("cell-pointerover", ({ feature }) => addHighlight(feature));
+
+        // Remove any active feature highlights when no longer hovering over a cell.
+        // In the case of moving between cells, a "cell-pointerout" event associated with the first
+        // "cell-pointerover" will always be emitted before any subsequent "cell-pointerover" events.
+        featureTable.on("cell-pointerout", () => highlightHandles?.removeAll());
+
+        // Wait for the view to finish loading before reacting to events.
+        view.when(async () => {
+          view.on("immediate-click", async (evt) => {
+            const { results } = await view.hitTest(evt);
+
+            results.forEach(({ graphic }) => {
+              // Ignore graphics that do not belong to the primary FeatureLayer.
+              if (graphic?.layer !== featureTable.layer) {
+                return;
+              }
+
+              // Used to uniquely identify each feature and row in the table.
+              const objectId = graphic.getObjectId();
+
+              // Update the table's selection depending on if the feature was already selected/highlighted.
+              if (featureTable.highlightIds.includes(objectId)) {
+                featureTable.highlightIds.remove(objectId);
+              } else {
+                featureTable.highlightIds.add(objectId);
+              }
+            });
+          });
+
+          // Logic for adding highlights to features when moving the mouse over the view.
+          // Use debounce to improve performance by avoiding redundant queries.
+          const highlightOnViewHover = promiseUtils.debounce(async (event) => {
+            // Find potential graphics under the mouse.
+            const { results } = await view.hitTest(event);
+
+            // Filter out graphics that do not belong to our chosen FeatureLayer.
+            const candidates = results.filter(
+              ({ graphic }) => graphic && graphic.layer && graphic.layer === featureTable.layer
+            );
+
+            // Remove any current highlights (rowHighlightIds) on both the table and view.
+            // Alternatively, we could identify specific features with a current highlight
+            // and remove them individually if not included in 'candidates'.
+            if (featureTable.rowHighlightIds.length) {
+              featureTable.rowHighlightIds.removeAll();
+              highlightHandles?.removeAll();
+            }
+
+            // Loop through candidates and add highlights to the feature
+            // on the view, and the associated table row
+            candidates.forEach(({ graphic }) => {
+              featureTable.rowHighlightIds.add(graphic.getObjectId());
+              addHighlight(graphic);
+            });
+          });
+
+          // Update feature highlights after interacting with the view.
+          view.on("pointer-move", (event) => promiseUtils.ignoreAbortErrors(highlightOnViewHover(event)));
+        });
+
+        // Adds temporary 'highlight' to a provided feature
+        // Uses the FeatureLayerView associated with the primary FeatureLayer.
+        function addHighlight(feature) {
+          if (featureTable.layerView && feature) {
+            highlightHandles.add(featureTable.layerView.highlight(feature), feature.getObjectId());
+          }
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="container">
+      <div id="tableContainer"></div>
+    </div>
+  </body>
+</html>
+

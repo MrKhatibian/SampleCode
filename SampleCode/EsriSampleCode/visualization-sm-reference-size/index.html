@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Create a reference size visualization | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .description {
+        background-color: white;
+        padding: 10px;
+      }
+      .title {
+        background-color: inherit;
+        text-align: center;
+        font-size: 16pt;
+        padding: 5px 10px 10px 10px;
+        color: #363636;
+      }
+      .high-population {
+        color: #c9770c;
+        font-weight: 900;
+      }
+      .low-population {
+        color: #4b6147;
+        font-weight: 900;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils",
+        "esri/smartMapping/renderers/size",
+        "esri/widgets/Legend"
+      ], (Map, MapView, FeatureLayer, Expand, reactiveUtils, sizeRendererCreator, Legend) => {
+        const map = new Map({
+          basemap: {
+            portalItem: {
+              id: "71463912e8ce4ee3a3e4fd307095484b"
+            }
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-85, 38],
+          zoom: 5,
+          constraints: {
+            minScale: 18489300,
+            maxScale: 2311161
+          },
+          highlightOptions: {
+            fillOpacity: 0
+          }
+        });
+
+        const layer = new FeatureLayer({
+          title: "Percent of forested land by population",
+          visible: false,
+          portalItem: {
+            id: "f7ad574fe1e04332a9c45710bf647860"
+          },
+          opacity: 1,
+          popupTemplate: {
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "NLCDfrstPt",
+                    label: "% forested land (NLCD)",
+                    format: {
+                      places: 0
+                    }
+                  },
+                  {
+                    fieldName: "POP2010",
+                    label: "Population (2010)",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          definitionExpression: "NLCDfrstPt > 1"
+        });
+        view.map.add(layer);
+
+        const sizeParams = {
+          layer,
+          view,
+          field: "NLCDfrstPt",
+          theme: "reference-size"
+        };
+
+        sizeRendererCreator
+          .createContinuousRenderer(sizeParams)
+          .then(({ renderer }) => {
+            renderer.visualVariables = [
+              {
+                type: "color",
+                field: "POP2010",
+                legendOptions: {
+                  title: "Population"
+                },
+                stops: [
+                  {
+                    value: 0,
+                    color: [57, 74, 53]
+                  },
+                  {
+                    value: 15000,
+                    color: [94, 120, 89]
+                  },
+                  {
+                    value: 30000,
+                    color: [235, 227, 215]
+                  },
+                  {
+                    value: 90000,
+                    color: [199, 143, 70]
+                  },
+                  {
+                    value: 150000,
+                    color: [201, 114, 0]
+                  }
+                ]
+              }
+            ];
+            layer.renderer = renderer;
+            layer.visible = true;
+          })
+          .catch((error) => {
+            console.log("there was an error: ", error);
+          });
+
+        // Add custom legend as an image to an Expand instance
+
+        const descriptionContainer = document.createElement("div");
+        descriptionContainer.classList.add("description");
+
+        const descriptionTitle = document.createElement("div");
+        descriptionTitle.innerHTML = `
+          Percent of forested land (size)</br>by population
+          (color: <span class="high-population">high population</span>, <span class="low-population">low population</span>)
+        `;
+        descriptionTitle.classList.add("esri-widget");
+        descriptionTitle.classList.add("title");
+        descriptionContainer.appendChild(descriptionTitle);
+
+        const image = document.createElement("img");
+        image.src =
+          "https://arcgis.github.io/arcgis-samples-javascript/sample-data/cim-primitive-overrides/wurman-legend.png";
+        descriptionContainer.appendChild(image);
+
+        view.ui.add([
+          new Expand({
+            view,
+            content: new Legend({ view }),
+            group: "top-left",
+          }),
+          new Expand({
+            view: view,
+            content: descriptionContainer,
+            expandIcon: "information",
+            group: "top-left",
+          })], "top-left");
+
+        // Adjusts the size of the legend image
+        // based on the size of the view
+        view.when().then(adjustLegendByViewSize);
+        reactiveUtils.watch(() => view.widthBreakpoint, adjustLegendByViewSize);
+
+        function adjustLegendByViewSize(widthBreakpoint) {
+          if (widthBreakpoint === "xsmall") {
+            image.style.width = "100%";
+          } else {
+            image.style.width = null;
+          }
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

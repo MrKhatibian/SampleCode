@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Analysis objects | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #menu {
+        padding: 0.8em;
+        max-width: 200px;
+      }
+      .custom-widget {
+        flex-flow: column;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 15px ;
+        width: 200px;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <script>
+      require([
+        "esri/geometry/SpatialReference",
+        "esri/core/reactiveUtils",
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/geometry/Point",
+        "esri/geometry/Polygon",
+        "esri/analysis/DirectLineMeasurementAnalysis",
+        "esri/widgets/DirectLineMeasurement3D",
+        "esri/analysis/AreaMeasurementAnalysis",
+        "esri/widgets/AreaMeasurement3D",
+        "esri/analysis/SliceAnalysis",
+        "esri/widgets/Slice",
+        "esri/analysis/LineOfSightAnalysis",
+        "esri/widgets/LineOfSight",
+        "esri/analysis/ViewshedAnalysis",
+        "esri/analysis/Viewshed"
+
+      ], function (
+        SpatialReference,
+        reactiveUtils,
+        SceneView,
+        WebScene,
+        Point,
+        Polygon,
+        DirectLineMeasurementAnalysis,
+        DirectLineMeasurement3D,
+        AreaMeasurementAnalysis,
+        AreaMeasurement3D,
+        SliceAnalysis,
+        Slice,
+        LineOfSightAnalysis,
+        LineOfSight,
+        ViewshedAnalysis,
+        Viewshed
+      ) {
+
+        // Load webscene and display it in a SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: new WebScene({
+            portalItem: {
+              id: "32d12af2671f4b1ebc614bdd79e2bf13"
+            }
+          })
+        });
+
+        // Add menu in the top right corner of the view
+        view.ui.add("menu", "bottom-left");
+
+        // To modify analysis objects we will temporarily store the corresponding widget in this variable.
+        let analysisWidget = null;
+        // Store the viewshed analysis and its analysis view in order to create a custom UI element for it
+        let viewshedAnalysis;
+        let viewshedAnalysisView;
+
+        view.when(async () => {
+          // Create the analysis objects
+          const directLineMeasurementAnalysis = createDirectLineMeasurementAnalysis();
+          const areaMeasurementAnalysis = createAreaMeasurementAnalysis();
+          const sliceAnalysis = createSliceAnalysis();
+          const lineOfSightAnalysis = createLineOfSightAnalysis();
+          viewshedAnalysis = createViewshedAnalysis();
+
+          // Wait for the view to load before adding analysis objects
+          await reactiveUtils.whenOnce(() => !view.updating);
+
+          // Add analysis object to the view to show them
+          view.analyses.addMany([
+            directLineMeasurementAnalysis,
+            areaMeasurementAnalysis,
+            sliceAnalysis,
+            lineOfSightAnalysis,
+            viewshedAnalysis
+          ]);
+
+          // Configure buttons to interact with the analysis objects
+          const areaMeasurementAnalysisButton = setupAnalysisButton(
+            "areaMeasurementAnalysisButton",
+            () => new AreaMeasurement3D({ view, analysis: areaMeasurementAnalysis })
+          );
+
+          const directLineMeasurementAnalysisButton = setupAnalysisButton(
+            "directLineMeasurementAnalysisButton",
+            () => new DirectLineMeasurement3D({ view, analysis: directLineMeasurementAnalysis })
+          );
+
+          const lineOfSightAnalysisButton = setupAnalysisButton(
+            "lineOfSightAnalysisButton",
+            () => new LineOfSight({ view, analysis: lineOfSightAnalysis })
+          );
+          const viewshedAnalysisButton = setupAnalysisButton("viewshedAnalysisButton", null);
+
+          const sliceAnalysisButton = setupAnalysisButton(
+            "sliceAnalysisButton",
+            () => new Slice({ view, analysis: sliceAnalysis })
+          );
+
+          // Remove button is a bit special
+          document.getElementById("removeWidgetButton").addEventListener("click", () => {
+            removeActiveWidget();
+          });
+
+          function setupAnalysisButton(elementId, widgetFactory) {
+            const button = document.getElementById(elementId);
+
+            button.addEventListener("click", () => {
+              // Remove current widget (if any)
+              removeActiveWidget();
+
+              // Install a suitable widget in the `analysisWidget` variable
+              if (elementId == "viewshedAnalysisButton") {
+                analysisWidget = getViewshedController();
+              } else {
+                analysisWidget = widgetFactory();
+              }
+
+              // Highlight this button as the currently active one and add the remove widget button
+              button.appearance = "outline";
+              document.getElementById("removeWidgetButton").style.display = "block";
+
+              // Show the analysisWidget in the lower right corner
+              view.ui.add(analysisWidget, "bottom-right");
+            });
+            return button;
+          }
+
+          function removeActiveWidget() {
+            // Remove the analysisWidget if one exists
+            if (analysisWidget) {
+              if (analysisWidget.destroy) {
+                analysisWidget.destroy();
+              } else {
+                analysisWidget.style.display = "none";
+                if (viewshedAnalysisView) viewshedAnalysisView.interactive = false;
+              }
+              analysisWidget = null;
+            }
+
+            // Hide remove button
+            document.getElementById("removeWidgetButton").style.display = "none";
+
+            // Reset appearance of the analysis buttons
+            areaMeasurementAnalysisButton.appearance = "solid";
+            directLineMeasurementAnalysisButton.appearance = "solid";
+            lineOfSightAnalysisButton.appearance = "solid";
+            viewshedAnalysisButton.appearance = "solid";
+            sliceAnalysisButton.appearance = "solid";
+          }
+        });
+
+        function createDirectLineMeasurementAnalysis() {
+          return new DirectLineMeasurementAnalysis({
+            startPoint: newPoint(-8238827, 4971466, 3),
+            endPoint: newPoint(-8238819, 4971537, 3)
+          });
+        }
+
+        function createAreaMeasurementAnalysis() {
+          const roofPolygon = new Polygon({
+            rings: [
+              [
+                [-8238931, 4971381, 50],
+                [-8238926, 4971426, 50],
+                [-8238835, 4971415, 50],
+                [-8238841, 4971369, 50],
+                [-8238931, 4971381, 50]
+              ]
+            ],
+            spatialReference: SpatialReference.WebMercator
+          });
+
+          return new AreaMeasurementAnalysis({
+            geometry: roofPolygon
+          });
+        }
+
+        function createSliceAnalysis() {
+          return new SliceAnalysis({
+            shape: {
+              position: newPoint(-8238840, 4971700, 21),
+              tilt: 0,
+              width: 70,
+              height: 100,
+              heading: 278
+            }
+          });
+        }
+
+        function createLineOfSightAnalysis() {
+          return new LineOfSightAnalysis({
+            observer: { position: newPoint(-8238825, 4971538, 48) },
+            targets: [
+              { position: newPoint(-8238903, 4971649, 2) },
+              { position: newPoint(-8238866, 4971629, 19) },
+              { position: newPoint(-8238825, 4971880, 2) },
+              { position: newPoint(-8238791, 4971784, 2) }
+            ]
+          });
+        }
+
+        function createViewshedAnalysis() {
+          return new ViewshedAnalysis({
+            viewsheds: [
+              new Viewshed({
+                observer: newPoint(-8238868, 4971525, 48),
+                heading: -80,
+                tilt: 75,
+                farDistance: 120,
+                horizontalFieldOfView: 55,
+                verticalFieldOfView: 55
+              })
+            ]
+          });
+        }
+
+        // Create a custom UI element for the viewshed
+        let viewshedController;
+        function getViewshedController() {
+          if (viewshedController) {
+            // If the widget is already created, make it visible
+            viewshedController.style.display = "flex";
+            viewshedAnalysisView.interactive = true;
+            // Select the first existing viewshed shape
+            if (viewshedAnalysis.viewsheds.length > 0) {
+              viewshedAnalysisView.selectedViewshed = viewshedAnalysis.viewsheds.items[0];
+            }
+            return viewshedController;
+          } else {
+            // If the widget doesn't exist yet, create it
+            viewshedController = document.getElementById("viewshedController");
+            viewshedController.style.display = "flex";
+
+            view.when(async () => {
+              viewshedAnalysisView = await view.whenAnalysisView(viewshedAnalysis);
+              viewshedAnalysisView.interactive = true;
+              // Select the first existing viewshed shape
+              if (viewshedAnalysis.viewsheds.length > 0) {
+                viewshedAnalysisView.selectedViewshed = viewshedAnalysis.viewsheds.items[0];
+              }
+              const start = document.getElementById("addViewshed");
+              const done = document.getElementById("doneViewshed");
+
+              let abortController;
+              start.addEventListener("click", () => {
+                abortController = new AbortController();
+                const onDone = () => {
+                  start.disabled = false;
+                  done.disabled = true;
+                };
+                // Pressing the start button begins the interactive creation of dimensions using the pointer
+                viewshedAnalysisView.createViewsheds(abortController).then(onDone, onDone);
+                start.disabled = true;
+                done.disabled = false;
+              });
+
+              done.addEventListener("click", () => {
+                // Pressing the done button aborts the interactive creation of dimensions
+                abortController?.abort();
+                start.disabled = false;
+                done.disabled = true;
+              });
+            });
+            return viewshedController;
+          }
+        }
+
+        function newPoint(x, y, z) {
+          // Convenience function to have all points in the same spatial reference
+          return new Point({ x, y, z, spatialReference: SpatialReference.WebMercator });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="menu" class="esri-widget">
+        <calcite-label>
+          Click one of the buttons below to open the corresponding analysis widget and interact with the analysis.
+        </calcite-label>
+
+        <calcite-button
+          id="directLineMeasurementAnalysisButton"
+          icon-start="measure-line"
+          title="Interact with direct line measurement"
+        >
+        </calcite-button>
+        <calcite-button
+          id="areaMeasurementAnalysisButton"
+          icon-start="measure-area"
+          title="Interact with area measurement"
+        >
+        </calcite-button>
+        <calcite-button id="sliceAnalysisButton" icon-start="slice" title="Interact with slice plane"> </calcite-button>
+        <calcite-button
+          id="lineOfSightAnalysisButton"
+          icon-start="line-of-sight"
+          title="Interact with line of sight analysis"
+        ></calcite-button>
+        <calcite-button id="viewshedAnalysisButton" icon-start="viewshed" title="Interact with viewshed analysis">
+        </calcite-button>
+        <calcite-label></calcite-label>
+        <calcite-button id="removeWidgetButton" title="Remove Widget" style="display: none">Remove Widget
+        </calcite-button>
+      </div>
+      <div id="viewshedController" class="esri-widget custom-widget" style="display:none">
+          <calcite-button id="doneViewshed" disabled="true">Done</calcite-button>
+          <calcite-button id="addViewshed">Add viewshed</calcite-button>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>TimeSlider with timeOffset and actions | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: black;
+      }
+      #timeSliderDiv {
+        position: absolute;
+        left: 5%;
+        right: 5%;
+        bottom: 20px;
+      }
+      #infoDiv {
+        height: 380px;
+        padding: 10px;
+        width: 320px;
+        border: 1px solid #444;
+      }
+      #infoDiv span {
+        color: #ff642e;
+        font-size: 12pt;
+        font-weight: bolder;
+      }
+
+      /* esri overrides */
+      .esri-ui-corner .esri-component.esri-widget--panel {
+        width: 120px;
+      }
+      .esri-legend__service {
+        padding: 0;
+        padding-top: 4px;
+      }
+      .esri-legend__layer-caption{
+        display: none;
+      }
+      .esri-legend__layer {
+        overflow: hidden;
+      }
+    </style>
+    <script>
+      require([
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/views/MapView",
+      "esri/widgets/Legend",
+      "esri/widgets/Expand",
+      "esri/widgets/TimeSlider",
+      "esri/core/reactiveUtils",
+      "esri/core/promiseUtils"
+    ], (
+      Map,
+      FeatureLayer,
+      MapView,
+      Legend,
+      Expand,
+      TimeSlider,
+      reactiveUtils,
+      promiseUtils) =>
+        (async () => {
+        let firesChart;
+
+        // create a map with dark human geography basemap
+        const map = new Map({
+          basemap: {
+            portalItem: {
+              id: "4f2e99ba65e34bb8af49733d9778fb8e"
+            }
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 5,
+          center: [-118, 37.49] // longitude, latitude
+        });
+
+        // create five instances of feature layers based on the following definitions
+        const url = "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_fires_since_2014/FeatureServer/";
+        const definitions = [
+          { id: 0, year: 2014, offset: 4 },
+          { id: 1, year: 2015, offset: 3 },
+          { id: 2, year: 2016, offset: 2 },
+          { id: 3, year: 2017, offset: 1 },
+          { id: 4, year: 2018, offset: 0 }
+        ];
+        const layers = definitions.map(definition => createLayer(definition));
+
+        // add the california fire layers
+        map.addMany(layers);
+
+        // Fires chart section
+        const monthDiv = document.getElementById("monthDiv");
+        const infoDiv = document.getElementById("infoDiv");
+        const chartCanvas = document.getElementById("fireChart");
+        const infoDivExpand = new Expand({
+          expandIcon: "graph-bar",
+          expandTooltip: "Expand earthquakes info",
+          view: view,
+          content: infoDiv,
+          expanded: true
+        });
+        view.ui.add(infoDivExpand, "top-right");
+
+        const fireLayerViews = await Promise.all(layers.map(layer => view.whenLayerView(layer)));
+
+        const timeSlider = new TimeSlider({
+          container: "timeSliderDiv",
+          view: view,
+          fullTimeExtent: {
+            start: new Date(2018, 0, 1),
+            end: new Date(2018, 11, 1)
+          },
+          playRate: 2000,
+          stops: {
+            interval: {
+              value: 1,
+              unit: "months"
+            }
+          },
+          // create actions that will allow users to jump to months that had most burns
+          actions: [
+            {
+              id: "july",
+              icon: "clock",
+              title: "Month with most burns"
+            },
+            {
+              id: "august",
+              icon: "clock",
+              title: "Month with second most burns"
+            },
+            {
+              id: "september",
+              icon: "clock",
+              title: "Month with third most burns"
+            }
+          ],
+          // set custom labels for timeslider's min, max dates, hide the extent label
+          labelFormatFunction: (value, type, element, layout) => {
+            const normal = new Intl.DateTimeFormat('en-us');
+            switch (type) {
+              case "min":
+                element.setAttribute("style", "color: #ff642e;");
+                element.innerText = "Jan"
+                break;
+              case "max":
+                element.setAttribute("style", "color: #ff642e;");
+                element.innerText = "Dec"
+                break;
+              case "extent":
+                element.parentNode.setAttribute("style", "width:0px");
+                break;
+            }
+          }
+        });
+        view.ui.add(timeSlider, "manual");
+
+        // update fire stats between 2014 - 2018 once the fire layer is loaded
+        await reactiveUtils.whenOnce(() => !fireLayerViews[4].updating);
+
+        // fire stats for each year between 2014 - 2018
+        const statQuery = {
+          outStatistics: [
+            {
+              onStatisticField: "GIS_ACRES",
+              outStatisticFieldName: "acres_sum",
+              statisticType: "sum"
+            },
+            {
+              onStatisticField: "OBJECTID",
+              outStatisticFieldName: "fire_counts",
+              statisticType: "count"
+            },
+            {
+              onStatisticField: "ALARM_DATE",
+              outStatisticFieldName: "year",
+              statisticType: "max"
+            }
+          ]
+        };
+
+        // create the fires chart
+        createFiresChart();
+
+        // query fire stats for the given month and year after the layers are loaded
+        updateFiresStats();
+
+        // query fire stats for the given month and year when the timeExtent changes
+        reactiveUtils.watch(() => timeSlider.timeExtent, () => {
+          updateFiresStats();
+        });
+
+        // the "trigger-action" event occurs when an item in the action button is selected
+        // define custom actions to occur for each action.id
+        timeSlider.on("trigger-action", function (event) {
+          const monthMapping = {
+            july: { startMonth: 6, endMonth: 7 },
+            august: { startMonth: 7, endMonth: 8 },
+            september: { startMonth: 8, endMonth: 9 }
+          };
+
+          const action = monthMapping[event.action.id];
+          if (action) {
+            timeSlider.timeExtent = {
+              start: new Date(2018, action.startMonth, 1),
+              end: new Date(2018, action.endMonth, 1)
+            };
+          }
+        });
+
+        // query five layer views representing fires between 2014-2018
+        // this is called from the UpdateFiresStats function
+        async function queryFeaturesForStats(layerView) {
+          // set the timeExtent for the stats query object. But we need to offset
+          // the timeExtent for each layer by number of years specified in the layer.timeOffset
+          const offset = layerView.layer.timeOffset.value;
+          let start = new Date(timeSlider.timeExtent.start);
+          start.setFullYear(start.getFullYear() - offset);
+
+          let end = new Date(timeSlider.timeExtent.end);
+          end.setFullYear(end.getFullYear() - offset);
+
+          // set query timeExtent for each layer for the given month and year
+          const query = {
+            ...statQuery,
+            timeExtent: {start, end}
+          };
+
+          try {
+            // query the layerviews for the stats
+            const result = await layerView.layer.queryFeatures(query);
+            return result?.features[0]?.attributes;
+            // Handle error
+          } catch (error) {
+            console.error("Error: ", error);
+            return null;
+          }
+        };
+
+        // This function is called when the timeSlider's timeExtent changes
+        // It queries each layer view for fire stats and updates the chart
+        async function updateFiresStats() {
+          // Query each and every fire layerview for stats and process the results
+          const promises = fireLayerViews.map(layerView => queryFeaturesForStats(layerView));
+          const fireStatsQueryResults = await Promise.all(promises);
+
+          let acresBurntList = [];
+          let chartLabels = [];
+
+          // Fire stats query results are back. Loop through them and process.
+          fireStatsQueryResults.forEach((result) => {
+            if (result.error) {
+              console.error(result.error);
+              return;
+            }
+            // update the chart if stats query returned a year for the given layer view
+            if (result && result.year !== null) {
+              let date = new Date(result.year);
+              let year = date.getFullYear();
+
+              // Array of burnt acres sum returned in the query results
+              acresBurntList.push(result.acres_sum ? result.acres_sum.toFixed(2) : 0);
+
+              // Chart labels will show the year and count of fires for that year
+              const label = `${year}, ${result.fire_counts}`;
+              chartLabels.push(label);
+            }
+          });
+
+          // Query results have been processed. Update the fires chart to display
+          // sum of acres burnt for the given month and year
+          firesChart.data.datasets[0].data = acresBurntList;
+          firesChart.data.labels = chartLabels;
+          firesChart.update();
+
+          const startMonth = timeSlider.timeExtent.start.toLocaleString("default", { month: "long" });
+          const endMonth = timeSlider.timeExtent.end.toLocaleString("default", { month: "long" });
+          monthDiv.innerHTML = `<b> Month: <span>${startMonth} - ${endMonth}</span></b>`;
+        }
+
+        // Creates feature layers each representing fires for the given year (2014 - 2018)
+        function createLayer(definition) {
+          const year = definition.year;
+
+          return new FeatureLayer({
+            url: url + definition.id,
+            timeOffset: {
+              value: definition.offset,
+              unit: "years"
+            },
+            outFields: ["*"],
+            popupTemplate: {
+              title: "{ALARM_DATE}",
+              content: "{YEAR_}, {ALARM_DATE}, {GIS_ACRES}"
+            }
+          });
+        }
+
+        // create the legend
+        const layerInfos = layers.map((layer, i) => {
+          return {
+            title: "",
+            layer: layer
+          };
+        });
+
+        const legend = new Legend({
+          view: view,
+          layerInfos: layerInfos
+        });
+        view.ui.add(legend, "top-left");
+
+        // create a bar chart to display sum of acres burnt for the given month and year.
+        function createFiresChart() {
+          const defaultFontColor = "#d1d1d1";
+          const gridLineColor = "#696969";
+          const zeroLineColor = defaultFontColor;
+          const fontFamily = "'Avenir Next W00','Helvetica Neue', Helvetica, Arial, sans-serif";
+
+          Chart.defaults.global.defaultFontColor = defaultFontColor;
+          firesChart = new Chart(chartCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+              labels: [2014, 2015, 2016, 2017, 2018],
+              datasets: [{
+                label: "Acres burnt, year, fire counts",
+                backgroundColor: ["#FAD90E", "#FFA77F", "#FF7200", "#C93100", "#FF0000"],
+                data: [0, 0, 0, 0, 0]
+              }]
+            },
+            options: {
+              responsive: false,
+              legend: { position: "bottom" },
+              title: {
+                display: true,
+                text: "Acres burnt by month",
+                fontFamily: fontFamily
+              },
+              scales: {
+                yAxes: [{
+                  ticks: {
+                    beginAtZero: true,
+                    callback: value => value % 1 === 0 ? value : null
+                  },
+                  gridLines: { zeroLineColor, color: gridLineColor }
+                }],
+                xAxes: [{ gridLines: { zeroLineColor, color: gridLineColor } }]
+              },
+              tooltips: {
+                callbacks: {
+                  title: () => "Fire",
+                  label: (tooltipItem) => {
+                    const yearCount = tooltipItem.xLabel.split(",");
+                    return [
+                      `Year: ${yearCount[0]}`,
+                      `Count: ${yearCount[1]}`,
+                      `Acres: ${tooltipItem.yLabel}`
+                    ];
+                  }
+                },
+                displayColors: false
+              }
+            }
+          });
+        }
+      })());
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="timeSliderDiv"></div>
+    <div id="infoDiv" class="esri-widget">
+      <div class="esri-widget__heading"><h4>California fires 2014 - 2018</h4></div>
+      <div id="monthDiv"></div><br/>
+        <canvas id="fireChart" height="250" width="300" class="esri-widget"></canvas>
+      </div>
+    </body>
+  </html>
+

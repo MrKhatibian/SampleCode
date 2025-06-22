@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Daylight widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/SceneLayer",
+      "esri/widgets/Daylight",
+      "esri/widgets/Expand"
+    ], (Map, SceneView, SceneLayer, Daylight, Expand) => {
+      // General camera settings
+      const camera = {
+        city: {
+          position: {
+            longitude: -4.49292254,
+            latitude: 48.38118005,
+            z: 29.41383
+          },
+          heading: 250.18,
+          tilt: 87.91
+        },
+        global: {
+          position: {
+            longitude: 27.05453608,
+            latitude: 54.53236102,
+            z: 10825172.372
+          },
+          heading: 357.3,
+          tilt: 0.19
+        }
+      };
+
+      /***********************************
+       * Create the SceneView
+       ***********************************/
+      // Make a new map and load a scene layer
+      const map = new Map({
+        basemap: "satellite",
+        ground: "world-elevation",
+        layers: [
+          new SceneLayer({
+            popupEnabled: false,
+            portalItem: {
+              id: "b343e14455fe45b98a2c20ebbceec0b0"
+            }
+          })
+        ]
+      });
+
+      const view = new SceneView({
+        map: map,
+        container: "viewDiv",
+
+        // position in Brest, France
+        camera: camera.city,
+        environment: {
+          lighting: {
+            // autocasts as new SunLighting()
+            type: "sun",
+            date: new Date("December 21, 2021 09:40:00 UTC"),
+
+            directShadowsEnabled: true
+          }
+        }
+      });
+
+      /**************************************
+       * Initialize the daylight widget
+       **************************************/
+
+      const daylight = new Daylight({
+        view: view,
+        // plays the animation twice as fast than the default one
+        playSpeedMultiplier: 2,
+        // disable the timezone selection button
+        visibleElements: {
+          timezone: false
+        }
+      });
+
+      // Add widget inside an Expand widget to be able to hide it on devices with small screens
+      view.ui.add(new Expand({ content: daylight, view: view, expanded: true }), "top-right");
+
+      /***********************************
+       * Add functionality to change between city and global scale
+       ***********************************/
+      const buttonCity = document.getElementById("city");
+      const buttonGlobal = document.getElementById("global");
+
+      buttonCity.addEventListener("click", (event) => {
+        // Change the viewpoint
+        view.camera = camera.city;
+        // Use the sun position on a set date and time to illuminate the scene
+        daylight.viewModel.sunLightingEnabled = true;
+        // Styling of the buttons
+        buttonCity.appearance = "solid";
+        buttonGlobal.appearance = "outline-fill";
+      });
+
+      buttonGlobal.addEventListener("click", (event) => {
+        // Change the viewpoint
+        view.camera = camera.global;
+        // Ignore the sun position and use virtual lighting to illuminate the scene
+        daylight.viewModel.sunLightingEnabled = false;
+        // Styling of the buttons
+        buttonCity.appearance = "outline-fill";
+        buttonGlobal.appearance = "solid";
+      });
+
+      /***********************************
+       * Add a prompt text before the daylight widget
+       ***********************************/
+      const toggleLightingPrompt = document.getElementById("infoDiv");
+      view.ui.add({
+        component: toggleLightingPrompt,
+        position: "top-right",
+        index: 0
+      });
+    });
+  </script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #selection {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #infoDiv {
+      max-width: 389px;
+      padding: 0 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    #city,
+    #global {
+      width: 40%;
+      max-width: 300px;
+      margin: 3px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="viewDiv">
+    <div id="infoDiv" class="esri-widget">
+      <p>Use the sun position checkbox to illuminate the scene either by date and time or relative to camera.</p>
+    </div>
+    <div id="selection">
+      <calcite-button id="city" appearance="solid">City scale</calcite-button>
+      <calcite-button id="global" appearance="outline-fill">Global scale</calcite-button>
+    </div>
+  </div>
+</body>
+
+</html>

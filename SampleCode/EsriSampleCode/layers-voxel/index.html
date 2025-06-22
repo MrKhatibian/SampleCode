@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to VoxelLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/VoxelLayer",
+        "esri/layers/VectorTileLayer",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Home"
+      ], (Map, SceneView, VoxelLayer, VectorTileLayer, FeatureLayer, Legend, Home) => {
+        // Initialize voxel layer with URL
+        const vxlLayer = new VoxelLayer({
+          url: "https://tiles.arcgis.com/tiles/z2tnIkrLQ2BRzr6P/arcgis/rest/services/EMU_Caribbean_Voxel/SceneServer",
+          visible: true
+        });
+        vxlLayer.popupEnabled = true;
+        // Polygon to show the study area
+        const polygonLayer = new FeatureLayer({
+          url: "https://services2.arcgis.com/z2tnIkrLQ2BRzr6P/arcgis/rest/services/EMU_Caribbean_Study_Area/FeatureServer",
+          title: "Study Area"
+        });
+
+        const map = new Map({
+          layers: [vxlLayer, polygonLayer],
+          basemap: {
+            baseLayers: [
+              new VectorTileLayer({
+                url: "https://basemaps.arcgis.com/arcgis/rest/services/OpenStreetMap_GCS_v2/VectorTileServer"
+              })
+            ]
+          },
+          ground: {
+            navigationConstraint: "none"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          environment: {
+            starsEnabled: false,
+            atmosphereEnabled: false
+          },
+          viewingMode: "local", // VoxelLayer are only supported in local viewing
+          camera: {
+            position: {
+              spatialReference: {
+                wkid: 4326
+              },
+              x: -97.24689929668067,
+              y: 40.57382951325698,
+              z: -262863.30295155034
+            },
+            heading: 143,
+            tilt: 92
+          }
+        });
+
+        const legend = new Legend({
+          view
+        });
+        view.ui.add(legend, "bottom-right");
+
+        view.ui.add(
+          new Home({
+            view
+          }),
+          "top-left"
+        );
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

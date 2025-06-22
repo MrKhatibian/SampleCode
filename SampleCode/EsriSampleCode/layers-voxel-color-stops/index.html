@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Modify the color scheme of a continuous variable | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .esri-legend {
+        width: 220px !important;
+      }
+
+      #infoDiv {
+        height: 100%;
+        max-height: calc(100vh - 100px);
+      }
+
+      .btn-color-picker {
+        border: 1px solid var(--calcite-color-border-1);
+        width: 60px;
+        height: 30px;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+
+      #existingColorStops {
+        background-color: var(--calcite-color-foreground-1);
+        padding-top: 10px;
+      }
+
+      .colorRowTitle {
+        color: var(--calcite-color-text-1);
+        font-size: var(--calcite-font-size--1);
+        margin: 10px 0px 0px;
+      }
+
+      .colorRow {
+        background-color: var(--calcite-color-foreground-1);
+      }
+
+      .colorSchemePicker {
+        padding: 10px 0;
+        font-size: 12px;
+        background-color: var(--calcite-color-foreground-1);
+      }
+
+      .colorPickerContent {
+        position: relative;
+        overflow: hidden;
+        padding: 3px;
+        margin: auto;
+      }
+
+      #colorScheme {
+        height: 20px;
+        width: 100%;
+        border: 1px solid;
+      }
+    </style>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30"></script>
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/VoxelLayer",
+        "esri/layers/voxel/VoxelVariableStyle",
+        "esri/layers/voxel/VoxelColorStop",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend",
+        "esri/Color"
+      ], (SceneView, WebScene, VoxelLayer, VoxelVariableStyle, VoxelColorStop, Expand, Legend, Color) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "3a922ed0c7a8489ea4fbe8747ac560ba"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "bottom-left");
+        view.ui.add("infoDiv", "top-right");
+        map.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          view.whenLayerView(vxlLayer).then((layerView) => {
+            const infoDiv = document.getElementById("infoDiv");
+            const existingColorStops = document.getElementById("existingColorStops");
+            const minRangeInput = document.getElementById("minRangeInput");
+            const maxRangeInput = document.getElementById("maxRangeInput");
+            const colorScheme = document.getElementById("colorScheme");
+            let colorGradient = "";
+            vxlLayer.renderMode = "volume";
+            vxlLayer.enableIsosurfaces = false;
+            let currentVariableStyle = null;
+            let selectedIndexColor = 0;
+            let colorStopsList = [];
+            for (let i = 0; i < vxlLayer.variables.length; ++i) {
+              const vxlVariable = vxlLayer.variables.getItemAt(i);
+              const item = document.createElement("calcite-option");
+              item.setAttribute("label", vxlLayer.variableStyles.getItemAt(i).label);
+              item.setAttribute("value", vxlVariable.id);
+              if (vxlVariable.id === 1) {
+                item.selected = true;
+                vxlLayer.currentVariableId = vxlVariable.id;
+              }
+              variableSelect.hidden = false;
+              variableSelect.appendChild(item);
+            }
+            currentVariableStyle = vxlLayer.getVariableStyle(null);
+            let transferFunction = currentVariableStyle.transferFunction;
+            const resetContinuousVariable = function () {
+              colorStopsList = [];
+              while (existingColorStops.hasChildNodes()) {
+                existingColorStops.removeChild(existingColorStops.firstChild);
+              }
+              colorGradient = "linear-gradient(to right";
+              for (let i = 0; i < transferFunction.colorStops.length; i++) {
+                let colorPercentage = (transferFunction.colorStops.getItemAt(i).position * 100).toFixed(1);
+                colorGradient += `, ${transferFunction.colorStops.getItemAt(i).color.toHex()} ${colorPercentage}%`;
+                createContinuousVariableItem(i, transferFunction.colorStops.getItemAt(i), false);
+              }
+              colorGradient += ")";
+              colorScheme.style.backgroundImage = colorGradient;
+            };
+            const refreshColorGradient = function () {
+              colorGradient = "linear-gradient(to right";
+              for (let i = 0; i < transferFunction.colorStops.length; i++) {
+                //colorStop's position is a normalized (i.e. 0 to 1) value.
+                //It can be converted to percentage for display or use it for styling a color gradient background.
+                let colorPercentage = (transferFunction.colorStops.getItemAt(i).position * 100).toFixed(1);
+                colorGradient += `, ${transferFunction.colorStops.getItemAt(i).color.toHex()} ${colorPercentage}%`;
+              }
+              colorGradient += ")";
+              colorScheme.style.backgroundImage = colorGradient;
+            };
+            const createContinuousVariableItem = function (continuousIndex, colorStop, addNew) {
+              const divItemRow = document.createElement("div");
+              const divItemCol = document.createElement("div");
+              const itemPositionLabel = document.createElement("calcite-label");
+              const itemPositionInput = document.createElement("calcite-input");
+              const itemColorButton = document.createElement("button");
+              const divItemDeleteAction = document.createElement("div");
+              const itemIcon = document.createElement("calcite-icon");
+              divItemRow.classList.add("colorRow");
+              itemPositionLabel.innerHTML = "Position";
+              itemPositionLabel.layout = "inline";
+              itemPositionInput.id = `item${continuousIndex}_${colorStop.position.toFixed(3)}_Input`;
+              itemPositionInput.type = "number";
+              //It is required to have position 0 as the first colorStop and 1 as the last colorStop.
+              if (colorStop.position === 0 || colorStop.position === 1) {
+                //Position 0 and 1 as a non-editable position. colorStops for position 0 and 1 are editable.
+                itemPositionInput.readOnly = true;
+                itemIcon.icon = "lock";
+                divItemDeleteAction.style = "float:right; width:15px; padding:2px 10px;";
+              } else {
+                itemIcon.icon = "trash";
+                divItemDeleteAction.style = "float:right; width:15px; padding:2px 10px; cursor: pointer;";
+                divItemDeleteAction.onclick = function () {
+                  const index = colorStopsList.map((obj) => obj.itemPositionInput).indexOf(itemPositionInput.id);
+                  transferFunction.colorStops.removeAt(index);
+                  colorStopsList.splice(index, 1);
+                  divItemRow.remove();
+                  refreshColorGradient();
+                };
+                itemPositionInput.addEventListener("calciteInputChange", function (e) {
+                  //A continuous variable can have multiple colorStops.
+                  //If a colorStop needs to be modified or removed, it is important to always check the index because it can change.
+                  //Having a separate array variable that stores all the colorStops can help to specify which index to use.
+                  const index = colorStopsList.map((obj) => obj.itemPositionInput).indexOf(this.id);
+                  const prevColorStop = index === 0 ? null : transferFunction.colorStops.getItemAt(index - 1);
+                  const nextColorStop =
+                    index === transferFunction.colorStops.length - 1
+                      ? null
+                      : transferFunction.colorStops.getItemAt(index + 1);
+                  const thisColorStop = transferFunction.colorStops.getItemAt(index);
+                  //This is to prevent a colorStop from overlapping the previous or next colorStop.
+                  this.min = (prevColorStop.position * 100).toFixed(1) + 0.1;
+                  this.max = (nextColorStop.position * 100).toFixed(1) - 0.1;
+                  if (
+                    parseFloat(this.value) <= parseFloat((prevColorStop.position * 100).toFixed(1)) ||
+                    parseFloat(this.value) >= parseFloat((nextColorStop.position * 100).toFixed(1))
+                  ) {
+                    e.preventDefault();
+                    this.value = (thisColorStop.position * 100).toFixed(1);
+                  } else {
+                    //Updating the position of a colorStop
+                    thisColorStop.position = (this.value / 100).toFixed(3);
+                    colorStopsList[index].position = (this.value / 100).toFixed(3);
+                  }
+                  refreshColorGradient();
+                });
+              }
+              itemPositionInput.value = (colorStop.position * 100).toFixed(1);
+              divItemCol.style = "float: left; width: 165px;";
+              itemColorButton.classList.add("btn-color-picker");
+              itemColorButton.id = `item${continuousIndex}_${colorStop.position.toFixed(3)}_Button`;
+              itemColorButton.style.background = colorStop.color;
+              if (addNew) {
+                //Adding the new colorStop before the last index.
+                transferFunction.colorStops.add(colorStop, continuousIndex - 1);
+                existingColorStops.insertBefore(divItemRow, existingColorStops.lastElementChild);
+                //Updating the array variable to include the new color stop.
+                //Remember to keep the index the same as in the colorStops collection
+                colorStopsList.splice(continuousIndex - 1, 0, {
+                  id: continuousIndex,
+                  itemPositionInput: itemPositionInput.id,
+                  itemColorButton: itemColorButton.id,
+                  position: colorStop.position,
+                  color: colorStop.color
+                });
+              } else {
+                existingColorStops.appendChild(divItemRow);
+                colorStopsList.push({
+                  id: continuousIndex,
+                  itemPositionInput: itemPositionInput.id,
+                  itemColorButton: itemColorButton.id,
+                  position: colorStop.position,
+                  color: colorStop.color
+                });
+              }
+              divItemRow.appendChild(divItemCol);
+              divItemCol.appendChild(itemPositionInput);
+              //itemPositionLabel.appendChild(itemPositionInput);
+              divItemRow.appendChild(itemColorButton);
+              divItemRow.appendChild(divItemDeleteAction);
+              divItemDeleteAction.appendChild(itemIcon);
+              itemColorButton.onclick = function () {
+                let rect = this.getBoundingClientRect();
+                selectedIndexColor = colorStopsList.map((obj) => obj.itemColorButton).indexOf(this.id);
+                colorPicker.style = `position:absolute;top:${rect.bottom}px;right:${
+                  window.innerWidth - rect.right
+                }px;z-index:999`;
+                colorPicker.value = colorStop.color.toHex();
+              };
+            };
+            resetContinuousVariable();
+            colorPicker.addEventListener("calciteColorPickerChange", function () {
+              const colorStop = transferFunction.colorStops.getItemAt(selectedIndexColor);
+              const btnColor = document.getElementById(colorStopsList[selectedIndexColor].itemColorButton);
+              btnColor.style.background = colorPicker.value;
+              colorStop.color = colorPicker.value;
+              refreshColorGradient();
+            });
+            addColorStopButton.onclick = function (e) {
+              const prevColorStop = transferFunction.colorStops.getItemAt(transferFunction.colorStops.length - 2);
+              const nextColorStop = transferFunction.colorStops.getItemAt(transferFunction.colorStops.length - 1);
+              const thisPosition = (nextColorStop.position - prevColorStop.position) / 2 + prevColorStop.position;
+              //Prevents adding a new colorStop with the same position as the previous colorStop or the next colorStop
+              if (
+                prevColorStop.position.toFixed(3) === thisPosition.toFixed(3) ||
+                thisPosition.toFixed(3) === nextColorStop.position.toFixed(3)
+              ) {
+                e.preventDefault();
+              } else {
+                const colorstop = new VoxelColorStop({
+                  color: [0, 0, 255, 255],
+                  position: thisPosition
+                });
+                createContinuousVariableItem(transferFunction.colorStops.length, colorstop, true);
+                refreshColorGradient();
+              }
+            };
+            variableSelect.addEventListener("calciteSelectChange", function () {
+              vxlLayer.currentVariableId = variableSelect.selectedOption.value;
+              currentVariableStyle = vxlLayer.getVariableStyle(null);
+              transferFunction = currentVariableStyle.transferFunction;
+              resetContinuousVariable();
+            });
+            /**
+             * Color picker window will close when clicking or scrolling outside the window
+             **/
+            document.addEventListener("click", (e) => {
+              if (e.target !== colorPicker && !e.target.classList.contains("btn-color-picker")) {
+                colorPicker.style = "display:none";
+              }
+            });
+            document.addEventListener(
+              "scroll",
+              (e) => {
+                if (e.target !== colorPicker && !e.target.classList.contains("btn-color-picker")) {
+                  colorPicker.style = "display:none";
+                }
+              },
+              true
+            );
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv">
+      <div
+        id="content"
+        style="padding: 10px; width: 300px; font-size: 12px; background-color: var(--calcite-color-foreground-1)"
+      >
+        <calcite-label scale="m"
+          >Current Variable:
+          <calcite-select hidden="true" id="variableSelect" label="Current Variable" scale="m"> </calcite-select>
+        </calcite-label>
+        <div id="colorStopsContainer">
+          <div id="colorSchemeContainer" class="colorRowTitle">
+            Color Scheme:
+            <div id="colorScheme"></div>
+          </div>
+        </div>
+      </div>
+      <div id="colorSchemePicker" class="colorSchemePicker">
+        <div style="margin-top: 5px; padding: 0 10px">
+          <div>
+            <calcite-button id="addColorStopButton">Add Color Stop</calcite-button>
+          </div>
+          <div>
+            <div class="colorRowTitle">
+              <div style="float: left; width: 175px">Position(%):</div>
+              <div>Color:</div>
+            </div>
+            <calcite-panel id="existingColorStops"> </calcite-panel>
+          </div>
+        </div>
+      </div>
+    </calcite-panel>
+    <calcite-color-picker id="colorPicker" style="display: none" allow-empty hide-channels hide-saved scale="s">
+    </calcite-color-picker>
+  </body>
+</html>
+

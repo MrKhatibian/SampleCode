@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Add labels to a FeatureLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: black;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/WebMap", 
+        "esri/views/MapView", 
+        "esri/layers/FeatureLayer"
+      ], (WebMap, MapView, FeatureLayer) => {
+        const labelClass = {
+          // autocasts as new LabelClass()
+          symbol: {
+            type: "text", // autocasts as new TextSymbol()
+            color: "green",
+            backgroundColor: [213, 184, 255, 0.75],
+            borderLineColor: "green",
+            borderLineSize: 1,
+            yoffset: 5,
+            font: {
+              // autocast as new Font()
+              family: "Playfair Display",
+              size: 12,
+              weight: "bold"
+            }
+          },
+          labelPlacement: "above-center",
+          labelExpressionInfo: {
+            expression: "$feature.MARKER_ACTIVITY"
+          }
+        };
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: new WebMap({
+            portalItem: {
+              // autocasts as new PortalItem
+              id: "372b7caa8fe340b0a6300df93ef18a7e"
+            },
+            layers: [
+              new FeatureLayer({
+                portalItem: {
+                  // autocasts as new PortalItem
+                  id: "6012738cd1c74582a5f98ea30ae9876f"
+                },
+                labelingInfo: [labelClass],
+                renderer: {
+                  type: "simple", // autocasts as new SimpleRenderer()
+                  symbol: {
+                    type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+                    color: "rgba(0,100,0,0.6)",
+                    size: 3,
+                    outline: {
+                      color: [0, 0, 0, 0.1],
+                      width: 0.5
+                    }
+                  }
+                }
+              })
+            ]
+          }),
+          center: [-116.925, 34.2501],
+          zoom: 12
+        });
+
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

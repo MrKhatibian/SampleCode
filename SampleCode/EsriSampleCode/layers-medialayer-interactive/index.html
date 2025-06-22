@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MediaLayer with interactive georeferencing | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .key {
+        display: inline-block;
+        padding: 0.3em 0.6em;
+        margin: 0 2px;
+        font-family: monospace;
+        color: var(--calcite-ui-text-2);
+        background-color: var(--calcite-ui-foreground-1);
+        border: 1px solid var(--calcite-ui-border-1);
+        border-radius: 3px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+      }
+
+      #shortcuts table {
+        margin: 0.5em;
+      }
+
+      #shortcuts table td:first-child {
+        padding-right: 1em;
+        text-align: right;
+      }
+
+      #tool-type {
+        position: fixed;
+        bottom: 2em;
+        left: 50%;
+      }
+    </style>
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView"], (WebScene, SceneView) => {
+        const scene = new WebScene({
+          portalItem: { id: "2b3342666d7b454093d8a926b7e2933e" }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: scene,
+          environment: {
+            lighting: {
+              directShadowsEnabled: true
+            }
+          }
+        });
+
+        view.when(async () => {
+
+          // The sample scene already contains a media layer with the element we are trying to position
+          const mediaLayer = scene.layers.find((item) => item.title == "Hearthstone Lakes Stage 5 Site Plan");
+          const mediaLayerView = await view.whenLayerView(mediaLayer);
+
+
+
+          // Enable interactivity and select the image
+          mediaLayerView.interactive = true;
+          mediaLayerView.selectedElement = mediaLayer.source;
+
+
+          // Set up the mode toggle and display a panel with all the relevant keyboard shortcuts
+          const transformButton = document.getElementById("transform");
+          const reshapeButton = document.getElementById("reshape");
+
+
+          transformButton.addEventListener("click", () => {
+            transformButton.active = true;
+            reshapeButton.active = false;
+
+            mediaLayerView.interactionOptions.tool = "transform";
+          });
+
+          reshapeButton.addEventListener("click", () => {
+            transformButton.active = false;
+            reshapeButton.active = true;
+
+            mediaLayerView.interactionOptions.tool = "reshape";
+          });
+
+
+          const shortcuts = document.getElementById("shortcuts");
+          view.ui.add(shortcuts, "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-shell content-behind>
+      <div id="viewDiv"></div>
+      <calcite-shell-panel slot="panel-end" display-mode="float" collapsed>
+        <calcite-panel id="shortcuts" heading="Available Shortcuts">
+          <table>
+            <tr>
+              <td><span class="key" id="shift">Shift</span></td>
+              <td>Preserve aspect ratio</td>
+            </tr>
+            <tr>
+              <td><span class="key" id="z">z</span> / <span class="key" id="r">r</span></td>
+              <td>Undo/ redo</td>
+            </tr>
+            <tr>
+              <td><span class="key" id="move">Shift</span> + <span class="key" id="move">← ↑ ↓ →</span></td>
+              <td>Move by 1px</td>
+            </tr>
+            <tr>
+              <td><span class="key" id="t">t</span></td>
+              <td>Toggle transparency</td>
+            </tr>
+          </table>
+        </calcite-panel>
+      </calcite-shell-panel>
+      <calcite-action-pad id="tool-type" expand-disabled layout="horizontal">
+        <calcite-action active text="Simple" id="transform" title="Activate transform tool"
+          ><img
+            src="data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3C!-- Created with Inkscape (http://www.inkscape.org/) --%3E%3Csvg width='22' height='22' version='1.1' viewBox='0 0 22 22' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23000'%3E%3Crect x='2.5' y='2.5' width='17.005' height='17.005'/%3E%3Cg stroke-width='2.9898'%3E%3Cpath d='m2.4949 8v-5.5051h5.5051'/%3E%3Cpath d='m14 2.4949h5.5051v5.5051'/%3E%3Cpath d='m19.505 14v5.5051h-5.5051'/%3E%3Cpath d='m8 19.505h-5.5051v-5.5051'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E%0A"
+          />
+        </calcite-action>
+        <calcite-action text="Reshape" id="reshape" title="Activate reshape tool"
+          ><img
+            src="data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3C!-- Created with Inkscape (http://www.inkscape.org/) --%3E%3Csvg width='22' height='22' version='1.1' viewBox='0 0 22 22' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='3.5' y='3.5' width='15' height='15' fill='none' stroke='%23000' stroke-dasharray='1,1'/%3E%3Crect x='3.5' y='3.5' width='15' height='15' fill='none' stroke='%23fff' stroke-dasharray='1, 1' stroke-dashoffset='1'/%3E%3Cg%3E%3Ccircle cx='3.5' cy='3.5' r='2.5'/%3E%3Ccircle cx='18.5' cy='3.5' r='2.5'/%3E%3Ccircle cx='3.5' cy='18.5' r='2.5'/%3E%3Ccircle cx='18.5' cy='18.5' r='2.5'/%3E%3C/g%3E%3C/svg%3E%0A"
+          />
+        </calcite-action>
+      </calcite-action-pad>
+    </calcite-shell>
+  </body>
+</html>
+

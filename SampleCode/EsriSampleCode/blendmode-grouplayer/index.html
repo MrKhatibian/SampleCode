@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Composite blending | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/GroupLayer",
+        "esri/layers/FeatureLayer",
+        "esri/layers/ImageryLayer",
+        "esri/layers/VectorTileLayer"
+      ], (Map, MapView, GroupLayer, FeatureLayer, ImageryLayer, VectorTileLayer) => {
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: new Map({
+            basemap: {
+              baseLayers: [
+                new VectorTileLayer({
+                  portalItem: {
+                    id: "f5ada26f334745c097fc801c911ebbd6"
+                  }
+                }),
+                new FeatureLayer({
+                  portalItem: {
+                    id: "28da9fa638b74fb295cc07008ef2f14a"
+                  }
+                })
+              ]
+            }
+          }),
+          extent: {
+            spatialReference: {
+              latestWkid: 102003,
+              wkid: 102003
+            },
+            xmax: 1874643.2331984383,
+            xmin: -2268085.08383833,
+            ymax: 1306570.485845424,
+            ymin: -962852.3969934431
+          },
+          constraints: {
+            snapToZoom: false,
+            minScale: 30999535
+          }
+        });
+        view.map.layers.add(
+          new GroupLayer({
+            layers: [
+              new FeatureLayer({
+                portalItem: {
+                  id: "c786669a00b547c995f0cc970dc007d8"
+                },
+                opacity: 1
+              }),
+              new ImageryLayer({
+                blendMode: "destination-in",
+                url:
+                  "https://sampleserver6.arcgisonline.com/arcgis/rest/services/NLCDLandCover2001/ImageServer",
+                renderer: {
+                  type: "unique-value",
+                  field: "Value",
+                  uniqueValueInfos: [
+                    {
+                      value: 82,
+                      label: "Cultivated crops",
+                      symbol: {
+                        type: "simple-fill",
+                        color: "black"
+                      }
+                    }
+                  ]
+                }
+              })
+            ]
+          })
+        );
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

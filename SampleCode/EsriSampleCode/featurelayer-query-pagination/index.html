@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query features with pagination | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .panel-side {
+        padding: 2px;
+        width: 390px;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 60;
+      }
+
+      #resultsDiv {
+        overflow: auto;
+      }
+    </style>
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], (Map, MapView, FeatureLayer) =>
+        (async () => {
+          const map = new Map({
+            basemap: "gray-vector"
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            padding: {
+              right: 390
+            },
+            center: [-98, 38],
+            zoom: 4,
+            constraints: {
+              geometry: {
+                type: "extent",
+                xmin: -17206956,
+                xmax: -4570726,
+                ymin: 1737191,
+                ymax: 7421660,
+                spatialReference: {
+                  wkid: 102100
+                }
+              },
+              minZoom: 3
+            }
+          });
+
+          const listNode = document.getElementById("incomeList");
+
+          // Create the FeatureLayer using the popupTemplate
+          const featureLayer = new FeatureLayer({
+            url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Counties_education_smart_mapping/FeatureServer/0",
+            outFields: ["*"],
+            popupTemplate: {
+              title: "{NAME}",
+              content: [
+                {
+                  type: "fields",
+                  fieldInfos: [
+                    {
+                      fieldName: "MEDHINC_CY",
+                      label: "Median household income",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    },
+                    {
+                      fieldName: "Population25up",
+                      label: "Population 25+",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            renderer: createRenderer()
+          });
+          map.add(featureLayer);
+
+          let graphics;
+          let start = 0;
+          let highlight;
+
+          // get number of all features from the service and use the count
+          // to set the number of pages in the calcite-pagination component
+          const featureCount = await featureLayer.queryFeatureCount();
+          document.getElementById("tablePager").setAttribute("total-items", featureCount);
+
+          // get the instance of the layerview representing the counties feature layer
+          const layerView = await view.whenLayerView(featureLayer);
+
+          // fetch the first twenty counties that have the highest household median income
+          queryPage(0);
+
+
+          // ************************************************************************
+          // This function is used to fetch 20 features from a specified start location
+          // It is called when the application loads first then it is called whenever
+          // user changes the page number on the calcite-pagination component
+          // ************************************************************************
+          function queryPage(page) {
+            // Query for the page of features.
+            // order the results by median income in descending order
+            const query = {
+              start: page,
+              num: 20,
+              outFields: ["*"],
+              returnGeometry: true,
+              orderByFields: ["MEDHINC_CY DESC"]
+            };
+            const promise = featureLayer
+              .queryFeatures(query)
+              .then((featureSet) => convertFeatureSetToRows(featureSet, query));
+          }
+
+
+
+          // ************************************************************************
+          // This function is called once "next" twenty countries are fetched
+          // and sets up the list on the right side of the application
+          // ************************************************************************
+          function convertFeatureSetToRows(featureSet, query) {
+            document.getElementById("incomeList").innerHTML = "";
+
+            graphics = featureSet.features;
+            graphics.forEach((result, index) => {
+              const attributes = result.attributes;
+              const name = attributes.NAME;
+              const income = `median income: ${attributes.MEDHINC_CY}`;
+
+              const item = document.createElement("calcite-pick-list-item");
+              item.setAttribute("label", name);
+              item.setAttribute("value", index);
+              item.setAttribute("description", income);
+              item.addEventListener("click", onCountyClickHandler);
+              document.getElementById("incomeList").appendChild(item);
+            });
+
+            if (highlight) {
+              highlight.remove();
+            }
+            highlight = layerView.highlight(featureSet.features);
+          }
+
+
+
+          // ************************************************************************
+          // User clicked on the page number on the calcite-pagination
+          // set up the query page and fetch the features from the service corresponding
+          // to the page number
+          // ************************************************************************
+          document.getElementById("tablePager").addEventListener("calcitePaginationChange", (event) => {
+            let page;
+            if (event.target.startItem === 1) {
+              page = 0;
+            } else {
+              page = event.target.startItem;
+            }
+            queryPage(page);
+
+            // set up the view for the new results
+            view.zoom = 4;
+            view.center = [-98, 38];
+            if (view.popup.visible) {
+              view.popup.visible = false;
+            }
+          });
+
+
+          // ***************************************************
+          // this function runs when user clicks on the county
+          // in the list shown on the right side of the app
+          // ***************************************************
+          function onCountyClickHandler(event) {
+            const target = event.target;
+            const resultId = target.getAttribute("value");
+
+            // get the graphic corresponding to the clicked zip code
+            const result = resultId && graphics && graphics[parseInt(resultId, 10)];
+
+            if (result) {
+              view
+                .goTo(result.geometry.extent.expand(6))
+                .then(() => {
+                  view.openPopup({
+                    features: [result],
+                    location: result.geometry.centroid
+                  });
+                })
+                .catch((error) => {
+                  if (error.name != "AbortError") {
+                    console.error(error);
+                  }
+                });
+            }
+          }
+
+          // called when the counties featurelayer is initialized
+          // render the layer to show classification of household median income
+          function createRenderer() {
+            return (renderer = {
+              type: "class-breaks",
+              field: "MEDHINC_CY",
+              classBreakInfos: [
+                {
+                  minValue: 0,
+                  maxValue: 15000,
+                  symbol: {
+                    type: "simple-fill",
+                    color: "#097969",
+                    outline: {
+                      color: "#D3D3D3",
+                      width: 0.5
+                    }
+                  }
+                },
+                {
+                  minValue: 15000,
+                  maxValue: 50000,
+                  symbol: {
+                    type: "simple-fill",
+                    color: "#AFE1AF",
+                    outline: {
+                      color: "#D3D3D3",
+                      width: 0.5
+                    }
+                  }
+                },
+                {
+                  minValue: 50000,
+                  maxValue: 80000,
+                  symbol: {
+                    type: "simple-fill",
+                    color: "white",
+                    outline: {
+                      color: "#D3D3D3",
+                      width: 0.5
+                    }
+                  }
+                },
+                {
+                  minValue: 80000,
+                  maxValue: 100000,
+                  symbol: {
+                    type: "simple-fill",
+                    color: "#5F9EA0",
+                    outline: {
+                      color: "#D3D3D3",
+                      width: 0.5
+                    }
+                  }
+                },
+                {
+                  minValue: 100000,
+                  maxValue: 200000,
+                  symbol: {
+                    type: "simple-fill",
+                    color: "#0818A8",
+                    outline: {
+                      color: "#D3D3D3",
+                      width: 0.5
+                    }
+                  }
+                }
+              ]
+            });
+          }
+
+          const resultPanel = document.getElementById("result-panel");
+          const toggleButton = document.getElementById("toggle-button");
+          view.ui.add(toggleButton, "top-left");
+
+          toggleButton.addEventListener("click", function () {
+            if (resultPanel.clientWidth == 390) {
+              resultPanel.style.width = "0px";
+              tablePager.style.width = "0px";
+              toggleButton.icon = "chevrons-right";
+              toggleButton.title = "Expand results panel";
+            } else {
+              resultPanel.style.width = "390px";
+              tablePager.style.width = "390px";
+              toggleButton.icon = "chevrons-left";
+              toggleButton.title = "Collapse results panel";
+            }
+          });
+        })());
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-action
+      id="toggle-button"
+      text="Toggle results panel"
+      title="Collapse results panel"
+      icon="chevrons-left"
+      scale="s"
+    >
+    </calcite-action>
+    <calcite-panel class="panel-side" id="result-panel">
+      <div slot="header-content" scale="s">
+        <h3 class="heading">Medium household income by counties from highest to lowest</h3>
+        <p>returns 20 counties at a time</p>
+        <p></p>
+      </div>
+
+      <calcite-panel id="resultsDiv">
+        <calcite-pick-list id="incomeList"></calcite-pick-list>
+      </calcite-panel>
+      <div slot="footer">
+        <calcite-pagination id="tablePager" start-item="1" page-size="20"></calcite-pagination>
+      </div>
+    </calcite-panel>
+  </body>
+</html>
+

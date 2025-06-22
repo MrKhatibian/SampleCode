@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Generate a class breaks visualization | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #infoDiv {
+        padding: 8px;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/smartMapping/renderers/color",
+        "esri/smartMapping/statistics/histogram",
+        "esri/widgets/smartMapping/ClassedColorSlider",
+        "esri/widgets/Legend",
+        "esri/widgets/BasemapToggle",
+        "esri/core/reactiveUtils"
+      ], (
+        Map,
+        MapView,
+        FeatureLayer,
+        colorRendererCreator,
+        histogram,
+        ClassedColorSlider,
+        Legend,
+        BasemapToggle,
+        reactiveUtils
+      ) => {
+        (async () => {
+          let fieldSelect, classSelect, numClassesInput, slider;
+
+          const layer = new FeatureLayer({
+            title: "Puget Sound block groups",
+            url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Puget_Sound_BG_demographics/FeatureServer/0",
+            popupTemplate: {
+              // autocast as esri/PopupTemplate
+              title: "Block Group {FID_Block_Group}",
+              content: [
+                {
+                  type: "fields",
+                  fieldInfos: [
+                    {
+                      fieldName: "EDUCBASECY",
+                      label: "Adults 25+",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                      }
+                    },
+                    {
+                      fieldName: "NOHS_CY",
+                      label: "No high school diploma",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                      }
+                    },
+                    {
+                      fieldName: "HSGRAD_CY",
+                      label: "High school dipolma",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                      }
+                    },
+                    {
+                      fieldName: "NO_COL_DEG",
+                      label: "No college degree",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                      }
+                    },
+                    {
+                      fieldName: "COL_DEG",
+                      label: "College degree",
+                      format: {
+                        digitSeparator: true,
+                        places: 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            definitionExpression: "EDUCBASECY > 0"
+          });
+
+          const map = new Map({
+            basemap: "gray-vector"
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-122.3487846, 47.58907],
+            zoom: 11
+          });
+
+          // generate rounded arcade expression when user
+          // selects a field name
+          const getValueExpression = (field) => {
+            return "Round( ( $feature." + field + " / $feature.EDUCBASECY ) * 100, 1)";
+          };
+
+          const generateRenderer = async () => {
+            const fieldLabel = fieldSelect.options[fieldSelect.selectedIndex].text;
+            // default to natural-breaks when manual is selected for classification method
+            const classificationMethod = classSelect.value === "manual" ? "natural-breaks" : classSelect.value;
+
+            const params = {
+              layer: layer,
+              valueExpression: getValueExpression(fieldSelect.value),
+              view: view,
+              classificationMethod: classificationMethod,
+              numClasses: parseInt(numClassesInput.value),
+              legendOptions: {
+                title: "% population with " + fieldLabel
+              }
+            };
+
+            // generate the renderer and set it on the layer
+            const rendererResponse = await colorRendererCreator.createClassBreaksRenderer(params);
+            layer.renderer = rendererResponse.renderer;
+
+            if (!map.layers.includes(layer)) {
+              map.add(layer);
+            }
+
+            if (classSelect.value === "manual") {
+              // if manual is selected, then add or update
+              // a classed color slider to allow the user to
+              // construct manual class breaks
+              updateColorSlider(rendererResponse);
+            } else {
+              destroySlider();
+            }
+          };
+
+          // if manual classification method is selected, then create
+          // a classed color slider to allow user to manually modify
+          // the class breaks starting with the generated renderer
+          const updateColorSlider = async (rendererResult) => {
+            const histogramResult = await histogram({
+              layer: layer,
+              valueExpression: getValueExpression(fieldSelect.value),
+              view: view,
+              numBins: 100
+            });
+
+            if (!slider) {
+              const sliderContainer = document.createElement("div");
+              const container = document.createElement("div");
+              container.id = "containerDiv";
+              container.appendChild(sliderContainer);
+              view.ui.add(container, "top-right");
+
+              slider = ClassedColorSlider.fromRendererResult(rendererResult, histogramResult);
+              slider.container = container;
+              slider.viewModel.precision = 1;
+
+              // update the renderer based on the user's input
+              const changeEventHandler = () => {
+                const renderer = layer.renderer.clone();
+                renderer.classBreakInfos = slider.updateClassBreakInfos(renderer.classBreakInfos);
+                layer.renderer = renderer;
+              };
+
+              slider.on(["thumb-change", "thumb-drag", "min-change", "max-change"], changeEventHandler);
+            } else {
+              // update the slider if another variable is selected
+              slider.updateFromRendererResult(rendererResult, histogramResult);
+            }
+          };
+
+          const destroySlider = () => {
+            if (slider) {
+              let container = document.getElementById("containerDiv");
+              view.ui.remove(container);
+              slider.container = null;
+              slider = null;
+              container = null;
+            }
+          };
+
+          // set up UI elements
+          view.ui.add(
+            new Legend({
+              view: view
+            }),
+            "bottom-left"
+          );
+
+          const basemapToggle = new BasemapToggle({
+            view: view,
+            nextBasemap: "dark-gray-vector"
+          });
+          view.ui.add(basemapToggle, "bottom-right");
+
+          let abortController = null;
+
+          async function onBasemapChange() {
+            abortController?.abort();
+            const { signal } = (abortController = new AbortController());
+
+            await reactiveUtils.whenOnce(() => !view.updating, signal);
+
+            generateRenderer();
+          }
+
+          reactiveUtils.watch(
+            () => basemapToggle.activeBasemap,
+            () => onBasemapChange()
+          );
+
+          view.ui.add("infoDiv", "top-right");
+          await view.when();
+
+          // generate a new renderer each time the user changes an input parameter
+          fieldSelect = document.getElementById("field-select");
+          fieldSelect.addEventListener("change", generateRenderer);
+
+          classSelect = document.getElementById("class-select");
+          classSelect.addEventListener("change", generateRenderer);
+
+          numClassesInput = document.getElementById("num-classes");
+          numClassesInput.addEventListener("change", generateRenderer);
+
+          await reactiveUtils.whenOnce(() => !view.updating);
+          generateRenderer();
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="infoDiv" class="esri-widget">
+      Select Field:
+      <select id="field-select" class="esri-widget">
+        <option value="NOHS_CY">no high school diploma</option>
+        <option value="NO_COL_DEG" selected>no college degree</option>
+        <option value="HSGRAD_CY">high school diploma</option>
+        <option value="COL_DEG">college degree</option>
+      </select>
+      Classification:
+      <select id="class-select" class="esri-widget">
+        <option value="equal-interval" selected>Equal interval</option>
+        <option value="quantile">Quantile</option>
+        <option value="natural-breaks">Natual Breaks</option>
+        <option value="manual">Manual</option>
+      </select>
+      Breaks:
+      <input type="number" id="num-classes" class="esri-widget" value="5" min="2" max="10" />
+    </div>
+  </body>
+</html>
+

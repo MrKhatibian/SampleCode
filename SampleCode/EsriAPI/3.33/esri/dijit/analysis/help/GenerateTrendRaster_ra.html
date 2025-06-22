@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="smallsize">
+        <h2>Generate Trend Raster</h2><p/>
+        <h2><img src="./images/GUID-A95F821A-8CAF-45F3-93E5-14BDF5DA0BCD-web.png" alt="Generate Trend Raster"></h2>
+        <hr/>
+    <p>Estimates the trend for each pixel along a dimension for one or more variables in a multidimensional raster.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputMultidimensionalRaster">
+        <div><h2>Choose multidimensional imagery layer to analyze trend</h2></div>
+        <hr/>
+        <div>
+            <p>
+            </p>
+            <p>The input imagery layer of a multidimensional raster that will be analyzed.
+            </p>
+        </div>
+    </div>
+    <div id="dimension">
+        <div><h2>Choose dimension along which variable trend will be analyzed</h2></div>
+        <hr/>
+        <div>
+            <p>The dimension along which a trend will be extracted for the variable or variables selected in the analysis.
+            </p>
+        </div>
+    </div>
+    <div id="variables">
+        <div><h2>Choose variable(s) to analyze trend</h2></div>
+        <hr/>
+        <div>
+            <p>The variable or variables for which trends will be calculated. If no variable is specified, the first variable in the multidimensional raster will be analyzed.
+            </p>
+        </div>
+    </div>
+    <div id="trendLineType">
+        <div><h2>Choose the type of line to fit variable values along a dimension</h2></div>
+        <hr/>
+        <div>
+            <p>Specifies the type of line to be used to fit to the pixel values along a dimension. 
+                <ul>
+                    <li> <b>Linear</b>&mdash;Variable pixel values will be fitted along a linear trend line. This is the default.
+                    </li>
+                    <li> <b>Polynomial</b>&mdash;Variable pixel values will be fitted along a second order polynomial trend line.
+                    </li>
+                    <li> <b>Harmonic</b>&mdash;Variable pixel values will be fitted along a harmonic trend line.
+                    </li>
+                </ul>
+                
+            </p>
+        </div>
+    </div>
+    <div id="cycleLength">
+        <div><h2>Specify the length of harmonic cycle</h2></div>
+        <hr/>
+        <div>
+            <p>The length of periodic variation to model. This parameter is required when the trend line type is set to  <b>Harmonic</b>. For example, leaf greenness often has one strong cycle of variation in a single year, so the cycle length is 1 year. Hourly temperature data has one strong cycle of variation throughout a single day, so the cycle length is 1 day.
+            </p>
+            <p>The default length is 1 year for data that varies on an annual cycle.
+            </p>
+            <p>This parameter is only included in the trend analysis when the dimension being analyzed is time and the type of trend line is set to  <b>Harmonic</b>.
+            </p>
+        </div>
+    </div>
+    <div id="cycleUnit">
+        <div><h2>Choose the time unit of harmonic cycle length</h2></div>
+        <hr/>
+        <div>
+            <p>Specifies the time unit to be used for the length of a harmonic cycle.
+                <ul>
+                    <li> <b>Days</b>&mdash;The unit for the length of the harmonic cycle is days.
+                    </li>
+                    <li> <b>Years</b>&mdash;The unit for the length of the harmonic cycle is years. This is the default.
+                    </li>
+                </ul>
+                
+            </p>
+            <p>This parameter is only included in the trend analysis when the dimension being analyzed is time and the type of trend line is set to  <b>Harmonic</b>.
+            </p>
+        </div>
+    </div>
+    <div id="frequency">
+        <div><h2>Specify the frequency number for the harmonic trend fitting</h2></div>
+        <hr/>
+        <div>
+            <p>The frequency to use in harmonic trend fitting. This parameter specifies the frequency of cycles in a year.
+            </p>
+            <p>The default value is  1, or one harmonic cycle per year.
+            </p>
+            <p>This parameter is only included in the trend analysis when the dimension being analyzed is time.
+            </p>
+        </div>
+    </div>
+    <div id="polynomialOrder">
+        <div><h2>Specify the polynomial order number for the trend fitting</h2></div>
+        <hr/>
+        <div>
+            <p>The polynomial order number to use in polynomial trend fitting.
+            </p>
+            <p>This parameter is only included in the trend analysis when the dimension being analyzed is time.
+            </p>
+            <p>The default value is 2, or second order polynomial.
+            </p>
+        </div>
+    </div>
+    <div id="modelStatistics">
+        <div><h2>Choose model statistics to be included in trend raster</h2></div>
+        <hr/>
+        <div>
+            <p>This tool provides three types of statistics of trend fit line: the root mean square error (RMSE), the R-squared goodness-of-fit statistic (R-squared), and the p-value statistic for the slope coefficient (P-value of the slope coefficient). Each statistic has a corresponding check box to specify whether it will be calculated and included as one of the multiple bands in the output trend raster.
+                <ul>
+                    <li>
+                        <p>RMSE
+                        </p>
+                        <ul>
+                            <li>Checked&mdash;The RMSE will be calculated and included as one of the multiple bands in the output trend raster. This is the default.
+                            </li>
+                            <li>Unchecked&mdash;The RMSE will not be calculated.
+                            </li>
+                        </ul>
+                        
+                    </li>
+                    <li>
+                        <p>R-squared
+                        </p>
+                        <ul>
+                            <li>Checked&mdash;The R-squared value will be calculated and included as one of the multiple bands in the output trend raster.
+                            </li>
+                            <li>Unchecked&mdash;The R-squared value will not be calculated. This is the default.
+                            </li>
+                        </ul>
+                        
+                    </li>
+                    <li>
+                        <p>P-value of slope coefficient
+                        </p>
+                        <ul>
+                            <li>Checked&mdash;The p-value will be calculated and included as one of the multiple bands in the output trend raster.
+                            </li>
+                            <li>Unchecked&mdash;The p-value will not be calculated. This is the default.
+                            </li>
+                        </ul>
+                        
+                    </li>
+                </ul>
+                
+            </p>
+        </div>
+    </div>
+    <div id="ignoreNodata">
+        <div><h2>Ignore missing values in calculation</h2></div>
+        <hr/>
+        <div>
+            <p>Specifies whether missing values are ignored in the analysis.
+                <ul>
+                    <li>Checked&mdash;The analysis will include all valid pixels along a given dimension and ignore any NoData pixels. This is the default.
+                    </li>
+                    <li>Unchecked&mdash;The analysis will result in NoData if there are any NoData values for the pixels along the given dimension.
+                    </li>
+                </ul>
+                
+            </p>
+        </div>
+    </div>
+    <div id="outputName">
+        <div><h2>Result layer name</h2></div>
+        <hr/>
+        <div>
+            <p>The name of the layer that will be created in  <b>My Content</b> and added to the map. The default name is based on the tool name and the input layer name. If the layer already exists, you will be prompted to provide another name.
+            </p>
+            <p>You can specify the name of a folder in  <b>My Content</b> where the result will be saved using the <b>Save result in</b> drop-down box.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

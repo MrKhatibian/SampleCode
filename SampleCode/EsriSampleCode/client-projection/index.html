@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Client-side projection | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      background-color: #ffffff;
+    }
+
+    #projectionDiv {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ffffff;
+      padding: 10px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/Map",
+      "esri/geometry/SpatialReference",
+      "esri/layers/GeoJSONLayer",
+      "esri/core/reactiveUtils",
+      "esri/widgets/Legend"
+    ], (
+      MapView,
+      Map,
+      SpatialReference,
+      GeoJSONLayer,
+      reactiveUtils,
+      Legend
+    ) => {
+
+      // display projected graphics as a FeatureLayer
+      const countriesLayer = new GeoJSONLayer({
+        title: "Forest area by country",
+        url: "https://developers.arcgis.com/javascript/latest/sample-code/client-projection/live/percent-forest-area.json",
+        objectIdField: "OBJECTID",
+        fields: [
+          {
+            name: "OBJECTID",
+            alias: "ObjectID",
+            type: "oid"
+          },
+          {
+            name: "Country",
+            alias: "Country",
+            type: "string"
+          },
+          {
+            name: "y2015",
+            alias: "% forest area (2015)",
+            type: "double"
+          }
+        ],
+        popupTemplate: {
+          title: "{Country}",
+          content: "{expression/per-land-area}",
+          expressionInfos: [
+            {
+              title: "per-land-area",
+              name: "per-land-area",
+              expression:
+                "IIF(!IsEmpty($feature.y2015), Round($feature.y2015) + '% of the land area in this country is forest.', 'No data')"
+            }
+          ]
+        },
+        renderer: {
+          type: "class-breaks",
+          defaultLabel: "No data",
+          defaultSymbol: {
+            type: "simple-fill",
+            color: "#fcedcd",
+            outline: {
+              color: [255, 255, 255, 0.1],
+              width: 0.5
+            }
+          },
+          visualVariables: [
+            {
+              type: "color",
+              field: "y2015",
+              stops: [
+                { value: 0, color: "#D0D0CB" },
+                { value: 50, color: "#4F6704" }
+              ]
+            }
+          ]
+        }
+      });
+
+
+      // Reproject the data to the projection selected by the user
+      const wkidSelect = document.getElementById("projectWKID");
+      wkidSelect.addEventListener("change", () => {
+        view.spatialReference = {
+          wkid: wkidSelect.value
+        };
+        centerPoint.spatialReference = {
+          wkid: wkidSelect.value
+        };
+        view.center = centerPoint;
+      });
+
+
+      const viewSpatialReference = new SpatialReference({
+        wkid: wkidSelect.value
+      });
+      let centerPoint = {
+        x: 0,
+        y: 0,
+        spatialReference: viewSpatialReference
+      };
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: new Map({
+          layers: [countriesLayer]
+        }),
+        highlightOptions: {
+          fillOpacity: 0
+        },
+        spatialReference: viewSpatialReference,
+        center: centerPoint,
+        scale: 166418924
+      });
+
+      view.graphics.add({
+        symbol: {
+          type: "simple-fill",
+          color: null,
+          outline: {
+            width: 0.5,
+            color: [208, 208, 203, 0.7]
+          }
+        },
+        geometry: {
+          type: "extent",
+          xmin: -180,
+          xmax: 180,
+          ymin: -90,
+          ymax: 90,
+          // This geometry automatically reprojects when added to the view
+          spatialReference: SpatialReference.WGS84
+        }
+      });
+
+      document.getElementById("viewSRDiv").innerHTML = `view.SR.wkid = <b>${view.spatialReference.wkid}</b>`;
+
+      view.ui.add(new Legend({ view: view }), "bottom-left");
+
+      view.whenLayerView(countriesLayer).then((layerView) => {
+        reactiveUtils.whenOnce(() => !view.updating)
+          .then(() => {
+            wkidSelect.disabled = false;
+          });
+
+        reactiveUtils.watch(() => view.spatialReference, (spatialReference) => {
+          document.getElementById(
+            "viewSRDiv"
+          ).innerHTML = `view.SR.wkid = <b>${spatialReference.wkid}</b>`;
+        });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv">
+    <div id="projectionDiv" class="esri-widget">
+      <p>Select a projection</p>
+      <select id="projectWKID" class="esri-widget" disabled>
+        <option value="8857" selected>Equal Earth Greenwich</option>
+        <option value="8858">Equal Earth Americas</option>
+        <option value="8859">Equal Earth Asia-Pacific</option>
+        <option value="54042">Winkel III</option>
+        <option value="54050">World Fuller</option>
+        <option value="54010">World Eckert VI</option>
+        <option value="54021">World Polyconic</option>
+        <option value="54016">World Gall Stereographic</option>
+        <option value="54008">World Sinusoidal</option>
+        <option value="54023">World Loximuthal</option>
+        <option value="54024">World Bonne</option>
+      </select><br /><br />
+      <div id="viewSRDiv" class="esri-widget paddings"></div><br />
+    </div>
+  </div>
+</body>
+
+</html>

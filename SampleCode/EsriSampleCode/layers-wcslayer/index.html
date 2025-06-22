@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>Intro to WCSLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/WCSLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand"
+      ], (
+        Map,
+        MapView,
+        WCSLayer,
+        Legend,
+        Expand
+      ) => {
+
+        // raster stretch renderer with 3 standard-deviations
+        // and with a multipart color ramps
+        const renderer = {
+          type: "raster-stretch",
+          stretchType: "standard-deviation",
+          statistics: [[-3, 37, 1, 1]],
+          numberOfStandardDeviations: 3,
+          colorRamp: {
+            type: "multipart",
+            colorRamps: [
+              {
+                fromColor: [0, 0, 255],
+                toColor: [0, 255, 255]
+              },
+              {
+                fromColor: [0, 255, 255],
+                toColor: [255, 255, 0]
+              },
+              {
+                fromColor: [255, 255, 0],
+                toColor: [255, 0, 0]
+              }
+            ]
+          }
+        };
+
+        // multi dimension definition for the layer
+        const multidimensionalDefinition = [
+          {
+            variableName: "water_temp",
+            dimensionName: "StdTime",
+            values: [1396828800000] // Monday, April 7, 2014 12:00:00 AM GTM
+          },
+          {
+            variableName: "water_temp", // water temp at sea level
+            dimensionName: "StdZ",
+            values: [0]
+          }
+        ];
+
+        // WCSLayer from ArcGIS Server
+        const layer = new WCSLayer({
+          url:
+            "https://sampleserver6.arcgisonline.com/arcgis/services/ScientificData/SeaTemperature/ImageServer/WCSServer",
+          renderer: renderer,
+          multidimensionalDefinition: multidimensionalDefinition,
+          opacity: 0.5,
+          title: "Sea temperature - sea level"
+        });
+
+        const map = new Map({
+          basemap: "gray-vector",
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-120, 10],
+          zoom: 1
+        });
+
+        view.whenLayerView(layer).then(() => {
+          layer.popupTemplate = layer.defaultPopupTemplate;
+        });
+
+        const legend = new Expand({
+          content: new Legend({
+            view: view
+          }),
+          view: view,
+          expanded: false,
+          expandTooltip: "Legend"
+        });
+
+        // Add widget to the bottom right corner of the view
+         view.ui.add(legend, "bottom-left");
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

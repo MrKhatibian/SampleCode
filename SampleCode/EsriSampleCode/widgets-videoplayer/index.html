@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>VideoLayer and VideoPlayer widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/VideoLayer", "esri/widgets/VideoPlayer"], (
+        Map,
+        MapView,
+        VideoLayer,
+        VideoPlayer
+      ) => {
+
+        // Create a new VideoLayer using the url to your video service
+        const videoLayer = new VideoLayer({
+          url: "url-to-your-video-service"
+        });
+
+        // Create a new map adding the videoLayer to the layers collection
+        const map = new Map({
+          basemap: "topo-vector",
+          layers: [videoLayer]
+        });
+
+        // Create a new MapView using the map and setting its container to be a div with the id of "viewDiv"
+        const view = new MapView({
+          container: "viewDiv",
+          map
+        });
+
+
+
+        // Create a new VideoPlayer using the videoLayer and the view
+        const videoPlayer = new VideoPlayer({
+          layer: videoLayer,
+          view
+        });
+
+        // Add the video player to the bottom left of the view
+        view.ui.add(videoPlayer, "bottom-left");
+
+
+        // When the view is ready, wait for the videoLayer to load, then zoom to its full extent.
+        // If an error is thrown, alert the user that they need to provide their own video service URL.
+        view.when(async () => {
+          await videoLayer.load().catch((error) => {
+            if (error.name === "arcgis-layers:url-mismatch") {
+              alert(
+                "For this sample to function properly and display a video, you must provide your own video service URL."
+              );
+            }
+          });
+          view.goTo(videoLayer.fullExtent);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

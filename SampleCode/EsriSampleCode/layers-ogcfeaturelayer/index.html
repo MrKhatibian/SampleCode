@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>OGCFeatureLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #appTitle {
+        padding: 15px;
+        width: 400px;
+      }
+
+      #winery-filter {
+        width: 150px;
+        visibility: hidden;
+      }
+
+      .filter-item {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        vertical-align: baseline;
+        cursor: pointer;
+      }
+
+      .filter-title {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        vertical-align: baseline;
+      }
+
+      .filter-item:focus,
+      .filter-item:hover {
+        background-color: rgb(186, 185, 185);
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/Map",
+        "esri/layers/OGCFeatureLayer",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils"
+      ], (MapView, Map, OGCFeatureLayer, Expand, reactiveUtils) => {
+        (async () => {
+          let wineryLayerView;
+          // Create the OGCFeatureLayer
+          const wineryLayer = new OGCFeatureLayer({
+            url: "https://demo.ldproxy.net/vineyards", // url to the OGC landing page
+            collectionId: "vineyards", // unique id of the collection
+            // define labeling
+            labelingInfo: [
+              {
+                labelExpressionInfo: {
+                  expression: "$feature.NAME"
+                },
+                symbol: {
+                  type: "text",
+                  color: "#4a6741",
+                  haloSize: 1,
+                  haloColor: "white",
+                  font: {
+                    family: "IM FELL DW Pica PRO",
+                    style: "italic",
+                    weight: "normal"
+                  }
+                },
+                maxScale: 0,
+                minScale: 100000
+              }
+            ],
+            // hide the vineyards in very small scales
+            minScale: 5000000,
+            // define rendering
+            renderer: {
+              type: "simple",
+              symbol: {
+                type: "web-style", // autocasts to WebStyleSymbol
+                styleUrl: "https://www.arcgis.com/sharing/rest/content/items/c71b13cf8f28452faf91ad0552574d24/data",
+                name: "Mangrove_Common_5"
+              }
+            },
+            popupTemplate: {
+              title: "{name}",
+              content: [
+                {
+                  type: "text",
+                  text: "The {name} vineyard is {area_ha} hectares and resides in {village} village. It is within the {region} region and the {subregion} subregion. "
+                }
+              ]
+            },
+            opacity: 0.6,
+            // display the attribution
+            copyright:
+              "Landwirtschaftskammer RLP (2020), dl-de/by-2-0, <a href='http://weinlagen.lwk-rlp.de/'' target='_blank'>weinlagen.lwk-rlp.de</a>, <a href='http://weinlagen.lwk-rlp.de/portal/nutzungsbedingungen/gewaehrleistung-haftung.html' target='_blank'>Regelungen zu Gewährleistung und Haftung</a>"
+          });
+          // create map with custom basemap
+          const map = new Map({
+            basemap: "gray-vector",
+            layers: [wineryLayer] // add OGCFeatureLayer
+          });
+          const view = new MapView({
+            container: "viewDiv",
+            map,
+            zoom: 12,
+            center: [6.93, 49.87],
+            popup: {
+              dockEnabled: true,
+              dockOptions: {
+                position: "bottom-right",
+                breakpoint: false,
+                buttonEnabled: false
+              }
+            }
+          });
+          const titleExpand = new Expand({
+            view: view,
+            content: document.getElementById("appTitle"),
+            expandIcon: "question",
+            expanded: true,
+            group: "top-left"
+          });
+          view.ui.add(titleExpand, "top-left");
+          const wineryElement = document.getElementById("winery-filter");
+
+          const filterByType = (event) => {
+            // close the popup if it's open
+            if (view.popup.visible) {
+              view.closePopup();
+            }
+            // determine filter definition based on the selected type
+            const selectedType = event.target.getAttribute("data");
+            if (!selectedType) {
+              return; // do not set filter if one of the filters has not been clicked
+            }
+            let filterDef = "";
+            switch (selectedType) {
+              case "lessThan50":
+                filterDef = "area_ha < 50";
+                break;
+              case "fiftyTo100":
+                filterDef = "area_ha >= 50 AND area_ha <= 100";
+                break;
+              case "greater100":
+                filterDef = "area_ha >= 100";
+                break;
+              default:
+            }
+            // apply the effect to the features
+            wineryLayerView.featureEffect = {
+              filter: {
+                where: filterDef
+              },
+              excludedEffect: "opacity(20%)"
+            };
+          };
+
+          // click event handler for winery filter
+          wineryElement.addEventListener("click", filterByType);
+
+          const layerView = await view.whenLayerView(wineryLayer);
+          wineryLayerView = layerView;
+          // set up UI items
+          wineryElement.style.visibility = "visible";
+          const filterExpand = new Expand({
+            view: view,
+            content: wineryElement,
+            expandIcon: "filter",
+            group: "top-left"
+          });
+          // clear the filters when user closes the expand widget
+          reactiveUtils.when(
+            () => !filterExpand.expanded,
+            () => {
+                wineryLayerView.featureEffect = null;
+            }
+          );
+          view.ui.add(filterExpand, "top-left");
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="winery-filter" class="esri-widget">
+      <div class="filter-title"><b>Filter by area (hectares)</b></div>
+      <div class="filter-item" data="greater100">Greater than 100</div>
+      <div class="filter-item" data="fiftyTo100">50 - 100</div>
+      <div class="filter-item" data="lessThan50">Less than 50</div>
+    </div>
+    <div id="appTitle" class="esri-widget">
+      <h3>Wineries</h3>
+      <p>
+        Click on a feature to see more information about a specific winery. Use the filter icon on the left to filter
+        the data by the area of the winery.
+      </p>
+    </div>
+  </body>
+</html>
+

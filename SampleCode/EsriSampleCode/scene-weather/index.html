@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Weather visualization | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      #selection {
+        position: absolute;
+        bottom: 20px;
+        width: 70%;
+        max-width: 1000px;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/widgets/Expand",
+        "esri/widgets/Weather",
+        "esri/widgets/Daylight"
+      ], (WebScene, SceneView, Expand, Weather, Daylight) => {
+        /***********************************
+         * Create the SceneView
+         ***********************************/
+        // Load a webscene
+        const scene = new WebScene({
+          portalItem: {
+            id: "c56dab9e4d1a4b0c9d1ee7f589343516"
+          }
+        });
+
+        // Create a new SceneView and set the weather to cloudy
+        const view = new SceneView({
+          map: scene,
+          container: "viewDiv",
+
+          environment: {
+            weather: {
+              type: "cloudy", // autocasts as new CloudyWeather({ cloudCover: 0.3 })
+              cloudCover: 0.3
+            }
+          }
+        });
+
+        /***********************************
+         * Add the widgets' UI elements to the view
+         ***********************************/
+        const weatherExpand = new Expand({
+          view: view,
+          content: new Weather({
+            view: view
+          }),
+          group: "top-right",
+          expanded: true
+        });
+
+        const daylightExpand = new Expand({
+          view: view,
+          content: new Daylight({
+            view: view
+          }),
+          group: "top-right"
+        });
+        view.ui.add([weatherExpand, daylightExpand], "top-right");
+
+        /***********************************
+         * Add functionality to change between flooding and no flooding
+         ***********************************/
+        // Wait for the view to be loaded, in order to being able to retrieve the layer
+        view.when(() => {
+          // Find the layer for the
+          let floodLevel = scene.allLayers.find(function (layer) {
+            return layer.title === "Flood Level";
+          });
+
+          const selection = document.getElementById("selection");
+
+          selection.addEventListener("calciteSegmentedControlChange", () => {
+            switch (selection.selectedItem.value) {
+              case "flooding":
+                // Change the weather to rainy to match the flooding scenario
+                view.environment.weather = {
+                  type: "rainy", // autocasts as new RainyWeather({ cloudCover: 0.7, precipitation: 0.3 })
+                  cloudCover: 0.7,
+                  precipitation: 0.3
+                };
+                // Turn on the water layer showing the flooding
+                floodLevel.visible = true;
+                break;
+
+              case "noFlooding":
+                // Change the weather back to cloudy
+                view.environment.weather = {
+                  type: "cloudy", // autocasts as new CloudyWeather({ cloudCover: 0.3 })
+                  cloudCover: 0.3
+                };
+
+                // Turn off the water layer showing the flooding
+                floodLevel.visible = false;
+                break;
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-segmented-control id="selection" width="full">
+      <calcite-segmented-control-item value="noFlooding" checked>No flooding</calcite-segmented-control-item>
+      <calcite-segmented-control-item value="flooding">Flooding</calcite-segmented-control-item>
+    </calcite-segmented-control>
+  </body>
+</html>
+

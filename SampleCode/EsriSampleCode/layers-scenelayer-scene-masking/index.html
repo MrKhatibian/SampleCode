@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Filter SceneLayer with SceneFilter | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #sketch {
+        background-color: white;
+        padding: 10px;
+        width: 300px;
+      }
+
+      #selection {
+        width: 100%;
+        display: flex;
+        justify-content: space-evenly;
+      }
+
+      #contains, 
+      #disjoint, 
+      #saveWebScene {
+        width: 100%;
+        padding: 10px 0 0 0;
+      }
+
+      #sidebarDiv {
+        background-color: white;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 100px;
+        justify-content: space-between;
+      }
+
+      #overlayDiv {
+        z-index: 1;
+        position: absolute;
+        margin: auto auto;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 280px;
+        height: 140px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid grey;
+        visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+      }
+
+      #info {
+        text-align: center;
+      }
+    </style>
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic",
+        "esri/layers/support/SceneFilter",
+        "esri/widgets/Sketch"
+      ], (WebScene, SceneView, GraphicsLayer, Graphic, SceneFilter, Sketch) => {
+        /***********************************
+         * Load the scene and prepare the layers
+         ***********************************/
+
+        const scene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "fa4dd90d0bfd470fb0dc9e32eab0bfef"
+          }
+        });
+
+        // Define symbol for the filter polygons
+        const filterSymbol = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [255, 140, 0, 0.3],
+          style: "solid",
+          outline: {
+            // autocasts as new SimpleLineSymbol()
+            color: [255, 140, 0, 1],
+            width: 2
+          }
+        };
+
+        // Prepare one starting filter polygon
+        const graphic = new Graphic({
+          symbol: filterSymbol,
+          geometry: {
+            type: "polygon",
+            rings: [
+              [2337839, 6841577],
+              [2337503, 6842401],
+              [2338391, 6842682],
+              [2338715, 6841864],
+              [2337839, 6841577]
+            ],
+            spatialReference: {
+              wkid: 102100
+            }
+          }
+        });
+
+        // Make a new layer for the masking filters
+        const filterLayer = new GraphicsLayer({
+          title: "Filter Layer",
+          graphics: [graphic],
+          elevationInfo: {
+            mode: "on-the-ground"
+          }
+        });
+
+        /***********************************
+         * Create the SceneView
+         ***********************************/
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: scene,
+          camera: {
+            position: {
+              longitude: 21.01444603,
+              latitude: 52.22511883,
+              z: 477.81971
+            },
+            heading: 315.42,
+            tilt: 70.98
+          }
+        });
+
+        view.map.add(filterLayer);
+
+        // Read the layers from the webscene
+        let osmTrees;
+        let osmBuildings;
+        scene.loadAll().then(() => {
+          osmTrees = scene.allLayers.find((layer) => {
+            return layer.title == "Realistic"; // There are two tree layer, we want the realistic trees
+          });
+
+          osmBuildings = scene.allLayers.find((layer) => {
+            return layer.title === "OpenStreetMap 3D Buildings";
+          });
+          // Apply the SceneFilter to both layers
+          updateFilter();
+        });
+
+        /***********************************
+         * Sketch widget functionality
+         ***********************************/
+
+        // Variable to keep track of which spatial relationship is selected,
+        let spatialRelationship = "contains";
+
+        // New sketch widget, remove points and polylines
+        const sketch = new Sketch({
+          layer: filterLayer,
+          view: view,
+          container: "sketchContainer",
+          availableCreateTools: ["polygon", "rectangle", "circle"]
+        });
+        sketch.viewModel.polygonSymbol = filterSymbol;
+
+        view.ui.add("sketch", "top-right");
+
+        // Listen to sketch widget's create event to update the filter
+        sketch.on("create", function (event) {
+          // Only once the polygon is completed
+          if (event.state === "complete") {
+            updateFilter();
+          }
+        });
+
+        // Listen to sketch widget's update event to update the filter
+        sketch.on("update", function (event) {
+          // Only if the update event is of type "stop", meaning only once the user stopped dragging
+          // There are different stop events, like 'move-stop', 'rotate-stop', 'scale-stop', etc.
+          if (event.toolEventInfo && event.toolEventInfo.type.includes("stop")) {
+            updateFilter();
+          }
+        });
+
+        // Listen to sketch widget's delete event to update the filter
+        sketch.on("delete", function (event) {
+          updateFilter();
+        });
+
+        // Update the filter to reflect the modified graphics layer.
+        function updateFilter() {
+          // Extract the geometries from the graphics layer
+          let geometries = [];
+          for (let i in filterLayer.graphics.items) {
+            geometries.push(filterLayer.graphics.items[i].geometry);
+          }
+
+          // Set the filter on the buildings layer
+          osmBuildings.filter = new SceneFilter({
+            geometries: geometries,
+            spatialRelationship: spatialRelationship
+          });
+          // Set the filter on the tree layer
+          osmTrees.filter = new SceneFilter({
+            geometries: geometries,
+            spatialRelationship: spatialRelationship
+          });
+        }
+
+        /***********************************
+         * Button functionality to set the spatial relationship of the layer
+         ***********************************/
+
+        const contains = document.getElementById("contains");
+        const disjoint = document.getElementById("disjoint");
+
+        contains.addEventListener("click", (event) => {
+          spatialRelationship = "contains";
+          updateFilter();
+
+          // Styling of the buttons
+          disjoint.appearance = "outline";
+          contains.appearance = "solid";
+        });
+
+        disjoint.addEventListener("click", (event) => {
+          spatialRelationship = "disjoint";
+          updateFilter();
+
+          // Styling of the buttons
+          disjoint.appearance = "solid";
+          contains.appearance = "outline";
+        });
+
+        /***********************************
+         * Button functionality to save the webscene
+         ***********************************/
+
+        view.ui.add("sidebarDiv", "top-right");
+
+        const title = document.getElementById("webSceneTitle");
+        const save = document.getElementById("saveWebScene");
+        const overlay = document.getElementById("overlayDiv");
+        const info = document.getElementById("info");
+        const ok = document.getElementById("ok");
+
+        // Start the process of saving the scene as a new webscene
+        save.addEventListener("click", () => {
+          ok.style.display = "none";
+          info.innerHTML = "Saving...";
+          overlay.style.visibility = "visible";
+          // Disable the button while saving
+          save.disabled = true;
+
+          // item automatically casts to a PortalItem instance by saveAs
+          const item = {
+            title: title.value
+          };
+          view.map.remove(filterLayer); // We need to remove filter layer since GraphicLayers cannot be persisted
+
+          // Update properties of the WebScene related to the view.
+          scene.updateFrom(view).then(() => {
+            scene
+              .saveAs(item)
+              // Saved successfully
+              .then((item) => {
+                // link to the newly-created web scene item
+                const itemPageUrl = item.portal.url + "/home/item.html?id=" + item.id;
+                const link = '<a target="_blank" href="' + itemPageUrl + '">' + title.value + "</a>";
+
+                statusMessage("Successfully saved as <i>" + link + "</i>");
+              })
+              // Save didn't work correctly
+              .catch((error) => {
+                statusMessage("Error " + error);
+              });
+          });
+        });
+
+        function statusMessage(message) {
+          view.map.add(filterLayer); // Add the filter layer back to continue working
+          save.disabled = false;
+          info.innerHTML = message;
+          ok.style.display = "block";
+        }
+
+        // Remove the overlay
+        ok.addEventListener("click", () => {
+          overlay.style.visibility = "hidden";
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="sketch">
+      Use the sketch widget to create and modify the filter polygons:
+      <div id="sketchContainer"></div>
+      <div id="selection">
+        <calcite-button id="contains" appearance="solid">Contains</calcite-button>
+        <calcite-button id="disjoint" appearance="outline">Disjoint</calcite-button>
+      </div>
+    </div>
+    <div id="sidebarDiv">
+      <label>Save scene as:</label>
+      <input id="webSceneTitle" type="text" class="esri-input" value="Scene Filter Sample" />
+      <calcite-button id="saveWebScene">Save</calcite-button>
+    </div>
+    <div id="overlayDiv" class="esri-widget">
+      <div id="info"></div>
+      <input id="ok" type="button" value="OK" class="esri-button" />
+    </div>
+  </body>
+</html>
+

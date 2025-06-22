@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Arrows along a line | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Legend"
+    ], (MapView, Map, FeatureLayer, Legend) => {
+      // Set up initial graphics
+      const redlandsStreets = new FeatureLayer({
+        portalItem: {
+          id: "fe5881620b274be99ca345c92d2f0302"
+        },
+        renderer: {
+          type: "unique-value", // autocasts as UniqueValueRenderer
+          field: "oneway",
+          defaultSymbol: {
+            type: "simple-line" // default SimpleLineSymbol
+          },
+          uniqueValueInfos: [{
+            value: "yes", // when one-way='yes', create CIMSymbol line with arrows
+            symbol: {
+              type: "cim", // autocasts as CIMSymbol
+              data: {
+                type: "CIMSymbolReference",
+                symbol: {
+                  type: "CIMLineSymbol",
+                  symbolLayers: [{
+                      // black 1px line symbol
+                      type: "CIMSolidStroke",
+                      enable: true,
+                      width: 1,
+                      color: [
+                        0,
+                        0,
+                        0,
+                        255
+                      ]
+                    },
+                    {
+                      // arrow symbol
+                      type: "CIMVectorMarker",
+                      enable: true,
+                      size: 5,
+                      markerPlacement: {
+                        type: "CIMMarkerPlacementAlongLineSameSize", // places same size markers along the line
+                        endings: "WithMarkers",
+                        placementTemplate: [19.5], // determines space between each arrow
+                        angleToLine: true // symbol will maintain its angle to the line when map is rotated
+                      },
+                      frame: {
+                        xmin: -5,
+                        ymin: -5,
+                        xmax: 5,
+                        ymax: 5
+                      },
+                      markerGraphics: [{
+                        type: "CIMMarkerGraphic",
+                        geometry: {
+                          rings: [
+                            [
+                              [
+                                -8,
+                                -5.47
+                              ],
+                              [
+                                -8,
+                                5.6
+                              ],
+                              [
+                                1.96,
+                                -0.03
+                              ],
+                              [
+                                -8,
+                                -5.47
+                              ]
+                            ]
+                          ]
+                        },
+                        symbol: {
+                          // black fill for the arrow symbol
+                          type: "CIMPolygonSymbol",
+                          symbolLayers: [{
+                            type: "CIMSolidFill",
+                            enable: true,
+                            color: [
+                              0,
+                              0,
+                              0,
+                              255
+                            ]
+                          }]
+                        }
+                      }]
+                    }
+                  ]
+                }
+              }
+            }
+          }]
+        }
+      });
+
+
+      const map = new Map({
+        basemap: "gray-vector",
+        layers: [redlandsStreets]
+      });
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-117.183, 34.056],
+        zoom: 16
+      });
+    });
+
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv">
+  </div>
+</body>
+
+</html>
+

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>SceneView - shadow and lighting settings | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #environmentDiv {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+      }
+      #highlightShadowColorButton {
+        border: 1px solid rgb(173, 172, 172);
+        width: 40px;
+        height: 20px;
+        cursor: pointer;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Graphic", "esri/views/SceneView", "esri/WebScene", "esri/symbols/WebStyleSymbol"], (
+        Graphic,
+        SceneView,
+        WebScene,
+        WebStyleSymbol
+      ) => {
+        const scene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "167f8a547ded4171abb2480a30022303"
+          }
+        });
+
+        const view = new SceneView({
+          map: scene,
+          popup: {
+            dockEnabled: true,
+            dockOptions: {
+              buttonEnabled: false,
+              breakpoint: false,
+              position: "bottom-right"
+            }
+          },
+          container: "viewDiv"
+        });
+
+        // Set the environment in SceneView
+        view.environment = {
+          lighting: {
+            directShadowsEnabled: true,
+            date: new Date("Sun Mar 15 2019 16:00:00 GMT+0100 (CET)")
+          }
+        };
+
+        const colorButton = document.getElementById("highlightShadowColorButton");
+        const colorPicker = document.getElementById("highlightShadowColorPicker");
+
+        // Set highlight shadow color to match selection highlight color
+        view.highlightOptions.shadowColor = view.highlightOptions.color;
+        colorButton.style.backgroundColor = view.highlightOptions.shadowColor;
+
+        // Register the events to controls
+        document.getElementById("timeOfDaySelect").addEventListener("change", updateTimeOfDay);
+        document.getElementById("directShadowsInput").addEventListener("change", updateDirectShadows);
+        document.getElementById("castShadowsInputBuidlings").addEventListener("change", changeEventCastShadowBuidlings);
+        document
+          .getElementById("castShadowsInputZoningVolume")
+          .addEventListener("change", changeEventCastShadowZoningVolume);
+        document.getElementById("castShadowsInputCrane").addEventListener("change", changeEventCastShadowCrane);
+
+        colorButton.addEventListener("click", toggleColorPicker);
+        colorPicker.addEventListener("calciteColorPickerChange", (evt) => {
+          view.highlightOptions.shadowColor = colorPicker.value.toString();
+          colorButton.style.backgroundColor = view.highlightOptions.shadowColor;
+        });
+
+        view.when(() => {
+          createCraneGraphic();
+        });
+
+        // Create the event's callback functions
+        function updateTimeOfDay(ev) {
+          const select = ev.target;
+          const date = select.options[select.selectedIndex].value;
+          view.environment.lighting.date = new Date(date);
+        }
+
+        function updateDirectShadows(ev) {
+          view.environment.lighting.directShadowsEnabled = !!ev.target.checked;
+        }
+
+        function toggleColorPicker() {
+          if (colorPicker.parentElement.style.display === "none") {
+            colorPicker.setAttribute("value", view.highlightOptions.shadowColor.toHex());
+            colorPicker.parentElement.style.display = "block";
+          } else {
+            colorPicker.parentElement.style.display = "none";
+          }
+        }
+
+        function changeEventCastShadowBuidlings(ev) {
+          const clone = view.map.layers.getItemAt(1).renderer.clone();
+          clone.symbol.symbolLayers.getItemAt(0).castShadows = !!ev.target.checked;
+          view.map.layers.getItemAt(1).renderer = clone;
+        }
+
+        function changeEventCastShadowZoningVolume(ev) {
+          updateCastShadowZoningVolume(!!ev.target.checked);
+        }
+
+        function updateCastShadowZoningVolume(castShadow) {
+          const clone = view.map.layers.getItemAt(0).renderer.clone();
+          clone.symbol.symbolLayers.getItemAt(0).castShadows = castShadow;
+          view.map.layers.getItemAt(0).renderer = clone;
+        }
+
+        function changeEventCastShadowCrane(ev) {
+          updateCastShadowCrane(!!ev.target.checked);
+        }
+
+        function updateCastShadowCrane(castShadow) {
+          const clone = view.graphics.getItemAt(0).symbol.clone();
+          clone.symbolLayers.getItemAt(0).castShadows = castShadow;
+          view.graphics.getItemAt(0).symbol = clone;
+        }
+
+        function createCraneGraphic() {
+          const craneSymbol = new WebStyleSymbol({
+            styleName: "EsriRealisticTransportationStyle",
+            name: "Tower_Crane"
+          });
+          craneSymbol.fetchSymbol().then((pointSymbol3D) => {
+            const crane = new Graphic({
+              geometry: {
+                x: 947733.6382228889,
+                y: 6008332.401697359,
+                type: "point",
+                spatialReference: view.spatialReference
+              },
+              symbol: pointSymbol3D
+            });
+            view.graphics.add(crane);
+            updateCastShadowCrane(false);
+          });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="environmentDiv" class="esri-widget">
+      <table style="width: 274px">
+        <col width="180px" />
+        <col width="auto" />
+        <tr>
+          <td>Time of day:</td>
+          <td>
+            <select id="timeOfDaySelect" class="esri-widget">
+              <option value="Sun Mar 15 2019 09:00:00 GMT+0100 (CET)">Morning</option>
+              <option value="Sun Mar 15 2019 12:00:00 GMT+0100 (CET)">Noon</option>
+              <option value="Sun Mar 15 2019 16:00:00 GMT+0100 (CET)" selected>Afternoon</option>
+              <option value="Sun Mar 15 2019 18:00:00 GMT+0100 (CET)">Evening</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Direct shadows general:</td>
+          <td><input id="directShadowsInput" type="checkbox" checked /></td>
+        </tr>
+        <tr>
+          <td><br /></td>
+        </tr>
+      </table>
+      <div>
+        <b>Toggle shadows per layer</b>
+      </div>
+      <table style="width: 274px">
+        <col width="180px" />
+        <col width="auto" />
+        <tr>
+          <td>Buildings shadow:</td>
+          <td><input id="castShadowsInputBuidlings" type="checkbox" checked /></td>
+        </tr>
+        <tr>
+          <td>Zoning volumes shadow:</td>
+          <td><input id="castShadowsInputZoningVolume" type="checkbox" checked /></td>
+        </tr>
+        <tr>
+          <td>Crane shadow:</td>
+          <td><input id="castShadowsInputCrane" type="checkbox" /></td>
+        </tr>
+        <tr>
+          <td><br /></td>
+        </tr>
+      </table>
+      <div>
+        <b>Change shadow color of selected feature</b>
+      </div>
+      <table style="width: 274px">
+        <col width="180px" />
+        <col width="auto" />
+        <tr>
+          <td>Color:</td>
+          <td><button id="highlightShadowColorButton"></button></td>
+        </tr>
+      </table>
+      <div style="display: none; padding-top: 5px">
+        <calcite-color-picker
+          id="highlightShadowColorPicker"
+          dir="ltr"
+          hide-channels=""
+          hide-saved=""
+          scale="m"
+          class="calcite-mode-dark"
+        ></calcite-color-picker>
+        <div style="padding-top: 5px">Select a zoning volume to see the change</div>
+      </div>
+    </div>
+  </body>
+</html>
+

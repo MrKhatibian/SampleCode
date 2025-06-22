@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Size visual variable themes | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+<link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+<script src="https://js.arcgis.com/4.30/"></script>
+
+<style>
+  html,
+  body,
+  #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+  #size-theme-container {
+    padding: 10px 10px 5px 10px;
+  }
+  #symbol-style-container {
+    padding: 5px 10px 5px 10px;
+  }
+
+</style>
+
+<script>
+  require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/smartMapping/renderers/size",
+    "esri/smartMapping/renderers/univariateColorSize",
+    "esri/widgets/Legend",
+    "esri/core/reactiveUtils"
+  ],
+  (
+    Map,
+    MapView,
+    FeatureLayer,
+    sizeRendererCreator,
+    univariateRendererCreator,
+    Legend,
+    reactiveUtils
+  ) => {
+
+    const layer = new FeatureLayer({
+      title: "Census tracts",
+      portalItem: {
+        id: "936481805c2d4639ac727938b32d8ec3"
+      },
+      layerId: 2,
+      minScale: 0,
+      maxScale: 0,
+      opacity: 0.01,
+      outFields: ["TOTHU10", "TOTHU00"]
+    });
+
+    const map = new Map({
+      basemap: "gray-vector",
+      layers: [ layer ]
+    });
+
+    const view = new MapView({
+      container: "viewDiv",
+      map,
+      center: [ -83.0208, 42.4388 ],
+      scale: 543438,
+      constraints: {
+        snapToZoom: false
+      }
+    });
+
+    view.when(async () => {
+      const layerView = await view.whenLayerView(layer);
+      updateLayer(layerView);
+    });
+
+    const legend = new Legend({
+      view,
+      container: document.getElementById("legend-container")
+    });
+    view.ui.add("container-div", "bottom-right");
+
+    const themeSelect = document.getElementById("size-theme-select");
+    themeSelect.addEventListener("change", () => {
+      updateLayer();
+    });
+
+    const symbolSelect = document.getElementById("symbol-style-select");
+    symbolSelect.addEventListener("change", () => {
+      updateLayer();
+    });
+
+    const symbolStyleContainer = document.getElementById("symbol-style-container");
+
+    // update the layer's renderer each time the user changes a parameter
+    async function updateLayer(layerView){
+      const theme = themeSelect.value;
+      const symbolStyle = symbolSelect.value;
+      symbolStyleContainer.style.display = theme === "above-and-below" ? "block" : "none";
+
+      const renderer = await createRenderer({ theme, symbolStyle });
+      layer.renderer = renderer;
+      reactiveUtils.whenOnce(() => !layerView?.updating).then(() => {
+        layer.opacity = 1;
+      });
+    }
+
+    async function createRenderer({ theme, symbolStyle }){
+
+      // Update the legend title based on the selected theme
+      const legendTitles = {
+        "above": `Increase in number of households 2000-2010`,
+        "below": `Decline in number of households 2000-2010`,
+        "above-and-below": `Change in number of households 2000-2010`
+      };
+
+      let params = {
+        layer,
+        view,
+        theme,
+        valueExpression: `$feature.TOTHU10 - $feature.TOTHU00`,
+        valueExpressionTitle: legendTitles[theme],
+        minValue: -1000,
+        maxValue: 2000,
+        defaultSymbolEnabled: false
+      };
+
+      if (theme === "above-and-below"){
+        params.symbolOptions = symbolStyle !== "none" ? {
+          symbolStyle
+        } : null;
+        const { renderer } = await univariateRendererCreator.createContinuousRenderer(params);
+        return renderer;
+      } else {
+        const { renderer } = await sizeRendererCreator.createContinuousRenderer(params);
+        return renderer;
+      }
+    }
+
+  });
+</script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="container-div" class="esri-widget">
+    <div id="theme-container" class="esri-widget">
+      <div id="size-theme-container">
+        Select size theme:
+        <select id="size-theme-select">
+          <option value="above">above</option>
+          <option value="below">below</option>
+          <option value="above-and-below" selected>above-and-below</option>
+        </select>
+      </div>
+      <div id="symbol-style-container">
+        Select symbol style:
+        <select id="symbol-style-select">
+          <option value="none">none</option>
+          <option value="caret">caret</option>
+          <option value="circle-caret">circle-caret</option>
+          <option value="arrow">arrow</option>
+          <option value="circle-arrow" selected>circle-arrow</option>
+          <option value="plus-minus">plus-minus</option>
+          <option value="circle-plus-minus">circle-plus-minus</option>
+          <option value="square">square</option>
+          <option value="circle" selected>circle</option>
+          <option value="triangle">triangle</option>
+        </select>
+      </div>
+    </div>
+    <div id="legend-container"></div>
+  </div>
+</body>
+</html>
+

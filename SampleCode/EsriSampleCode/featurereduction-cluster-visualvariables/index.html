@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+  <title>Point clustering with visual variables | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+
+  <style>
+    html, body, #viewDiv {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: white;
+    }
+    #infoDiv {
+      background: white;
+      padding: 10px;
+    }
+  </style>
+
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Legend",
+      "esri/widgets/Expand"
+    ], (Map, MapView, FeatureLayer, Legend, Expand
+    ) => {
+
+      // Displays each weather station with three variables:
+      // Rotation - indicates wind direction
+      // Color - indicates air temperature
+      // Size - indicates wind speed
+
+
+      const renderer = {
+        type: "simple", // autocasts as new SimpleRenderer()
+        symbol: {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          // Arrow marker
+          path: "M14.5,29 23.5,0 14.5,9 5.5,0z",
+          color: [50, 50, 50],
+          outline: {
+            color: [0, 0, 0, 0.7],
+            width: 0.5
+          },
+          angle: 180,
+          size: 15
+        },
+        visualVariables: [
+          {
+            type: "rotation",
+            // Use {cluster_avg_WIND_DIRECT} in the
+            // featureReudction.popupTemplate to
+            // display the average temperature of all
+            // features within the cluster
+            field: "WIND_DIRECT",
+            rotationType: "geographic"
+          },
+          {
+            type: "size",
+            // Use {cluster_avg_WIND_SPEED} in the
+            // featureReudction.popupTemplate to
+            // display the average temperature of all
+            // features within the cluster
+            field: "WIND_SPEED",
+            minDataValue: 0,
+            maxDataValue: 60,
+            minSize: 8,
+            maxSize: 40
+          },
+          {
+            type: "color",
+            // Use {cluster_avg_TEMP} in the
+            // featureReudction.popupTemplate to
+            // display the average temperature of all
+            // features within the cluster
+            field: "TEMP",
+            stops: [
+              { value: 20, color: "#2b83ba" },
+              { value: 35, color: "#abdda4" },
+              { value: 50, color: "#ffffbf" },
+              { value: 65, color: "#fdae61" },
+              { value: 80, color: "#d7191c" }
+            ]
+          }
+        ]
+      };
+
+
+      // Configures clustering on the layer including
+      // a popupTemplate referring to aggregate fields
+      // that summarize the values of the fields used
+      // to render the cluster graphics.
+
+
+      const clusterConfig = {
+        type: "cluster",
+        popupTemplate: {
+          content: [{
+            type: "text",
+            text: "This cluster represents <b>{cluster_count}</b> weather stations."
+          }, {
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "cluster_avg_WIND_SPEED",
+              label: "Average wind speed (km/h)",
+              format: {
+                places: 0
+              }
+            }, {
+              fieldName: "cluster_avg_WIND_DIRECT",
+              label: "Average wind direction (degrees)",
+              format: {
+                places: 0
+              }
+            }, {
+              fieldName: "cluster_avg_TEMP",
+              label: "Average temperature (°F)",
+              format: {
+                places: 0
+              }
+            }]
+          }]
+        }
+      };
+
+
+      const layer = new FeatureLayer({
+        portalItem: {
+          id: "cb1886ff0a9d4156ba4d2fadd7e8a139"
+        },
+        renderer,
+        featureReduction: clusterConfig
+      });
+
+      // Layer used only for geographic context
+
+      const baseLayer = new FeatureLayer({
+        portalItem: {
+          id: "2b93b06dc0dc4e809d3c8db5cb96ba69"
+        },
+        legendEnabled: false,
+        popupEnabled: false,
+        renderer: {
+          type: "simple",
+          symbol: {
+            type: "simple-fill",
+            color: [200, 200, 200, 0.75],
+            outline: {
+              color: "white",
+              width: 0.5
+            }
+          }
+        }
+      });
+
+      const map = new Map({
+        layers: [baseLayer, layer]
+      });
+
+
+      const spatialReference = {
+        wkid: 54036
+      };
+
+      const view = new MapView({
+        container: "viewDiv",
+        map,
+        center: {
+          x: 0,
+          y: 0,
+          spatialReference: spatialReference
+        },
+        spatialReference: spatialReference,
+        scale: 100000000,
+        constraints: {
+          rotationEnabled: false
+        },
+        graphics: [
+          {
+            symbol: {
+              type: "simple-fill",
+              color: null,
+              outline: {
+                width: 1,
+                color: [200, 200, 200, 0.75]
+              }
+            },
+            geometry: {
+              type: "extent",
+              xmin: -180,
+              xmax: 180,
+              ymin: -90,
+              ymax: 90,
+              spatialReference: { wkid: 4326 }
+            }
+          }
+        ]
+      });
+
+      const legend = new Legend({
+        view: view,
+        container: "legendDiv"
+      });
+
+      const infoDiv = document.getElementById("infoDiv");
+      view.ui.add(new Expand({
+        view: view,
+        content: infoDiv,
+        expandIcon: "list-bullet",
+        expanded: true
+      }), "top-right");
+
+      const toggleButton = document.getElementById("toggle-cluster");
+      toggleButton.addEventListener("click", toggleClustering);
+
+      // To turn off clustering on a layer, set the
+      // featureReduction property to null
+      function toggleClustering () {
+        let fr = layer.featureReduction;
+        layer.featureReduction = (fr && fr.type === "cluster") ? null : clusterConfig;
+        toggleButton.innerText = toggleButton.innerText === "Enable Clustering" ? "Disable Clustering" : "Enable Clustering";
+      }
+
+    });
+
+  </script>
+
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="infoDiv" class="esri-widget">
+      <button id="toggle-cluster" class="esri-button">Disable Clustering</button>
+      <div id="legendDiv"></div>
+    </div>
+  </body>
+
+  </html>
+

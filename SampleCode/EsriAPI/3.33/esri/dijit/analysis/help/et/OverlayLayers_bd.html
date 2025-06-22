@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Kattuvad kihid</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Kattuvad kihid"></h2>
+        <hr/>
+    <p>Kihtide kattuvus &uuml;hendab omavahel kaks v&otilde;i enam kihti &uuml;heks kihiks. V&otilde;ite m&otilde;ista kihtide &uuml;lekatet kui hulga kaartide l&auml;bimist ja &uuml;he konkreetse kaardi loomist k&otilde;ikide nende l&auml;bi t&ouml;&ouml;deldud kaartide informatsiooni hulgast. &Uuml;lekate on midagi enamat kui vaid lihtne liitmine; k&otilde;ik &uuml;lekattes osalevad objektide atribuudid kantakse samuti l&otilde;pptootesse &uuml;le. &Uuml;lekatet kasutatakse geograafias sageli, otsides vastust k&uuml;simusele &ldquo;Mis on mille kohal?&rdquo; 
+    </p>
+    <p>Allpool on esitatud n&auml;ited:
+        <ul>
+            <li>Millised maad on olnud seotud 100 aasta jooksul &uuml;leujutuste piirkonnas? (Esinemine/kattuvus t&auml;hendab teise kihi peal olemist.)
+                  
+            </li>
+            <li>Milline maakasutus on &uuml;he v&otilde;i teise mullat&uuml;&uuml;bi levialas?
+                 
+            </li>
+            <li>Millised kaevikud esinevad mahaj&auml;etud s&otilde;jav&auml;eosades?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Kui ruut  <b>Kasuta praegust kaardi ulatust</b> on m&auml;rgitud, kaetakse ainult need sisend- ja &uuml;lekattekihi objektid, mis on kaardil praegu n&auml;htavad. Kui see ruut pole m&auml;rgitud, kaetakse k&otilde;ik sisend- ja &uuml;lekattekihi objektid ka siis, kui neid pole kaardi praeguses ulatuses n&auml;ha.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Vali sisendkiht</h2></div>
+        <hr/>
+        <div>
+            <p>Punkti-, joone- v&otilde;i alakiht, mis kaetakse.
+            </p>
+            <p>Lisaks kaardil asuvale kihile saate valida variandi  <b>Vali anal&uuml;&uuml;sikiht</b>, mille leiate ripploendi allosast. See variant avab galerii, mida saate sirvida ja kus saate erinevatest allikatest valida anal&uuml;&uuml;sil kasutamiseks andmestikke. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Vali ülekatte kiht</h2></div>
+        <hr/>
+        <div>
+            <p>Sisendkihis kaetav kiht.  
+            </p>
+            <p>Lisaks kihi valimisele kaardil saate valida ripploendi alumises servas  <b>Vali anal&uuml;&uuml;sikihte</b>, et otsida oma sisust suurandmete failiketta andmestikku v&otilde;i objektikihti. Valikuliselt v&otilde;ite rakendada filtrit oma sisendkihile v&otilde;i valikut kaardile lisatud majutatud kihtidele. Filtreid ja valikuid rakendatakse ainult anal&uuml;&uuml;siks. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Vali ülekatte meetod</h2></div>
+        <hr/>
+        <div>
+            <p>M&auml;&auml;rab &uuml;lekattemeetodi, mille abil &uuml;hendatakse sisendkiht ja &uuml;lekattekiht.  
+
+                <ul>
+                    <li> <b>&Uuml;hisosa</b> &ndash; tulemus sisaldab &uuml;lekattekihis vaid neid objekte v&otilde;i objektide osasid, mis kattuvad sisendkihi objektidega.
+                    </li>
+                    <li> <b>Kustuta</b> &ndash; tulemus sisaldab &uuml;lekattekihis vaid neid objekte v&otilde;i objektide osasid, mis ei kattu sisendkihi aladega.
+                    </li>
+                    <li> <b>&Uuml;hendamine</b>&mdash; M&otilde;lema kihi k&otilde;ik kihid &uuml;hendatakse, luues sisendkihi ja &uuml;lekattekihi geomeetrilise &uuml;henduse. K&otilde;ik objektid ja nende atribuudid kirjutatakse kihile.
+                    </li>
+                    <li> <b>Identiteet</b>&mdash; Objektid v&otilde;i objektide osad sisend- ja &uuml;lekattekihis kombineeritakse. Objektid v&otilde;i objektide osad, millel on &uuml;lekate nii sisend- kui &uuml;lekattekihiga, kirjutatakse v&auml;ljundkihile.
+                    </li>
+                    <li> <b>S&uuml;mmeetriline erinevus</b>&mdash; Sisend- ja &uuml;lekattekihi objektid v&otilde;i objektide osad, millel ei esine &uuml;lekatet, kombineeritakse.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Tulemkihi nimi</h2></div>
+        <hr/>
+        <div>
+            <p>Selle kihi nimi, mis luuakse jaotises  <b>Minu sisu</b> ja lisatakse kaardile. See peab olema sama geomeetriat&uuml;&uuml;biga (punktid, jooned, pinnad) nagu &uuml;lekatte kiht. Vaikimisi nimi on tuletatud &uuml;lekatte meetodi ja sisendkihi nimetuse j&auml;rgi. Kui kiht on juba olemas, palutakse teil sisestada m&otilde;ni muu nimi.
+            </p>
+            <p>Kasutades rippmen&uuml;&uuml;d  <b>Salvesta tulemused</b>, saate jaotises <b>Minu sisu</b> m&auml;&auml;rata selle kausta nime, kuhu tulemused salvestatakse.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

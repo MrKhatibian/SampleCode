@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>PointCloudLayer - change point size and density | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #paneDiv {
+        width: 270px;
+        padding: 15px;
+        font-size: 14px;
+      }
+
+      .title {
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .slider {
+        margin: 20px 0;
+        height: 40px;
+        width: 95%;
+      }
+
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/layers/PointCloudLayer", "esri/widgets/Slider"], (
+        Map,
+        SceneView,
+        PointCloudLayer,
+        Slider
+      ) => {
+        // create slider for point size
+        const selectedPointsSize = 5;
+        const pointsizeSlider = new Slider({
+          container: "point-size-slider",
+          min: 1,
+          max: 15,
+          values: [ selectedPointsSize ],
+          steps: 0.5,
+          snapOnClickEnabled: false,
+          visibleElements: {
+            labels: true,
+            rangeLabels: true
+          }
+        });
+        // watch for changes on the sliders and update the renderer according to the new values
+        pointsizeSlider.on(["thumb-change", "thumb-drag"], pointsizeValueChanged);
+        function pointsizeValueChanged(event) {
+          const newRenderer = pcLayer.renderer.clone();
+          newRenderer.pointSizeAlgorithm.size =  event.value;
+          pcLayer.renderer = newRenderer;
+        }
+
+        // create slider for point size
+        const selectedPointsPerInch = 5;
+        const pointsperinchSlider = new Slider({
+          container: "points-per-inch-slider",
+          min: 1,
+          max: 40,
+          values: [ selectedPointsPerInch ],
+          steps: 1,
+          snapOnClickEnabled: false,
+          visibleElements: {
+            labels: true,
+            rangeLabels: true
+          }
+        });
+        // watch for changes on the sliders and update the renderer according to the new values
+        pointsperinchSlider.on(["thumb-change", "thumb-drag"], pointsperinchValueChanged);
+        function pointsperinchValueChanged(event) {
+          const newRenderer = pcLayer.renderer.clone();
+          newRenderer.pointsPerInch =  event.value;
+          pcLayer.renderer = newRenderer;
+        }
+
+        // create map and view
+        const map = new Map({
+          basemap: "gray-vector",
+          ground: "world-elevation"
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            heading: 210,
+            tilt: 78,
+            position: {
+              x: -8249335,
+              y: 4832005,
+              z: 50.7,
+              spatialReference: {
+                wkid: 3857
+              }
+            }
+          }
+        });
+
+        // create Point Cloud Layer with a renderer with set values for point size and point density
+        const pcLayer = new PointCloudLayer({
+          url:
+            "https://tiles.arcgis.com/tiles/V6ZHFr6zdgNZuVG0/arcgis/rest/services/BARNEGAT_BAY_LiDAR_UTM/SceneServer",
+          renderer: {
+            type: "point-cloud-rgb", // autocasts as new PointCloudRGBRenderer()
+            field: "RGB",
+            pointSizeAlgorithm: {
+              type: "fixed-size",
+              useRealWorldSymbolSizes: false,
+              size: 5
+            },
+            pointsPerInch: 5
+          }
+        });
+
+        // add layer to the map
+        map.add(pcLayer);
+        // add panel to the map
+        view.ui.add(document.getElementById("paneDiv"), "bottom-left");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="paneDiv" class="esri-widget">
+      <div class="title">Customize point cloud layer:</div>
+      <div>Point size:</div>
+      <div id="point-size-slider" class="slider"></div>
+      <div>Points per inch:</div>
+      <div id="points-per-inch-slider" class="slider"></div>
+    </div>
+  </body>
+</html>
+

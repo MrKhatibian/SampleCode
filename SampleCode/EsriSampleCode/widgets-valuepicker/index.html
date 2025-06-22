@@ -1,0 +1,180 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ValuePicker widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .panel-content {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/ImageryLayer",
+        "esri/widgets/ValuePicker",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils"
+      ], (Map, MapView, ImageryLayer, ValuePicker, Legend, Expand, reactiveUtils) =>
+        (async () => {
+          // Sentinel-2 10m land use/land cover time series image service.
+          const layer = new ImageryLayer({
+            url: "https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer",
+            effect: "brightness(110%) drop-shadow(2px, 2px, 3px, #000)",
+            blendMode: "multiply"
+          });
+
+          const map = new Map({
+            basemap: {
+              portalItem: {
+                id: "4405b7351634455aaa30cb555d7c2fb1"
+              }
+            },
+            layers: [layer]
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map,
+            zoom: 11,
+            center: [-117.24, 34.097]
+          });
+
+          await view.whenLayerView(layer);
+
+
+          // get the raster functions that are available with the image service
+          // service has raster functions that only show specified land cover types
+          // add the raster function names to combobox items
+          let comboboxItems = [];
+          layer.rasterFunctionInfos.forEach((rf) => {
+            comboboxItems.push({
+              value: rf.name,
+              label: rf.name
+            });
+          });
+
+          // create a new value picker with a combobox component
+          const rasterFunctionPicker = new ValuePicker({
+            visibleElements: {
+              playButton: false
+            },
+            component: {
+              type: "combobox", // autocasts to ValuePickerCombobox
+              placeholder: "Pick Land Cover Type",
+              items: comboboxItems
+            },
+            values: [comboboxItems[0].label], // set first item in list to be selected initially
+            container: "rasterFunctionPickerDiv"
+          });
+
+
+
+          // watch the values change on the value picker
+          // set the ImageryLayer.rasterFunction - this function
+          // will process the image to show only the specified land cover type.
+          reactiveUtils.watch(
+            () => rasterFunctionPicker.values,
+            (values) => {
+              layer.rasterFunction = {
+                functionName: rasterFunctionPicker.values[0]
+              };
+            }
+          );
+
+
+
+          // set dates between 2017 - 2022
+          // image service has the land cover data between 2017 - 2022
+          const startDate = new Date(2017, 0, 1);
+          const endDate = new Date(2022, 0, 1);
+          let currentDate = startDate;
+
+          // create a label component showing years between 2017 - 2022
+          // this will be used by the value picker to change view.timeExtent
+          const labelComponentForDates = [];
+          while (currentDate <= endDate) {
+            labelComponentForDates.push({
+              value: currentDate.getTime(),
+              label: "Land cover in " + currentDate.getFullYear()
+            });
+            currentDate.setFullYear(currentDate.getFullYear() + 1);
+          }
+
+          // create new ValuePicker with label component
+          const valuePickerTime = new ValuePicker({
+            values: [labelComponentForDates[0].value], // set the starting value to the first date in the array
+            component: {
+              type: "label", // autocasts to ValuePickerLabel
+              items: labelComponentForDates
+            },
+            playRate: 1500,
+            loop: true, // animates through the values on a loop when "play" is pressed
+            container: "valuePickerTimeDiv"
+          });
+
+
+
+          // watch the values change on the value picker update the
+          // view.timeExtent show to the land cover for the given year
+          reactiveUtils.watch(
+            () => valuePickerTime.values,
+            (values) => {
+              const startDate = new Date(values[0]);
+              const endDate = startDate.setFullYear(startDate.getFullYear() + 1);
+              view.timeExtent = {
+                start: new Date(values[0]),
+                end: new Date(endDate)
+              };
+            }
+          );
+
+
+          // add the UI components to the view
+          const pickerContainer = document.getElementById("pickerContainer");
+          view.ui.add(pickerContainer, "top-right");
+
+          const legendExpand = new Expand({
+            expandTooltip: "Show Legend",
+            expanded: false,
+            view: view,
+            content: new Legend({ view })
+          });
+          view.ui.add(legendExpand, "top-left");
+        })());
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="pickerContainer" heading="Land cover (categories and years)">
+      <div class="panel-content">
+        <div id="valuePickerTimeDiv"></div>
+        <div id="rasterFunctionPickerDiv"></div>
+      </div>
+    </calcite-panel>
+  </body>
+</html>
+

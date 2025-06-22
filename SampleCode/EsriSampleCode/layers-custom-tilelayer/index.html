@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom TileLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/request",
+        "esri/Color",
+        "esri/views/SceneView",
+        "esri/widgets/LayerList",
+        "esri/widgets/Expand",
+        "esri/layers/BaseTileLayer",
+        "esri/core/reactiveUtils"
+      ], (Map, esriRequest, Color, SceneView, LayerList, Expand, BaseTileLayer, reactiveUtils) => {
+        // *******************************************************
+        // Custom tile layer class code
+        // Create a subclass of BaseTileLayer
+        // *******************************************************
+
+        const TintLayer = BaseTileLayer.createSubclass({
+          properties: {
+            urlTemplate: null,
+            tint: {
+              value: null,
+              type: Color
+            }
+          },
+
+          // Watch the tint property and refresh the layer if the tint values
+          // change at runtime.
+          initialize() {
+            reactiveUtils.watch(
+              () => this.tint,
+              () => {
+                this.refresh();
+              }
+            );
+          },
+
+          // Generate the tile url for a given level, row and column
+          getTileUrl: function (level, row, col) {
+            return this.urlTemplate.replace("{z}", level).replace("{x}", col).replace("{y}", row);
+          },
+
+          // This method fetches tiles for the specified level and size.
+          // Override this method to process the data returned from the server.
+          fetchTile: function (level, row, col, options) {
+            // call getTileUrl() method to construct the URL to tiles
+            // for a given level, row and col provided by the LayerView
+            const url = this.getTileUrl(level, row, col);
+
+            // Request for tiles based on the generated url
+            // the signal option ensures that obsolete requests are aborted
+            return esriRequest(url, {
+              responseType: "image",
+              signal: options && options.signal
+            }).then(
+              function (response) {
+                // When esri request resolves successfully
+                // get the image from the response
+                const image = response.data;
+                const width = this.tileInfo.size[0];
+                const height = this.tileInfo.size[0];
+
+                // Create a canvas with 2D rendering context
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = width;
+                canvas.height = height;
+
+                // Apply the tint color provided by
+                // by the application to the canvas
+                if (this.tint) {
+                  // Get a CSS color string in rgba form
+                  // representing the tint Color instance.
+                  context.fillStyle = this.tint.toCss();
+                  context.fillRect(0, 0, width, height);
+
+                  // Applies "difference" blending operation between canvas
+                  // and steman tiles. Difference blending operation subtracts
+                  // the bottom layer (canvas) from the top layer (tiles) or the
+                  // other way round to always get a positive value.
+                  context.globalCompositeOperation = "difference";
+                }
+
+                // Draw the blended image onto the canvas.
+                context.drawImage(image, 0, 0, width, height);
+
+                return canvas;
+              }.bind(this)
+            );
+          }
+        });
+
+        // *******************************************************
+        // Start of JavaScript application
+        // *******************************************************
+
+        // Create a new instance of the TintLayer and set its properties
+        const openTopoMapTileLayer = new TintLayer({
+          urlTemplate: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
+          tint: new Color("#132178"),
+          title: "OpenTopoMap",
+          copyright: 'Map data from &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> Map design by &copy; <a href="http://opentopomap.org/" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>) contributors'
+        });
+
+        // Add the new instance of the custom tile layer the map
+        const map = new Map({
+          layers: [openTopoMapTileLayer]
+        });
+
+        // Create a new scene view and add the map
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          center: [8.5, 45.5], // View over the Alps
+          zoom: 7,
+          environment: {
+            lighting: {
+              type: "virtual"
+            }
+          }
+        });
+
+        // Create a layer list widget
+        const layerList = new LayerList({
+          view: view
+        });
+        view.ui.add(layerList, "top-right");
+
+        const colorPicker = document.getElementById("colorPicker");
+        colorPicker.addEventListener("calciteColorPickerChange", (event) => {
+          openTopoMapTileLayer.tint = colorPicker.value;
+        });
+
+        const expandWidget = new Expand({
+          view: view,
+          content: colorPicker,
+          expandIcon: "palette",
+          expandTooltip: "Change tint color"
+        });
+        view.ui.add(expandWidget, "top-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-color-picker id="colorPicker" channels-disabled saved-disabled value="#132178"></calcite-color-picker>
+  </body>
+</html>
+

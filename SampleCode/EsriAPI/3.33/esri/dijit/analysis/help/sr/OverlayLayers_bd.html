@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Preklopi slojeve</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Preklopi slojeve"></h2>
+        <hr/>
+    <p>Preklapanje slojeva kombinuje dva ili vi&scaron;e slojeva u jedan sloj.  O preklapanju možete da razmi&scaron;ljate kao o gledanju kroz naslagane mape i kreiranju jedne mape koja sadrži sve informacije pronađene u naslaganim mapama. Preklapanje je vi&scaron;e od spajanja geometrije; svi atributi geoobjekata u preklapanju su uključeni u konačni proizvod. Preklapanje se koristi da odgovori na jedno od najosnovnijih pitanja geografije: &Scaron;ta je iznad čega? 
+    </p>
+    <p>Slede neki primeri:
+        <ul>
+            <li>Koje parcele su unutar 100-godi&scaron;njeg vodoplavnog područja? (Unutar je drugi način da se kaže iznad.)
+                  
+            </li>
+            <li>Upotreba koje zemlje je iznad kog tipa tla?
+                 
+            </li>
+            <li>Koji bunari su unutar napu&scaron;tenih vojnih baza?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Ako je opcija  <b>Koristi trenutni obuhvat mape</b> izabrana, biće preklopljeni samo oni geoobjekti na ulaznim slojevima i slojevima preklapanja koji su vidljivi unutar trenutnog obuhvata mape. Ako ova opcija nije potvrđena, biće preklopljeni svi geoobjekti u ulaznom sloju i sloju preklapanja, čak i ako su izvan trenutnog obuhvata mape.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Odaberite ulazni sloj</h2></div>
+        <hr/>
+        <div>
+            <p>Tačkasti i linijski sloj ili sloj oblasti koji će biti preklopljen.
+            </p>
+            <p>Pored biranja sloja sa mape, možete da selektujete  <b>Izaberi sloj za analizu</b> koji se nalazi na dnu padajuće liste. Ova opcija otvara galeriju gde možete da pregledate i birate skupove podataka iz raznih izvora za kori&scaron;ćenje u va&scaron;oj analizi. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Odaberite sloj preklapanja</h2></div>
+        <hr/>
+        <div>
+            <p>Sloj kojim će biti preklopljen ulazni sloj.  
+            </p>
+            <p>Kao dodatak odabiru sloja iz mape, možete da odaberete  <b>Izaberi sloj za analizu</b> na dnu padajuće liste da biste potražili deljeni skup podataka za datoteke sa velikim podacima ili sloj geoobjekta u svojim sadržajima. Možete opciono da primenite filter na ulazni sloj ili da primenite selekciju na hostovane slojeve koji su dodati na va&scaron;u mapu. Filteri i selekcije se primenjuju samo za analizu. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Odaberite metod preklapanja</h2></div>
+        <hr/>
+        <div>
+            <p>Navodi metod preklapanja koji će kombinovati ulazni sloj i sloj preklapanja.  
+
+                <ul>
+                    <li> <b>Presecanje</b> &ndash; Kombinovaće se samo oni geoobjekti ili delovi geoobjekata iz sloja preklapanja koji se preklapaju sa geoobjektima iz ulaznog sloja.
+                    </li>
+                    <li> <b>Izbri&scaron;i</b> &ndash; Kombinovaće se samo oni geoobjekti ili delovi geoobjekata iz sloja preklapanja koji se ne preklapaju sa oblastima iz ulaznog sloja.
+                    </li>
+                    <li> <b>Unija</b> &ndash; Kombinovaće se svi geoobjekti iz oba sloja, kreirajući geometrijsku uniju ulaznog sloja i sloja preklapanja.  Svi geoobjekti i njihovi atributi će biti upisani u sloj.
+                    </li>
+                    <li> <b>Identitet</b> &ndash; Kombinovaće se geoobjekti ili delovi geoobjekata iz ulaznog sloja i sloja preklapanja. Geoobjekti ili delovi geoobjekata koji se preklapaju su ulaznom sloju i sloju preklapanja će biti upisani u izlazni sloj.
+                    </li>
+                    <li> <b>Simetrična razlika</b> &ndash; Kombinovaće se geoobjekti ili delovi geoobjekata ulaznog sloja i sloja preklapanja koji se ne preklapaju.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Naziv sloja sa rezultatima</h2></div>
+        <hr/>
+        <div>
+            <p>Naziv sloja koji će biti kreiran u  <b>Mom sadržaju</b> i dodat mapi. Imaće isti tip geoobjekata (oblasti, linije ili tačke) kao slojevi preklapanja. Podrazumevano ime je zasnovano na metodu preklapanja i imenu ulaznog sloja. Ako sloj već postoji, bićete upitani da unesete drugi naziv.
+            </p>
+            <p>Koristeći  <b>Sačuvaj rezultat u</b> padajućem polju, možete da navedete ime fascikle u <b>Mom sadržaju</b> u kojoj će rezultat biti sačuvan.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

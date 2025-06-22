@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Shadow cast | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #selection {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: center;
+      }
+
+      #scenarioA,
+      #scenarioB {
+        width: 40%;
+        max-width: 300px;
+        margin: 3px;
+      }
+    </style>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/widgets/ShadowCast"], function (
+        WebScene,
+        SceneView,
+        ShadowCast
+      ) {
+        const view = new SceneView({
+          container: "viewDiv",
+          map: new WebScene({
+            portalItem: {
+              id: "f2220db76c6448b4be8083d19ef4cf8d"
+            }
+          }),
+          environment: {
+            lighting: {
+              directShadowsEnabled: false
+            }
+          }
+        });
+        const widget = new ShadowCast({
+          view
+        });
+        view.ui.add(widget, "top-right");
+        widget.viewModel.date = new Date("May 1, 2021");
+        widget.viewModel.visualizationType = "duration";
+        let scenarioA = null;
+        let scenarioB = null;
+        view.when(() => {
+          view.map.allLayers.forEach((layer) => {
+            if (layer.title === "Development Scenario A") {
+              scenarioA = layer;
+            }
+            if (layer.title === "Development Scenario B") {
+              scenarioB = layer;
+            }
+          });
+        });
+        const buttonA = document.getElementById("scenarioA");
+        const buttonB = document.getElementById("scenarioB");
+        buttonA.addEventListener("click", (event) => {
+          toggleScenarios("A");
+        });
+        buttonB.addEventListener("click", (event) => {
+          toggleScenarios("B");
+        });
+
+        function toggleScenarios(active) {
+          scenarioA.visible = active === "B" ? false : true;
+          scenarioB.visible = active === "B" ? true : false;
+          if (active === "B") {
+            buttonA.appearance = "outline-fill";
+            buttonB.appearance = "solid";
+          }
+          if (active === "A") {
+            buttonA.appearance = "solid";
+            buttonB.appearance = "outline-fill";
+          }
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="selection">
+        <calcite-button id="scenarioA" appearance="solid">Scenario A</calcite-button>
+        <calcite-button id="scenarioB" appearance="outline-fill">Scenario B</calcite-button>
+      </div>
+    </div>
+  </body>
+</html>
+

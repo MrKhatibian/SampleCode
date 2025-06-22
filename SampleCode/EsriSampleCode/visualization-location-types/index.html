@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Visualize features by type | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(15, 15, 15, 1);
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        Map,
+        MapView,
+        FeatureLayer,
+        Legend
+      ) => {
+        /******************************************************************
+         *
+         * Define symbols for each unique type. One each for freeways,
+         * highways, and other major roads
+         *
+         ******************************************************************/
+
+
+        const colors = ["#d92b30", "#3cccb4", "#ffdf3c", "#c27c30", "#f260a1"];
+
+        const commonProperties = {
+          type: "simple-line",
+          width: "4px",
+          style: "solid"
+        };
+
+        // Symbol for Interstate highways
+        const fwySym = {
+          ...commonProperties,
+          color: colors[0]
+        };
+
+        // Symbol for U.S. Highways
+        const hwySym = {
+          ...commonProperties,
+          color: colors[1]
+        };
+
+        // Symbol for state highways
+        const stateSym = {
+          ...commonProperties,
+          color: colors[2]
+        };
+
+        // Symbol for other major highways
+        const majorSym = {
+          ...commonProperties,
+          color: colors[3]
+        };
+
+        // Symbol for other major highways
+        const otherSym = {
+          ...commonProperties,
+          color: colors[4]
+        };
+
+
+        /******************************************************************
+         *
+         * Set each unique value directly in the renderer's constructor.
+         * At least one field must be used (in this case the "CLASS" field).
+         * The label property of each unique value will be used to indicate
+         * the field value and symbol in the legend.
+         *
+         ******************************************************************/
+
+
+        const hwyRenderer = {
+          type: "unique-value", // autocasts as new UniqueValueRenderer()
+          legendOptions: {
+            title: "Route type"
+          },
+          defaultSymbol: otherSym,
+          defaultLabel: "Other",
+          field: "RTTYP",
+
+          uniqueValueInfos: [
+            {
+              value: "I", // code for interstates/freeways
+              symbol: fwySym,
+              label: "Interstate"
+            },
+            {
+              value: "U", // code for U.S. highways
+              symbol: hwySym,
+              label: "US Highway"
+            },
+            {
+              value: "S", // code for U.S. highways
+              symbol: stateSym,
+              label: "State Highway"
+            },
+            {
+              value: "M", // code for U.S. highways
+              symbol: majorSym,
+              label: "Major road"
+            }
+          ]
+
+        };
+
+
+        // Set the renderer on the layer
+        const hwyLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/TIGER_Roads_2021_view/FeatureServer/0",
+
+          renderer: hwyRenderer,
+
+          title: "USA Freeway System",
+          minScale: 0,
+          maxScale: 0,
+          definitionExpression: "MTFC = 'Primary Road'",
+          orderBy: [{
+            valueExpression: `
+              Decode( $feature.RTTYP,
+                "I", 1,
+                "U", 2,
+                "S", 3,
+                "M", 4,
+              100 );
+            `,
+            order: "ascending"
+          }]
+        });
+
+        // Add the layer to the map
+        const map = new Map({
+          layers: [hwyLayer],
+          basemap: {
+            portalItem: {
+              id: "9cc4e190b8764e8880bd77cb16b9a30a"
+            }
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map,
+          constraints: {
+            snapToZoom: false
+          },
+          center: [-95.43270, 29.77624],
+          scale: 544504
+        });
+
+        view.ui.add(new Legend({ view }), "bottom-left");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

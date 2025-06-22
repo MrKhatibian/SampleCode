@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>UtilityNetworkAssociations widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <script>
+    require([
+      "esri/WebMap",
+      "esri/views/MapView",
+      "esri/widgets/UtilityNetworkAssociations",
+      "esri/config",
+      "esri/layers/support/TileInfo",
+    ], (WebMap, MapView, UtilityNetworkAssociations, esriConfig, TileInfo) => {
+      let utilityNetwork;
+
+      // Set the hostname to the on-premise portal
+      // Enterprise example: esriConfig.portalUrl = "https://myHostName.esri.com/arcgis";
+      esriConfig.portalUrl = "https://www.arcgis.com";  // this is the default
+
+      // Initialize the WebMap and pass in the webmap id
+      // Credentials to sign in to the webmap: 
+      // username: viewer01
+      // password: I68VGU^nMurF
+      const webMap = new WebMap({
+        portalItem: { // autocasts as new PortalItem()
+          id: "471eb0bf37074b1fbb972b1da70fb310" // webmap id
+        }
+      });
+
+      // Set the MapView scale 1:1 while generating additional LODs for the MapView.constraints.
+      const tileInfo = TileInfo.create({
+        spatialReference: {
+          wkid: 102100,
+        },
+        numLODs: 32,
+      });
+
+      // Initialize the view
+      const view = new MapView({
+        container: "viewDiv",
+        map: webMap,
+        center: [-88.14811693423965, 41.78211862373845],
+        zoom: 25,
+        constraints: {
+          lods: tileInfo.lods,
+          snapToZoom: false,
+        }
+      });
+
+      view.when(async () => {
+        await webMap.load();
+
+        // Check if webMap contains utility networks.
+        if (webMap.utilityNetworks.length > 0) {
+          // Assigns the utility network at index 0 to utilityNetwork.
+          utilityNetwork = webMap.utilityNetworks.getItemAt(0);
+          // load the UtilityNetwork instance.
+          await utilityNetwork.load();
+
+          // Initialize the UtilityNetworkAssociations widget
+          const unAssociations = new UtilityNetworkAssociations({
+            view,
+            utilityNetwork,
+            visibleElements: {
+              maxAllowableAssociationsSlider: true,
+              connectivityAssociationsSettings: {
+                arrowsToggle: false,
+                capSelect: false,
+                colorPicker: true,
+                stylePicker: true,
+                widthInput: true
+              },
+              structuralAttachmentAssociationsSettings: {
+                arrowsToggle: false,
+                capSelect: false,
+                colorPicker: true,
+                stylePicker: true,
+                widthInput: true
+              }
+            }
+          });
+
+          // Add the widget to the view
+          view.ui.add(unAssociations, "top-right");
+        }
+      });
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>

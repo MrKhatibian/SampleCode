@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+    <title>Override cluster symbol | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background: rgba(50,50,50);
+      }
+      #infoDiv {
+        padding: 10px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/layers/GeoJSONLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/Home"
+      ], (Map, FeatureLayer, GeoJSONLayer, MapView, Legend, Expand, Home) => {
+
+
+        const clusterConfig = {
+          type: "cluster",
+          clusterRadius: "100px",
+          popupTemplate: {
+            title: "Cluster summary",
+            content: "This cluster represents {cluster_count} earthquakes.",
+            fieldInfos: [
+              {
+                fieldName: "cluster_count",
+                format: {
+                  places: 0,
+                  digitSeparator: true
+                }
+              }
+            ]
+          },
+          clusterMinSize: "24px",
+          clusterMaxSize: "60px",
+
+          symbol: {
+            type: "simple-marker",
+            style: "circle",
+            color: "#69dcff",
+            outline: {
+              color: "rgba(0, 139, 174, 0.5)",
+              width: 6
+            }
+          },
+
+          labelingInfo: [
+            {
+              deconflictionStrategy: "none",
+              labelExpressionInfo: {
+                expression: "Text($feature.cluster_count, '#,###')"
+              },
+              symbol: {
+                type: "text",
+                color: "#004a5d",
+                font: {
+                  weight: "bold",
+                  family: "Noto Sans",
+                  size: "12px"
+                }
+              },
+              labelPlacement: "center-center"
+            }
+          ]
+        };
+
+
+        const layer = new GeoJSONLayer({
+          title: "Earthquakes from the last month",
+          url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+          copyright: "USGS Earthquakes",
+
+          featureReduction: clusterConfig,
+
+          // popupTemplates can still be viewed on
+          // individual features
+          popupTemplate: {
+            title: "Magnitude {mag} {type}",
+            content: "Magnitude {mag} {type} hit {place} on {time}",
+            fieldInfos: [
+              {
+                fieldName: "time",
+                format: {
+                  dateFormat: "short-date-short-time"
+                }
+              }
+            ]
+          },
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-marker",
+              size: 8,
+              color: "#69dcff",
+              style: "triangle",
+              outline: {
+                color: "rgba(0, 139, 174, 0.5)",
+                width: 1
+              }
+            }
+          }
+        });
+
+        // background layer for geographic context
+        // projected to Alaska Polar Stereographic
+        const baseLayer = new FeatureLayer({
+          portalItem: {
+            id: "2b93b06dc0dc4e809d3c8db5cb96ba69"
+          },
+          legendEnabled: false,
+          popupEnabled: false,
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: [65, 65, 65, 1],
+              outline: {
+                color: [50, 50, 50, 0.75],
+                width: 0.5
+              }
+            }
+          },
+          spatialReference: {
+            wkid: 5936
+          }
+        });
+
+        const map = new Map({
+          layers: [baseLayer, layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          extent: {
+            spatialReference: {
+              wkid: 5936
+            },
+            xmin: 1270382,
+            ymin: -1729511,
+            xmax: 2461436,
+            ymax: -953893
+          },
+          spatialReference: {
+            // WGS_1984_EPSG_Alaska_Polar_Stereographic
+            wkid: 5936
+          },
+          constraints: {
+            minScale: 15469455
+          },
+          map: map
+        });
+
+        view.ui.add(
+          new Home({
+            view: view
+          }),
+          "top-left"
+        );
+
+        const legend = new Legend({
+          view: view,
+          container: "legendDiv"
+        });
+
+        const infoDiv = document.getElementById("infoDiv");
+        view.ui.add(
+          new Expand({
+            view: view,
+            content: infoDiv,
+            expandIcon: "list-bullet",
+            expanded: false
+          }),
+          "top-left"
+        );
+
+        const toggleButton = document.getElementById("cluster");
+
+        // To turn off clustering on a layer, set the
+        // featureReduction property to null
+        toggleButton.addEventListener("click", () => {
+          let fr = layer.featureReduction;
+          layer.featureReduction =
+            fr && fr.type === "cluster" ? null : clusterConfig;
+          toggleButton.innerText =
+            toggleButton.innerText === "Enable Clustering"
+              ? "Disable Clustering"
+              : "Enable Clustering";
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="infoDiv" class="esri-widget">
+      <button id="cluster" class="esri-button">Disable Clustering</button>
+      <div id="legendDiv"></div>
+    </div>
+  </body>
+</html>
+

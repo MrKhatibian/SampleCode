@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MapImageLayer - Set definition expressions on sublayers | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #viewDiv {
+        flex: 1;
+      }
+
+      footer {
+        color: #0079c1;
+        padding: 10px;
+        font-weight: bold;
+        font-size: 12pt;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/MapImageLayer",
+      ], (Map, SceneView, MapImageLayer) => {
+
+        // create slider for population
+        let selectedPopulation = 100000;
+        const slider = document.querySelector("#population-slider-input");
+        const sliderCount = document.querySelector("#population-count");
+
+        /*****************************************************************
+         * Create a MapImageLayer instance pointing to a Map Service
+         * containing data about US Cities, Counties, States and Highways.
+         * Define sublayers with visibility for each layer in Map Service.
+         *****************************************************************/
+        const layer = new MapImageLayer({
+          url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer",
+          sublayers: [
+            {
+              id: 3,
+              visible: false
+            },
+            {
+              id: 2,
+              visible: true
+            },
+            {
+              id: 1,
+              visible: true
+            },
+            {
+              id: 0,
+              visible: true,
+              definitionExpression: "pop2000 > 100000"
+            }
+          ]
+        });
+
+        /*****************************************************************
+         * Add the layer to a map
+         *****************************************************************/
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          layers: [layer]
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          zoom: 4,
+          center: [-99, 39]
+        });
+
+
+        /*****************************************************************
+         * Listen for events on when the slider values have changed.
+         * When the slider value changes, apply the new value to the
+         * MapImageLayer definitionExpression.
+         *****************************************************************/
+        layer.when(() => {
+          const cities = layer.findSublayerById(0);
+
+          // calciteSliderChange is fired if the value changes after the mouse is released
+          function onChange(event) {
+            const value = event.currentTarget.value;
+            selectedPopulation = +value;
+            cities.definitionExpression = `pop2000 > ${selectedPopulation}`;
+          }
+          slider.addEventListener("calciteSliderChange", onChange);
+
+          // calciteSliderInput is fired any time the value changes, also when dragging
+          function onInput(event) {
+            const value = event.currentTarget.value;
+            sliderCount.innerHTML = `Cities with Population greater than ${value}`;
+          }
+          slider.addEventListener("calciteSliderInput", onInput);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <footer>
+      <calcite-label id="population-slider" alignment="center">
+        <span id="population-count">Cities with Population greater than 100,000</span>
+        <calcite-slider
+          id="population-slider-input"
+          min="0"
+          value="100000"
+          max="1000000"
+          step="10000"
+          snap
+          label-handles
+          ticks="100"
+      ></calcite-slider>
+    </calcite-label>
+    </footer>
+  </body>
+</html>

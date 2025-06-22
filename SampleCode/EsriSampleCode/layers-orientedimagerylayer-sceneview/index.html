@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>OrientedImageryLayer in SceneView | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #oi-container {
+        top: 8px;
+        right: 8px;
+        position: absolute;
+        height: 80%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/widgets/OrientedImageryViewer",
+        "esri/layers/OrientedImageryLayer",
+        "esri/widgets/Popup"
+      ], function (SceneView, WebScene, OrientedImageryViewer, OrientedImageryLayer, Popup) {
+
+        // create an instance of the webscene in sceneview
+        const scene = new WebScene({
+          portalItem: {
+            id: "aa1c036445824e06a2d1b0e12e02a924"
+          }
+        });
+
+        const view = new SceneView({
+          map: scene,
+          spatialReference: {
+            wkid: 102100,
+            latestWkid: 3857
+          },
+          container: "viewDiv"
+        });
+
+
+
+        // create a new instance of the oriented imagery viewer widget
+        const orientedImageryViewer = new OrientedImageryViewer({
+          view,
+          disabled: false,
+          container: "oi-container"
+        });
+
+
+
+        // create an instance of an oriented imagery layer and add it to scene
+        const layer = new OrientedImageryLayer({
+          portalItem: {
+            id: "c8a4aeb77b114579a44bb7eab9a86cde"
+          }
+        });
+        scene.layers.add(layer);
+
+        // zoom to the full extent of the layer when layer is loaded
+        // set the oriented imagery layer to be used with an oriented imagery viewer
+        view.whenLayerView(layer).then(() => {
+          view.goTo(layer.fullExtent);
+          orientedImageryViewer.layer = layer;
+        });
+
+
+        // set the popup to be docked in the top-left corner
+        view.popup = new Popup({
+          dockEnabled: true,
+          dockOptions: {
+            position: "top-left",
+            breakpoint: false
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="oi-container"></div>
+  </body>
+</html>
+

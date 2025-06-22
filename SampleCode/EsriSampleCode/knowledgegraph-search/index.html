@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Search Knowledge Graph | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+        body {
+      margin: 0px 120px;
+      color: #151515;
+      font-size: 14px;
+    }
+
+    #searchDiv,
+    #streamingDiv {
+      background-color: white;
+      padding: 10px;
+    }
+  </style>
+
+  <script>
+    require([
+      "esri/rest/knowledgeGraphService",
+    ], (KGModule ) => {
+      /**
+       * Credentials to sign in to the knowledge graph service:
+       * username: viewer01
+       * password: I68VGU^nMurF
+       */
+
+      // set knowledge graph with url to service
+      const url = "https://sampleserver7.arcgisonline.com/server/rest/services/Hosted/BumbleBees/KnowledgeGraphServer"
+      
+      let knowledgeGraph;
+      const searchPanel=document.getElementById('search-panel');
+      const container=document.getElementById('search-container');
+      const dataDiv = document.getElementById('dataDiv');
+      const loader = `<calcite-label id="loader">Loading knowledge graph data
+        <calcite-loader label="Loading Data..." type="indeterminate"></calcite-loader>
+      </calcite-label>`
+      
+      /**
+       * Initialization function that connects to a knowledge graph and displays the data model and service definition.
+       * The data model is used to populate the dropdowns in the search with the correct named types and IDs.
+       */
+      const init = async () => {
+        //get the knowledge graph data model and service definition.
+        knowledgeGraph = await KGModule.fetchKnowledgeGraph(url);
+        //display the data model and service definition for the knowledge graph
+        dataDiv.innerHTML = `<calcite-tree selection-mode="none">${buildList(knowledgeGraph, false,true)}</calcite-tree>`;
+
+        //populate the named type selection for streaming search
+        let types = '';
+        knowledgeGraph.dataModel.entityTypes.forEach((type) => {
+          types += `<calcite-combobox-item value="${type.name}" text-label="${type.name}"></calcite-combobox-item>`
+        })
+        knowledgeGraph.dataModel.relationshipTypes.forEach((type) => {
+          types += `<calcite-combobox-item value="${type.name}" text-label="${type.name}"></calcite-combobox-item>`
+        })
+        document.getElementById('streaming-search-named-types').innerHTML += types
+
+        //populate the id selection
+        const ids = await KGModule.executeQuery(knowledgeGraph, {
+          openCypherQuery: `MATCH (n) RETURN n.globalid`
+        })
+        let idList = '';
+        ids.resultRows.forEach((id) => {
+          idList += `<calcite-combobox-item value="${id}" text-label="${id}"></calcite-combobox-item>`
+        })
+        document.getElementById('streaming-search-ids').innerHTML += idList
+
+      }
+      /** 
+       * Basic search to return any information related to the search term. 
+       * Search is limited by the searchMaxRecordCount parameter in the serviceDefinition of the graph.
+       */
+      document.getElementById('search-button').addEventListener('click', async (e) => {
+        dataDiv.innerHTML = loader;
+        const searchString = document.getElementById("search-keyword").value
+        const typeFilter = document.getElementById("search-type-filter").value
+        const searchResults = await KGModule.executeSearch(knowledgeGraph, {
+          searchQuery: searchString,
+          typeCategoryFilter: typeFilter
+        })
+        //display results
+        document.getElementById('results-panel').setAttribute('heading', "Search Results")
+        dataDiv.innerHTML = searchResults.resultRows.length>0? `<calcite-tree selection-mode="none">${buildList(searchResults.resultRows, false, true)}</calcite-tree>`: 'Your search returned no results';
+      })
+
+      /**
+       * Streaming search to return the specified number of entities or relationships (or both)
+       * that contain the search time starting at the specified index.
+       * It will only search the named types specified or the ids specified. 
+       * If neither are specified, it will search the entire graph.
+       * Streaming search has more options to refine the search results. 
+       * Streaming search also has much higher performance when working with large datasets. 
+       * It returns the data in chunks that can be processed as they are returned.
+       */
+      document.getElementById('streaming-search-button').addEventListener('click', async (e) => {
+        dataDiv.innerHTML = loader;
+        const searchString = document.getElementById("streaming-search-keyword").value
+        const typeFilter = document.getElementById("streaming-search-type-filter").value
+        const namedTypes = document.getElementById("streaming-search-named-types").value
+        const index = document.getElementById("streaming-search-start-index").value
+        const limit = document.getElementById("streaming-search-limit").value
+        const ids = document.getElementById("streaming-search-ids").value
+        const context = document.getElementById('streaming-search-context').checked
+        //construct the search object
+        const searchParams = {
+          searchQuery: searchString,
+          typeCategoryFilter: typeFilter,
+          returnSearchContext: context,
+        }
+        if (index) { searchParams["start"] = index };
+        if (limit) { searchParams["num"] = limit };
+        if (namedTypes) { namedTypes.type = 'string' ? searchParams["namedTypesFilter"] = [namedTypes] : searchParams["namedTypesFilter"] = namedTypes  };
+        if (ids) { searchParams["idsFilter"] = ids };
+        //execute the search and read the result
+        const searchResults = await KGModule.executeSearchStreaming(knowledgeGraph, searchParams)
+        document.getElementById('results-panel').setAttribute('heading', "Search Results")
+        dataDiv.innerHTML = '';
+        readStream(searchResults);
+      })
+
+
+      //function to recursively build the html to display the results
+      function buildList(data, isSub, isFirst = false) {
+        var html = ''
+        for (var item in data) {
+          //don't show the functions
+          if (typeof (data[item]) !== "function") {
+            //if the value is an object expand it's children
+            if (typeof (data[item]) === 'object' && data[item] && item != 'timestamp') { 
+              html += `<calcite-tree-item ${isFirst & item != "shape" ? "expanded" : ""}>${item}<calcite-tree slot="children">`
+              html += buildList(data[item], true, isFirst); 
+              isFirst = false;
+              //otherwise just show the value
+            } else {
+              html += `<calcite-tree-item>${item}: ${data[item]}</calcite-tree-item> `// No submenu
+            }
+          }
+        }
+        html += (isSub) ? '</calcite-tree></calcite-tree-item>' : '';
+        return html;
+      }
+
+      // a function to read the stream returned from the streaming search
+      const readStream = async (streamingQueryResult, method) => {
+        //create the reader
+        let reader = streamingQueryResult.resultRowsStream.getReader();
+        //try to read the stream
+        try {
+          while (true) {
+            //read the stream
+            const { done, value } = await reader.read();
+            //stop reader when the stream is done
+            if (done) {
+              dataDiv.innerHTML += '<p>Your search returned no results.</p>'
+              break;
+            }
+            //create the output list from the read stream.
+            dataDiv.innerHTML += `<calcite-tree selection-mode="none">${buildList(value, false, true)}</calcite-tree>` 
+            
+          }
+        // if there is an error in returning the stream or the stream is aborted
+        } catch (err) {
+          if (err.name === "AbortError") {
+            console.log("Request aborted as expected");
+          } else {
+            throw err;
+          }
+        }
+      };
+
+      //handle close button click on search panel
+      searchPanel.addEventListener('calcitePanelClose', (target)=>{ 
+        container.setAttribute('collapsed', true)
+      })
+
+      //toggle visibility of the search panel from the action bar
+      document.getElementById('open-search').addEventListener('click', (target)=>{
+        const container=document.getElementById('search-container')
+        if (searchPanel.hasAttribute('closed')){
+          searchPanel.removeAttribute('closed')
+          container.setAttribute('collapsed',false)
+        } else{
+          searchPanel.setAttribute('closed',true)
+         container.setAttribute('collapsed',true)
+        }  
+      })
+
+      init()
+    });
+  </script>
+</head>
+
+<body>
+  <calcite-shell>
+    <calcite-panel id="results-panel" heading="Knowledge Graph">
+      <calcite-card id="dataDiv">
+        <calcite-label id="loader">Loading knowledge graph data
+          <calcite-loader label="Loading Data..." type="indeterminate"></calcite-loader>
+        </calcite-label>
+    </calcite-card>
+    </calcite-panel>
+    <calcite-shell-panel id="search-container" slot="panel-end" position="end">
+        <calcite-action-bar slot="action-bar">
+            <calcite-tooltip slot="expand-tooltip" label="tooltip" disable-pointer>
+                Search knowledge graph
+            </calcite-tooltip>
+            <calcite-action-group>
+                <calcite-action text="Layer properties" icon="search" id="open-search"></calcite-action>
+            </calcite-action-group>
+        </calcite-action-bar>
+        <calcite-panel id="search-panel" heading="Search" resizable="true" closable="true">
+          <div id="searchDiv">
+            <h3>Search</h3>
+            <calcite-label for="search-keyword">Search:
+              <calcite-input id="search-keyword" placeholder="bombus" value="bombus"></calcite-input>
+            </calcite-label>
+            <calcite-label for="search-type-filter">Search Type
+              <calcite-select id="search-type-filter">
+                <calcite-option value="entity">Entities only</calcite-option>
+                <calcite-option value="both">Both</calcite-option>
+                <calcite-option value="relationship">Relationships only</calcite-option>
+              </calcite-select>
+            </calcite-label>
+            <calcite-button id="search-button">Search</calcite-button>
+          </div>
+          <div id="streamingDiv">
+            <h3>Streaming Search</h3>
+            <calcite-label>
+              Search:
+              <calcite-input id="streaming-search-keyword" placeholder="bombus" value="bombus"></calcite-input>
+            </calcite-label>
+            <calcite-label>Search Type
+              <calcite-select id="streaming-search-type-filter">
+                <calcite-option value="entity">Entities only</calcite-option>
+                <calcite-option value="both">Both</calcite-option>
+                <calcite-option value="relationship">Relationships only</calcite-option>
+              </calcite-select>
+            </calcite-label>
+            <calcite-label>Start search at this index
+              <calcite-input-number id="streaming-search-start-index" placeholder="starting at 0" step="1" value="2"></calcite-input-number>
+            </calcite-label>
+            <calcite-label>Maximum Number of Results
+              <calcite-input-number id="streaming-search-limit" placeholder="returning all matching records" step="1" value="50"></calcite-input-number>
+            </calcite-label>
+            <calcite-label>Search in these types
+              <calcite-combobox  id="streaming-search-named-types" placeholder="search all types">
+              </calcite-combobox>
+            </calcite-label>
+            <calcite-label >Search in these IDs
+              <calcite-combobox  id="streaming-search-ids" placeholder="search all ids">
+              </calcite-combobox>
+            </calcite-label>
+            <calcite-label layout="inline">
+              <calcite-checkbox id="streaming-search-context"></calcite-checkbox>
+              Return Search Context
+          </calcite-label>
+            <calcite-button id="streaming-search-button">Streaming Search</calcite-button>
+          </div>
+        </calcite-panel>
+    </calcite-shell-panel>
+</calcite-shell>
+</body>
+
+</html>

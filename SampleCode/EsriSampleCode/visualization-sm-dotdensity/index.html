@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Generate a dot density visualization | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      #viewDiv {
+        position: absolute;
+        left: 0;
+        right: 260px;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+      }
+
+      #panel {
+        position: absolute;
+        right: 0;
+        height: 100%;
+        width: 260px;
+        overflow: scroll;
+        text-align: center;
+      }
+
+      #fieldList {
+        width: 100%;
+      }
+
+      .padding {
+        text-align: center;
+        padding-top: 10px;
+      }
+    </style>
+
+<script>
+  require([
+    "esri/views/MapView",
+    "esri/Map",
+    "esri/layers/FeatureLayer",
+    "esri/widgets/Legend",
+    "esri/smartMapping/renderers/dotDensity",
+    "esri/smartMapping/symbology/dotDensity",
+    "esri/smartMapping/popup/templates"
+  ], (
+    MapView,
+    Map,
+    FeatureLayer,
+    Legend,
+    dotDensityRendererCreator,
+    dotDensitySymbology,
+    popupTemplateCreator
+  ) => {
+    const layer = new FeatureLayer({
+      portalItem: {
+        id: "478888c07fe14d9b87e33d4708417c95"
+      },
+      title: "Decade in which homes were built",
+      opacity: 0.01
+    });
+
+    const map = new Map({
+      basemap: {
+        portalItem: {
+          id: "3582b744bba84668b52a16b0b6942544"
+        }
+      },
+      layers: [ layer ]
+    });
+
+    const view = new MapView({
+      container: "viewDiv",
+      map: map,
+      center: [-122.35011, 37.67181],
+      zoom: 9
+    });
+
+    view
+      .when()
+      .then(getSchemes)
+      .then(createRenderer)
+      .then(applyRenderer)
+      .then(createPopupTemplate)
+      .catch((error) => {
+        console.error(error);
+      });
+
+    view.ui.add(
+      new Legend({
+        view: view
+      }),
+      "bottom-left"
+    );
+
+    // Create new renderer with new dot value each time
+    // the user changes their input
+
+    const fieldList = document.getElementById("fieldList");
+    fieldList.addEventListener("change", (event) => {
+      createRenderer()
+        .then(applyRenderer)
+        .then(createPopupTemplate);
+    });
+
+    const schemesList = document.getElementById("colorSchemes");
+    schemesList.addEventListener("change", (event) => {
+      createRenderer()
+        .then(applyRenderer);
+    });
+
+    // create an input list for the user to change the color scheme
+
+    function getSchemes() {
+      const dotDensitySchemes = dotDensitySymbology.getSchemes({
+        basemap: view.map.basemap,
+        numColors: 8
+      });
+
+      let allSchemes = [ dotDensitySchemes.primaryScheme ].concat(
+        dotDensitySchemes.secondarySchemes
+      );
+
+      allSchemes.forEach((scheme, i) => {
+        const option = document.createElement("option");
+        option.value = scheme.name;
+        option.innerText = scheme.name;
+        option.selected = scheme.name === "Sunset Fade";
+        schemesList.appendChild(option);
+      });
+      allSchemes = null;
+    }
+
+    // indicates whether the input string
+    // has the $feature Arcade profile variable
+
+    function isArcade(stringValue) {
+      return stringValue.indexOf("$feature") !== -1;
+    }
+
+    /**
+     * Generates a new dot density renderer based on the selected fields in the
+     * list box. Returns a promise that resolves to an object containing the renderer.
+     */
+    function createRenderer() {
+      const selectedOptions = [].slice.call(fieldList.selectedOptions);
+      const fields = selectedOptions.map((option) => {
+        return {
+          field: isArcade(option.value) ? null : option.value,
+          valueExpression: isArcade(option.value) ? option.value : null,
+          valueExpressionTitle: isArcade(option.value) ? option.text : null,
+          label: option.text
+        };
+      });
+
+      const params = {
+        view: view,
+        layer: layer,
+        attributes: fields,
+        legendOptions: {
+          unit: "homes"
+        },
+        // Uses the scheme selected by the user
+        dotDensityScheme: dotDensitySymbology.getSchemeByName({
+          basemap: view.map.basemap,
+          numColors: fields.length,
+          name: schemesList.value
+        })
+      };
+
+      return dotDensityRendererCreator.createRenderer(params);
+    }
+
+    function applyRenderer(response) {
+      layer.renderer = response.renderer;
+      if (!layer.opacity < 1) {
+        layer.opacity = 1;
+      }
+      return layer;
+    }
+
+    // Creates a popup template only containing
+    // information related to the renderer
+    function createPopupTemplate(layer){
+      popupTemplateCreator.getTemplates({
+        layer: layer
+      }).then((response) => {
+        // the response may also contain secondary
+        // templates you can choose from
+        const popupTemplate = response.primaryTemplate.value;
+        popupTemplate.title = "{COUNTY}, {STATE}";
+        layer.popupTemplate = popupTemplate;
+      });
+    }
+  });
+</script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="panel" class="esri-widget">
+      <div style="padding: 10px">
+        <h3>Decade in which homes were built</h3>
+        <div style="padding-bottom: 10px">
+          This map randomly places dots within Census Block Groups based
+          on the number of homes built within the area.
+          <strong>Selecting two or more decades</strong> will render
+          dots based on the decade in which homes were built.
+          <strong>Use Ctrl or Cmd to select and deselect values.</strong>
+        </div>
+        <select
+          id="fieldList"
+          multiple="multiple"
+          size="8"
+          class="esri-widget"
+        >
+          <option value="ACSBLT1939" selected>Before 1940</option>
+          <option value="ACSBLT1940" selected>1940-1949</option>
+          <option value="ACSBLT1950" selected>1950-1959</option>
+          <option value="ACSBLT1960" selected>1960-1969</option>
+          <option value="ACSBLT1970" selected>1970-1979</option>
+          <option value="ACSBLT1980" selected>1980-1989</option>
+          <option value="ACSBLT1990" selected>1990-1999</option>
+          <option value="$feature.ACSBLT2000 + $feature.ACSBLT2010 + $feature.ACSBLT2014" selected>After 2000</option>
+        </select>
+        <div class="padding">
+          Color Scheme: <select class="esri-widget" id="colorSchemes"></select>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

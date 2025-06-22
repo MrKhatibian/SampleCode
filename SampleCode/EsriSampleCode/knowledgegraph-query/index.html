@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query Knowledge Graph | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+        body {
+            margin: 0px 120px;
+            color: #151515;
+            font-size: 14px;
+        }
+
+        #queryDiv {
+            padding: 10px;
+        }
+
+        #queryPanel {
+            border-color: #f8f8f8;
+        }
+
+        calcite-notice {
+            padding-bottom: 10px;
+        }
+
+        #dataDiv {
+            padding: 10px;
+            overflow: auto;
+            width: 100%;
+        }
+
+        #resultsDiv {
+            display: flex;
+            max-height: 80vh;
+        }
+
+        #streaming {
+            width: 100%;
+            background-color: #f8f8f8;
+            padding: 0 10px 0 10px;
+            display: none;
+        }
+
+        #mapDiv {
+            height: 75vh;
+            width: 100%;
+
+        }
+
+        select {
+            height: 30px;
+            width: 150px;
+        }
+    </style>
+
+    <script>
+        require([
+            "esri/rest/knowledgeGraphService",
+            "esri/widgets/Sketch/SketchViewModel",
+            "esri/layers/GraphicsLayer",
+            "esri/Graphic",
+            "esri/geometry/Polygon",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/geometry/support/webMercatorUtils"
+        ], (KGModule, SketchViewModel, GraphicsLayer, Graphic, Polygon, EsriMap, MapView, webMercatorUtils) => {
+            /**
+               * Credentials to sign in to the knowledge graph service:
+               * username: viewer01
+               * password: I68VGU^nMurF
+               */
+            let knowledgeGraph;
+            // set knowledge graph with url to service
+            const url = "https://sampleserver7.arcgisonline.com/server/rest/services/Hosted/BumbleBees/KnowledgeGraphServer"
+            let propertyList = {};
+            const dataDiv = document.getElementById('dataDiv');
+            let streaming = false;
+            // map initialization with graphics layer
+            let polygonGraphic = new Graphic({
+                geometry: {
+                    type: "polygon",  // autocasts as new Polygon()
+                    rings: [
+                        [-76, 45],
+                        [-70, 45],
+                        [-70, 40],
+                        [-76, 40]
+                    ]
+                },
+                symbol: {
+                    type: "simple-line",
+                    color: [226, 119, 40],
+                    width: 4
+                },
+            });
+            const graphicsLayer = new GraphicsLayer({
+                graphics: [polygonGraphic]
+            });
+            const map = new EsriMap({
+                basemap: 'dark-gray-vector',
+                layers: [graphicsLayer]
+            });
+            const view = new MapView({
+                map: map,
+                center: [-74, 43],
+                zoom: 3,
+                container: "mapDiv"
+            });
+
+            // create a new sketch view model and set its layer
+            const sketchViewModel = new SketchViewModel({
+                view: view,
+                layer: graphicsLayer
+            });
+            view.when(()=>{
+                // Once user is done updating the rectangle on the map
+            //update the query
+            const updateQuery = (event) => {
+                if (event.state == 'complete') {
+                    document.getElementById('streaming-query-button').dispatchEvent(new Event('click'))
+                }
+            }
+            sketchViewModel.on("update", updateQuery)
+            })
+            
+
+            const init = async () => {
+                //get the knowledge graph data model and service definition.
+                knowledgeGraph = await KGModule.fetchKnowledgeGraph(url);
+                // view the knowledge graph data model in the console
+                const content = buildList(knowledgeGraph, false)
+                //display the data model for the knowledge graph
+                document.getElementById('query-button').dispatchEvent(new Event('click'))
+                //populate the named type selections for the query builder
+                constructCypher()
+            }
+            /**
+             * Basic query to return the selected entities or relationships that match the pattern. 
+             * Query is limited by the maxRecordCount parameter in the serviceDefinition of the graph.
+             */
+            document.getElementById('query-button').addEventListener('click', async (e) => {
+                query = constructCypher()
+                const searchResults = await KGModule.executeQuery(knowledgeGraph, {
+                    openCypherQuery: query,
+                })
+                dataDiv.innerHTML = `<h3>Query Results</h3><calcite-tree>${buildList(searchResults.resultRows, false, true)}</calcite-tree>`;
+            })
+            /**
+             * Streaming query to return the the selected entities or relationships that match the pattern defined in the query.
+             * It uses the bindParameter property to either bind geometry from the sketch on the map to the query to perform a spatial query on the graph
+             * or to bind a list of ids to query within. 
+             * Streaming query has more options to refine the query results. 
+             * Streaming query also has much higher performance when working with large datasets. 
+             * It returns the data in chunks that can be processed as they are returned.
+             */
+            document.getElementById('streaming-query-button').addEventListener('click', async (e) => {
+                bindParameters = {}
+                query = constructCypher(true)
+                //create a geometry from the sketch layer as the bind parameter
+                const rings = []
+                for (graphic of graphicsLayer.graphics.items) {
+                    //convert the geometry to wgs84 if necessary
+                    const geom = graphic.geometry.spatialReference.isWGS84
+                        ? graphic.geometry
+                        : webMercatorUtils.webMercatorToGeographic(graphic.geometry);
+                    rings.push(geom.rings[0])
+                }
+                bindParameters['userGeometry'] = new Polygon({ rings: rings })
+                //execute the query and display the results
+                const searchResults = await KGModule.executeQueryStreaming(knowledgeGraph, {
+                    openCypherQuery: query,
+                    bindParameters: bindParameters
+                })
+                dataDiv.innerHTML = '<h3>Query Results</h3>';
+                readStream(searchResults);
+            })
+            // a function to read the stream returned from the streaming search
+            const readStream = async (streamingQueryResult, method) => {
+                //create the reader
+                let reader = streamingQueryResult.resultRowsStream.getReader();
+                //try to read the stream
+                try {
+                    while (true) {
+                        //read the stream
+                        const { done, value } = await reader.read();
+                        //stop reader when the stream is done
+                        if (done) {
+                            dataDiv.innerHTML += "<p>Your query returned no results</p>";
+                            break;
+                        }
+                        //create the output list from the read stream.
+                        dataDiv.innerHTML += `<calcite-tree selection-mode="none">${buildList(value, false, true)}</calcite-tree>`
+                    }
+                    // if there is an error in returning the stream or the stream is aborted
+                } catch (err) {
+                    if (err.name === "AbortError") {
+                        console.log("Request aborted as expected");
+                    } else {
+                        throw err;
+                    }
+                }
+            };
+
+
+            //function to recursively build the html to display the results
+            function buildList(data, isSub, isFirst = false) {
+                let html = ''
+                for (let item in data) {
+                    //don't show the functions
+                    if (typeof (data[item]) !== "function") {
+                        //if the value is an object expand it's children
+                        if (typeof (data[item]) === 'object' && data[item] && item != 'timestamp') {
+                            html += `<calcite-tree-item ${isFirst & item != "shape" ? "expanded" : ""}>${item}<calcite-tree selection-mode="none" slot="children">`
+                            html += buildList(data[item], true, isFirst);
+                            isFirst = false;
+                            //otherwise just show the value
+                        } else {
+                            html += `<calcite-tree-item>${item}: ${data[item]}</calcite-tree-item> `// No submenu
+                        }
+                    }
+                }
+                html += (isSub) ? '</calcite-tree></calcite-tree-item>' : '';
+                return html;
+            }
+
+            //construct the openCypher query that will be executed against the graph based on the user input
+            const constructCypher = (streaming = false) => {
+                let query = '';
+                //if it's a streaming query, put variables in for the bindParameters
+                if (streaming) {
+                    query = "MATCH (A:User) - [R:Observed | Reviewed] -> (B:Observation) WHERE esri.graph.ST_Intersects($userGeometry, B.shape) RETURN A LIMIT 10"
+
+                } else {
+                    query = "MATCH (A:User) - [R:Observed | Reviewed] -> (B:Observation) WHERE B.quality_grade = 'research' RETURN A LIMIT 10"
+                }
+                document.getElementById('cypher').innerText = query;
+                return query;
+            }
+
+            document.getElementById('query-control').addEventListener('calciteSegmentedControlChange', (event) => {
+                const method = event.target.selectedItem.value
+                if (method == 'streaming-query') {
+                    streaming = true
+                    document.getElementById('streaming').style.display = 'block';
+                    constructCypher(true)
+                } else {
+                    document.getElementById('streaming').style.display = 'none'
+                    constructCypher()
+                }
+            })
+            init()
+        });
+    </script>
+</head>
+
+<body>
+    <calcite-shell>
+        <calcite-panel id="queryPanel" class="query">
+            <div id="queryDiv">
+                <h3>
+                    <calcite-segmented-control id="query-control">
+                        <calcite-segmented-control-item id="query-button" value="query"
+                            checked>Query</calcite-segmented-control-item>
+                        <calcite-segmented-control-item id="streaming-query-button" value="streaming-query">Streaming
+                            Query</calcite-segmented-control-item>
+                    </calcite-segmented-control>
+                </h3>
+                <calcite-notice kind="brand" open label="openCypher query">
+                    <div slot="title">openCypher query</div>
+                    <div slot="message" id="cypher"></div>
+                </calcite-notice>
+            </div>
+        </calcite-panel>
+        <div id="resultsDiv">
+            <div id="streaming">
+                <calcite-label>Bind Parameter Geometry
+                    <div id="mapDiv">
+                    </div>
+                </calcite-label>
+            </div>
+            <div id="dataDiv">
+                <p>Please enter a search term and click <strong>search</strong> to see results</p>
+            </div>
+        </div>
+    </calcite-shell>
+</body>
+
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>WebStyleSymbol (2D) | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Bookmarks",
+        "esri/widgets/Legend",
+        "esri/webmap/Bookmark"
+      ], (Map, MapView, FeatureLayer, Bookmarks, Legend, Bookmark) => {
+        const category = document.getElementById("category").text;
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          extent: {
+            spatialReference: {
+              latestWkid: 3857,
+              wkid: 102100
+            },
+            xmin: -13185668,
+            ymin: 4066176,
+            xmax: -13183855,
+            ymax: 4067515
+          },
+          constraints: {
+            minScale: 2311104
+          },
+          popup: {
+            defaultPopupTemplateEnabled: true
+          }
+        });
+
+        const symbolCats = [
+          "post-office",
+          "atm",
+          "place-of-worship",
+          "park",
+          "school",
+          "hospital",
+          "fire-station",
+          "playground",
+          "shopping-center",
+          "campground",
+          "golf-course",
+          "library",
+          "city-hall",
+          "beach",
+          "police-station",
+          "subway-station",
+          "train-station",
+          "cemetery",
+          "trail",
+          "radio-tower",
+          "museum",
+          "airport",
+          "live-music-venue",
+          "sports-complex",
+          "ferry"
+        ];
+
+        rendererInfos = symbolCats.map((symCat) => {
+          return {
+            value: symCat,
+            symbol: {
+              type: "web-style",
+              name: symCat,
+              styleName: "Esri2DPointSymbolsStyle"
+            },
+            label: symCat
+          };
+        });
+
+        const scale = 36112;
+
+        const renderer = {
+          type: "unique-value", // autocasts as new UniqueValueRenderer()
+          valueExpression: category,
+          valueExpressionTitle: "Symbol Categories",
+          uniqueValueInfos: rendererInfos,
+          visualVariables: [
+            {
+              type: "size",
+              valueExpression: "$view.scale",
+              stops: [
+                { value: scale, size: 20 },
+                { value: scale * 2, size: 15 },
+                { value: scale * 4, size: 10 },
+                { value: scale * 8, size: 5 },
+                { value: scale * 16, size: 2 },
+                { value: scale * 32, size: 1 }
+              ]
+            }
+          ]
+        };
+
+        const featureLayer = new FeatureLayer({
+          url:
+            "http://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/LA_County_Points_of_Interest/FeatureServer/0",
+          renderer: renderer,
+          popupTemplate: {
+            title: "{Name}",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "cat2",
+                    label: "Category"
+                  },
+                  {
+                    fieldName: "addrln1",
+                    label: "Address"
+                  },
+                  {
+                    fieldName: "city",
+                    label: "City"
+                  },
+                  {
+                    fieldName: "phones",
+                    label: "Phone number"
+                  },
+                  {
+                    fieldName: "link",
+                    label: "Link"
+                  }
+                ]
+              }
+            ]
+          }
+        });
+
+        map.add(featureLayer);
+
+        const bookmarks = new Bookmarks({
+          view: view,
+          bookmarks: [
+            new Bookmark({
+              name: "Angeles National Forest",
+              viewpoint: {
+                targetGeometry: {
+                  type: "extent",
+                  spatialReference: {
+                    wkid: 102100
+                  },
+                  xmin: -13139131.948889678,
+                  ymin: 4047767.23531948,
+                  xmax: -13092887.54677721,
+                  ymax: 4090610.189673263
+                }
+              }
+            }),
+            new Bookmark({
+              name: "Crystal Lake",
+              viewpoint: {
+                targetGeometry: {
+                  type: "extent",
+                  spatialReference: {
+                    wkid: 102100
+                  },
+                  xmin: -13125852.551697943,
+                  ymin: 4066904.1101411926,
+                  xmax: -13114291.451169826,
+                  ymax: 4077614.8487296384
+                }
+              }
+            }),
+            new Bookmark({
+              name: "San Fernando",
+              viewpoint: {
+                targetGeometry: {
+                  type: "extent",
+                  spatialReference: {
+                    latestWkid: 3857,
+                    wkid: 102100
+                  },
+                  xmin: -13185668.186639601,
+                  ymin: 4066176.418652561,
+                  xmax: -13183855.195875114,
+                  ymax: 4067515.260976006
+                }
+              }
+            })
+          ]
+        });
+
+        // Add the widget to the top-right corner of the view
+        view.ui.add(bookmarks, {
+          position: "top-left"
+        });
+
+        const legend = new Legend({
+          view: view
+        });
+
+        view.ui.add(legend, "bottom-right");
+      });
+    </script>
+    <script type="text/plain" id="category">
+      if($feature.cat2 == "UPS Locations" || $feature.cat2 == "USPS Mail Collection Boxes" || $feature.cat2 == "DHL Locations" || $feature.cat2 == "Federal Express Locations"){
+        return "post-office"
+      }
+      else if($feature.cat2=="Banking and Finance"){
+        return "atm"
+      }
+      else if($feature.cat2 == "Churches"){
+        return "place-of-worship"
+      }
+      else if($feature.cat2 == "Parks and Gardens"){
+        return "park"
+      }
+      else if($feature.cat1 == "Education"){
+        return "school"
+      }
+      else if($feature.cat2 == "Mental Health Centers" ||$feature.cat2 == "Medicare and Medicaid Offices"|| $feature.cat2 == "Mental Health Counseling" || $feature.cat2== "Dental Care" || $feature.cat2 == "Health Clinics" || $feature.cat2== "Health Centers" || $feature.cat2 == "Health Education and Counseling" || $feature.cat2== "Health Screening and Testing" || $feature.cat2== "Hospitals and Medical Centers"){
+        return "hospital"
+      }
+      else if($feature.cat2 == "Fire Stations"){
+        return "fire-station"
+      }
+      else if($feature.cat2 == "Recreation Centers" || $feature.cat2 == "Recreation Programs" || $feature.cat2 == "Park and Ride Locations"){
+        return "playground"
+      }
+      else if($feature.cat2 == "Shopping Centers" || $feature.cat2=="Thrift Shops"){
+        return "shopping-center"
+      }
+      else if($feature.cat2 == "Campgrounds"){
+        return "campground"
+      }
+      else if($feature.cat2 == "Golf Courses"){
+        return "golf-course"
+      }
+      else if($feature.cat2 == "Libraries"){
+        return "library"
+      }
+      else if($feature.cat2 == "City Halls"|| $feature.cat2 == "Government Offices" || $feature.cat2 =="County Offices" || $feature.cat2 =="Probation Offices" || $feature.cat2 =="Social Security Administration"){
+        return "city-hall"
+      }
+      else if($feature.cat2 == "Beaches and Marinas"){
+        return "beach"
+      }
+      else if($feature.cat2 == "Sheriff and Police Stations"){
+        return "police-station"
+      }
+      else if($feature.cat2 == "Metro Stations"){
+        return "subway-station"
+      }
+      else if($feature.cat2 == "Metrolink Stations" || $feature.cat2 == "Amtrak Stations"){
+        return "train-station"
+      }
+      else if($feature.cat2 == "Cemeteries"){
+        return "cemetery"
+      }
+      else if($feature.cat2 == "Trails"){
+        return "trail"
+      }
+      else if($feature.cat2 == "Microwave Towers" || $feature.cat2 =="Cellular Towers"){
+        return "radio-tower"
+      }
+      else if($feature.cat2 == "Museums and Aquariums"){
+        return "museum"
+      }
+      else if($feature.cat2 == "Airport"){
+        return "airport"
+      }
+      else if($feature.cat2 == "Cultural and Performing Arts Centers"){
+        return "live-music-venue"
+      }
+      else if($feature.cat2 == "Sports Venues"){
+        return "sports-complex"
+      }
+      else if($feature.cat2 == "Ferries"){
+        return "ferry"
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv" class="esri-widget"></div>
+  </body>
+</html>
+

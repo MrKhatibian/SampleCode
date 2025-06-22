@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>UtilityNetworkTrace widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+  <script>
+    require([
+      "esri/WebMap",
+      "esri/views/MapView",
+      "esri/widgets/UtilityNetworkTrace",
+      "esri/config"
+    ], (WebMap, MapView, UtilityNetworkTrace, esriConfig) => {
+      // Set the hostname to the on-premise portal
+      // Enterprise example: esriConfig.portalUrl = "https://myHostName.esri.com/arcgis";
+      esriConfig.portalUrl = "https://www.arcgis.com";  // this is the default
+
+      // Initialize the WebMap and pass in the webmap id
+      // Credentials to sign in to the webmap: 
+      // username: viewer01
+      // password: I68VGU^nMurF
+      const webmap = new WebMap({
+        portalItem: { // autocasts as new PortalItem()
+          id: "471eb0bf37074b1fbb972b1da70fb310" // webmap id
+        }
+      });
+
+      // Initialize the view
+      const view = new MapView({
+        container: "viewDiv",
+        map: webmap
+      });
+
+      // Initialize the UtilityNetworkTrace widget without any set parameters
+      const utilityNetworkTrace = new UtilityNetworkTrace({
+        view: view
+      });
+
+      // Add the widget to the view
+      view.ui.add(utilityNetworkTrace, "top-right");
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to OrientedImageryLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #oi-container {
+        top: 8px;
+        right: 8px;
+        position: absolute;
+        height: 80%;
+      }
+    </style>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/widgets/OrientedImageryViewer",
+      "esri/layers/OrientedImageryLayer",
+    ], function(
+      Map,
+      MapView,
+      OrientedImageryViewer,
+      OrientedImageryLayer
+    ) {
+
+      const map = new Map({
+        basemap: "hybrid"
+      });
+
+      view = new MapView({
+        map,
+        container: "viewDiv"
+      });
+
+
+      // create an instance of an oriented imagery layer and add it to map
+      const layer = new OrientedImageryLayer({
+        portalItem: {
+          id: "ca2aa99099414ff7aba2f1e3721f4218",
+        }
+      });
+      map.layers.add(layer);
+
+      // zoom to the full extent of the layer when layer is loaded
+      // set the oriented imagery layer to be used with an oriented imagery viewer
+      view.whenLayerView(layer).then(() =>{
+        view.goTo(layer.fullExtent);
+        orientedImageryViewer.layer = layer;
+      });
+
+
+
+      // create a new instance of the oriented imagery viewer widget
+      const orientedImageryViewer = new OrientedImageryViewer({
+        view,
+        disabled: false,
+        container: "oi-container"
+      });
+
+
+    });
+  </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="oi-container"></div>
+  </body>
+</html>
+

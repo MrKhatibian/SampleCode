@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Request data from a remote server | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+  </head>
+
+  <body>
+    <calcite-shell>
+      <calcite-panel heading="Using esri/request">
+        <calcite-block
+          heading="Enter a URL:"
+          description='Enter a server URL to the input box below, then click the "Make Request" button to send a request.'
+          open
+        >
+          <calcite-input-text
+            id="input-url"
+            placeholder="https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer"
+            value="https://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer"
+            required
+          ></calcite-input-text>
+          <calcite-button id="request-button" style="padding-top: 5px">Make Request</calcite-button>
+          <calcite-label style="padding-top: 10px" scale="l"
+            >Server response from the request:
+            <calcite-text-area
+              id="results-text-area"
+              placeholder="Request response will show here.."
+              read-only
+              rows="25"
+            ></calcite-text-area>
+          </calcite-label>
+        </calcite-block>
+      </calcite-panel>
+    </calcite-shell>
+    <calcite-alert id="alert" kind="danger" icon label="Danger alert" auto-close>
+      <div slot="title">Enter a valid URL.</div>
+    </calcite-alert>
+    <script>
+      require(["esri/request"], (esriRequest) => {
+        const requestButton = document.getElementById("request-button");
+        const urlInput = document.getElementById("input-url");
+        const textArea = document.getElementById("results-text-area");
+        const alert = document.getElementById("alert");
+        let url;
+
+
+        // Create URLSearchParams and pass it into the esriRequest options query parameter.
+        // This can be a plain object or URLSearchParams object.
+        const urlSearchParams = new URLSearchParams({
+          f: "json"
+        });
+
+        // Create a ReqeuestOptions object with the URLSearchParams as the query parameter.
+        // Other parameters can be specified if needed.
+        const options = {
+          query: urlSearchParams
+        };
+
+
+        // Make the request on a Button click using the
+        // value of the Input Text component.
+        requestButton.addEventListener("click", () => {
+          // Check if the input text is a valid URL
+          if (isValidURL(urlInput.value)) {
+            // If the URL is valid, pass in the url and options property
+            // to make the request.
+            makeRequest(url, options);
+          } else {
+            // If the input is an invalid URL, alert the end user.
+            alert.open = true;
+            textArea.value = "Request response will show here..";
+          }
+        });
+
+        // Function to call esriRequest with async/await.
+        async function makeRequest(url, options) {
+
+          // Use try/catch for error handling.
+          try {
+            // Use async/await to wait for the response to return
+            // from the service.
+            const response = await esriRequest(url, options);
+            // When the response returns from the service, stringify the response to display
+            // the information in the Text Area component.
+            const responseJSON = JSON.stringify(response, null, 2);
+            textArea.value = `HTTP Status Code: ${response.httpStatus}\nResponse:\n${responseJSON}`;
+          } catch (error) {
+            // If an error is returned in the response, display the error alongside the http status code.
+            textArea.value = `${error.details.httpStatus} error: "${error.message}."`;
+          }
+
+        }
+
+        // Function to validate the URL.
+        function isValidURL(string) {
+          try {
+            url = new URL(string);
+            return true;
+          } catch (err) {
+            return false;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
+

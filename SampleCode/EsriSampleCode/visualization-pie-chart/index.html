@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Pie charts | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #filter {
+        background-color: white;
+        width: 400px;
+      }
+      .btns {
+        float: right;
+        padding-top: 5px;
+      }
+      #error {
+        color: red;
+        display: none;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand"
+      ], (Map, MapView, FeatureLayer, Legend, Expand) => {
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+          center: [-84.78824, 42.43930],
+          zoom: 6,
+          constraints: {
+            minScale: 9500000,
+            maxScale: 900000,
+            snapToZoom: false
+          }
+        });
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "a7c5a8c8ea42416e8bd92df9872cc51b"
+          },
+          renderer: {
+            type: "pie-chart", // autocasts as new PieChartRenderer
+            size: 10,
+            attributes: [
+              {
+                color: "#ed5151",
+                label: "No high school diploma",
+                field: "SOMEHS_CY"
+              },
+              {
+                field: "HSGRAD_CY",
+                color: "#149ece",
+                label: "High school diploma"
+              },
+              {
+                field: "CollegeEducated",
+                color: "#a7c636",
+                label: "College educated"
+              }
+            ],
+            backgroundFillSymbol: { // polygon fill behind pie chart
+              color: [127, 127, 127, 0.2],
+              outline: {
+                width: 1,
+                color: [255, 255, 255, 0.3]
+              }
+            },
+            outline: {
+              width: 1.5,
+              color: "grey"
+            },
+            visualVariables: [
+              {
+                type: "size",
+                valueExpression:
+                  "$feature.SOMEHS_CY + $feature.HSGRAD_CY + $feature.CollegeEducated",
+                minDataValue: 20000,
+                maxDataValue: 500000,
+                minSize: 12,
+                maxSize: 48
+              }
+            ]
+          },
+          popupTemplate: {
+            title: "{COUNTY}, {STATE}",
+            content: [
+              {
+                type: "media",
+                mediaInfos: [
+                  {
+                    title: "{COUNTY} County Education Attainment",
+                    type: "pie-chart",
+                    value: {
+                      fields: ["SOMEHS_CY", "HSGRAD_CY", "CollegeEducated"]
+                    }
+                  }
+                ]
+              },
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "ASSCDEG_CY",
+                    label: "Number of Associate's degrees",
+                    format: {
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "BACHDEG_CY",
+                    label: "Number of Bachelor's Degrees",
+                    format: {
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "GRADDEG_CY",
+                    label: "Number of Graduate degrees",
+                    format: {
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "CollegeEducated",
+                    label: "Number of college degrees",
+                    format: {
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "EDUCBASECY",
+                    label: "Total population base",
+                    format: {
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "expression/percent-educated",
+                    label: "Percent college educated"
+                  }
+                ]
+              }
+            ],
+            fieldInfos: [
+              {
+                fieldName: "HSGRAD_CY",
+                label: "High school diploma"
+              },
+              {
+                fieldName: "SOMEHS_CY",
+                label: "No high school diploma"
+              },
+              {
+                fieldName: "CollegeEducated",
+                label: "College educated"
+              }
+            ],
+            expressionInfos: [
+              {
+                name: "percent-educated",
+                title: "Percent college educated",
+                expression:
+                  "ROUND((($feature.CollegeEducated/$feature.EDUCBASECY)*100),2)+ '%'"
+              }
+            ]
+          }
+        });
+        map.add(layer);
+        
+        const legend = new Legend({
+          view: view
+        });
+        view.ui.add(legend, "bottom-left");
+
+        view.ui.add(
+          new Expand({
+            content: document.getElementById("filter"),
+            view: view,
+            expandIcon: "sliders-horizontal",
+            expandTooltip: "Filter"
+          }),
+          "top-right"
+        );
+
+        const filterBy = document.getElementById("filterBy");
+        const operator = document.getElementById("operator");
+        const filterPct = document.getElementById("filterPct");
+
+        document.getElementById("filterBtn").addEventListener("click", () => {
+          if (filterBy.value && operator.value && filterPct.value) {
+            document.getElementById("error").style.display = "none";
+            let filterStr =
+              "(" +
+              filterBy.value +
+              "/ (SOMEHS_CY + HSGRAD_CY + CollegeEducated) *100 )" +
+              operator.value +
+              filterPct.value;
+            layer.featureEffect = {
+              filter: {
+                where: filterStr
+              },
+              excludedEffect: "opacity(20%)"
+            };
+          } else {
+            document.getElementById("error").style.display = "block";
+          }
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", () => {
+          document.getElementById("error").style.display = "none";
+          layer.featureEffect = null;
+          filterPct.value = null;
+        });
+      });
+    </script>
+
+
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-card id="filter">
+      <h3>FILTER BY:</h3>
+      <calcite-segmented-control id="filterBy">
+        <calcite-segmented-control-item value="SOMEHS_CY" checked>No high school diploma </calcite-segmented-control-item>
+        <calcite-segmented-control-item value="HSGRAD_CY">High school diploma</calcite-segmented-control-item>
+        <calcite-segmented-control-item value="CollegeEducated">College educated</calcite-segmented-control-item>
+      </calcite-segmented-control>
+      <span>
+        <calcite-select id="operator" style="width: 50%; float: left">
+          <calcite-option value=">" selected>Greater than</calcite-option>
+          <calcite-option value="<">Less than</calcite-option>
+        </calcite-select>
+        <calcite-input id="filterPct" type="number" min="0" max="100" suffix-text="%"></calcite-input>
+      </span>
+      <span id="error">All fields must have value in order to filter.</span>
+      <span class="btns">
+        <calcite-button id="resetBtn" appearance="outline">Reset</calcite-button>
+        <calcite-button id="filterBtn">Filter</calcite-button>
+      </span>
+    </calcite-card>
+  </body>
+</html>
+

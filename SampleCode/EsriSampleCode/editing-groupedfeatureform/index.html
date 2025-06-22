@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Update Feature Attributes | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #info {
+        padding: 14px;
+        border-radius: 5px;
+      }
+
+      #update {
+        padding: 6px;
+      }
+
+      #form {
+        background: #fff;
+      }
+
+      /* replaces esri-widget--panel */
+      .scroller {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/widgets/FeatureForm",
+        "esri/layers/FeatureLayer",
+        "esri/form/FormTemplate"
+      ], (Map, MapView, FeatureForm, FeatureLayer, FormTemplate) => {
+        let highlight, editFeature;
+
+        const featureLayer = new FeatureLayer({
+          portalItem: {
+            id: "449887ea7d60429fbf6f0c67881f2758"
+          },
+          outFields: ["*"],
+          formTemplate: {
+            // Autocasts to new FormTemplate
+            title: "Damage assessments",
+            description: "Provide information for insurance",
+            elements: [
+              {
+                // Autocasts to new GroupElement
+                type: "group",
+                label: "Inspector Information",
+                description: "Field inspector information",
+                elements: [
+                  {
+                    // Autocasts to new FieldElement
+                    type: "field",
+                    fieldName: "inspector",
+                    label: "name"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "inspemail",
+                    label: "Email address",
+                    visibilityExpression: "alwaysHidden"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "insp_date",
+                    label: "Date of inspection"
+                  }
+                ]
+              }, // end of first group element
+              {
+                type: "group",
+                label: "Contact information",
+                description: "The insured's contact information",
+                elements: [
+                  {
+                    type: "field",
+                    fieldName: "placename",
+                    label: "Business name"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "firstname",
+                    label: "First name"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "lastname",
+                    label: "Last name"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "workphone",
+                    label: "Work telephone number"
+                  }
+                ]
+              }, // end of second group element
+              {
+                type: "group",
+                label: "Insurance coverage",
+                description: "Structure and contents coverage",
+                elements: [
+                  {
+                    type: "field",
+                    fieldName: "strinsur",
+                    label: "Structure insured"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "continsur",
+                    label: "Contents insured"
+                  }
+                ]
+              }, // end of third group element
+              {
+                type: "group",
+                label: "Insurance type information",
+                description: "Type of insurance coverage",
+                elements: [
+                  {
+                    type: "field",
+                    fieldName: "rentinsur",
+                    label: "Renter's"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "floodinsur",
+                    label: "Flood"
+                  },
+                  {
+                    type: "field",
+                    fieldName: "fireinsur",
+                    label: "fire"
+                  }
+                ]
+              } // end of fourth group element
+            ],
+            expressionInfos: [
+              {
+                name: "alwaysHidden",
+                expression: "1 == 0"
+              }
+            ]
+          } // end of form template elements
+        });
+
+        const map = new Map({
+          basemap: "topo-vector",
+          layers: [featureLayer]
+        });
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+          center: [-88.143, 41.774],
+          zoom: 17,
+          popupEnabled: false
+        });
+
+        // Add a new feature form with grouped fields
+        const form = new FeatureForm({
+          map: map, // required if using Arcade expressions using the $map global variable
+          container: "form",
+          groupDisplay: "sequential", // only display one group at a time
+          layer: featureLayer
+        });
+
+        view.on("click", (event) => {
+          // Unselect any currently selected features
+          unselectFeature();
+          // Listen for when the user clicks on the view
+          view.hitTest(event).then((response) => {
+            // If user selects a feature, select it
+            const results = response.results;
+            if (results.length > 0 && results[0].graphic && results[0].graphic.layer === featureLayer) {
+              selectFeature(results[0].graphic.attributes[featureLayer.objectIdField]);
+            } else {
+              // Hide the form and show the info div
+              document.getElementById("update").classList.add("esri-hidden");
+            }
+          });
+        });
+
+        // Function to unselect features
+        function unselectFeature() {
+          if (highlight) {
+            highlight.remove();
+          }
+        }
+
+        // Highlight the clicked feature and display
+        // its attributes in the featureform.
+        function selectFeature(objectId) {
+          // query feature from the server
+          featureLayer
+            .queryFeatures({
+              objectIds: [objectId],
+              outFields: ["*"],
+              returnGeometry: true
+            })
+            .then((results) => {
+              if (results.features.length > 0) {
+                editFeature = results.features[0];
+
+                // display the attributes of selected feature in the form
+                form.feature = editFeature;
+
+                // highlight the feature on the view
+                view.whenLayerView(editFeature.layer).then((layerView) => {
+                  highlight = layerView.highlight(editFeature);
+                });
+
+                if (document.getElementById("update").classList.contains("esri-hidden")) {
+                  document.getElementById("info").classList.add("esri-hidden");
+                  document.getElementById("update").classList.remove("esri-hidden");
+                }
+              }
+            });
+        }
+
+        // Listen to the feature form's submit event.
+        form.on("submit", () => {
+          if (editFeature) {
+            // Grab updated attributes from the form.
+            const updated = form.getValues();
+
+            // Loop through updated attributes and assign
+            // the updated values to feature attributes.
+            Object.keys(updated).forEach((name) => {
+              editFeature.attributes[name] = updated[name];
+            });
+
+            // Setup the applyEdits parameter with updates.
+            const edits = {
+              updateFeatures: [editFeature]
+            };
+            applyAttributeUpdates(edits);
+          }
+        });
+
+        // Call FeatureLayer.applyEdits() with specified params.
+        function applyAttributeUpdates(params) {
+          document.getElementById("btnUpdate").style.cursor = "progress";
+          featureLayer
+            .applyEdits(params)
+            .then((editsResult) => {
+              // Get the objectId of the newly added feature.
+              // Call selectFeature function to highlight the new feature.
+              if (editsResult.addFeatureResults.length > 0) {
+                const objectId = editsResult.addFeatureResults[0].objectId;
+                selectFeature(objectId);
+              }
+              document.getElementById("btnUpdate").style.cursor = "pointer";
+            })
+            .catch((error) => {
+              console.log("===============================================");
+              console.error("[ applyEdits ] FAILURE: ", error.code, error.name, error.message);
+              console.log("error = ", error);
+              document.getElementById("btnUpdate").style.cursor = "pointer";
+            });
+        }
+
+        document.getElementById("btnUpdate").onclick = () => {
+          // Fires feature form's submit event.
+          form.submit();
+        };
+
+        view.ui.add("update", "top-right");
+        view.ui.add("info", {
+          position: "top-left",
+          index: 1
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="info" class="esri-widget">
+      <h3>Select a feature to begin editing</h3>
+    </div>
+
+    <div id="update" class="esri-widget esri-hidden">
+      <div id="form" class="scroller esri-component"></div>
+      <input type="button" class="esri-button" value="Update assessment" id="btnUpdate" />
+    </div>
+  </body>
+</html>
+

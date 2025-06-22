@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Apply drop-shadow effects to layerview | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #topbar {
+        padding: 10px;
+        width: 190px;
+      }
+      .style-button {
+        margin: 3px;
+      }
+      button:disabled {
+        opacity: 0.4;
+        -moz-opacity: 0.4;
+        -webkit-opacity: 0.4;
+        cursor: default;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/views/MapView", "esri/WebMap"], (
+        MapView,
+        WebMap
+      ) => {
+        // webmap containing 2008 - 2016 presidential election data
+        const webmap = new WebMap({
+          portalItem: {
+            id: "cc5f66590815460895fd256cc1702a4c"
+          }
+        });
+
+        const view = new MapView({
+          map: webmap,
+          container: "viewDiv"
+        });
+
+        // UI setup
+        view.ui.add("topbar", "top-right");
+        const layer12Button = document.getElementById("layer12");
+        const layer16Button = document.getElementById("layer16");
+
+        // get 2012 and 2016 election layers when the view is initialized
+        // setup feature effects on the corresponding layer views
+        webmap.when(() => {
+          // 2016 election layer
+          const layer16 = webmap.layers.items[0];
+          view.whenLayerView(layer16).then( (lv) => {
+            const stat =
+              "<b>Party switch</b><br/>Democrat - 19 counties <br/ >Republican - 219 counties";
+            document.getElementById("stats").innerHTML = stat;
+            applyFilter(lv, "F2012_to_2016_Party_Switch");
+          });
+
+          // 2012 election layer
+          const layer12 = webmap.layers.items[1];
+          view.whenLayerView(layer12).then( (lv) => {
+            applyFilter(lv, "F2008_to_2012_Party_Switch");
+          });
+
+          // this function is called when layerViews are loaded
+          // for 2012 and 2016 election results layers and called
+          // once to set up the effects on the layer views to set
+          // drop-shadow effect on counties where the winning parties
+          // changed from the previous election
+          function applyFilter(layerView, field) {
+            const featureFilter = {
+              where: `${field}='R' OR ${field}='D'`
+            };
+            // set scale dependent drop-shadow effects on election results featurelayers
+            layerView.featureEffect = {
+              filter: featureFilter,
+              includedEffect: [
+                {
+                  scale: 36978595,
+                  value: "drop-shadow(3px, 3px, 4px)"
+                },
+                {
+                  scale: 18489297,
+                  value: "drop-shadow(2px, 2px, 3px)"
+                },
+                {
+                  scale: 4622324,
+                  value: "drop-shadow(1px, 1px, 2px)"
+                }
+              ]
+            };
+          }
+
+          // buttons that will toggle visibilities of two election layers
+          layer12Button.addEventListener("click", () => {
+            const stat = "<b>Party switch</b><br/>Democrat - 12 counties <br/ >Republican - 193 counties";
+            setLayerVisibility(true, false, stat);
+          });
+
+          layer16Button.addEventListener("click", () => {
+            const stat = "<b>Party switch</b><br/>Democrat - 19 counties <br/ >Republican - 219 counties";
+            setLayerVisibility(false, true, stat);
+          });
+
+          function setLayerVisibility(layer12Vis, layer16Vis, stats) {
+            layer12.visible = layer12Vis;
+            layer12Button.disabled = layer12Vis;
+            layer16.visible = layer16Vis;
+            layer16Button.disabled = layer16Vis;
+            document.getElementById("stats").innerHTML = stats;
+          }
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="topbar" class="esri-widget">
+      <h3 class="esri-heading"> Presidential election</h3>
+      <button class="esri-button style-button" id="layer12" type="button"> 2012 </button>
+      <button class="esri-button style-button" id="layer16" type="button" disabled> 2016 </button>
+      <p class="esri-content" id="stats"></p>
+    </div>
+  </body>
+</html>

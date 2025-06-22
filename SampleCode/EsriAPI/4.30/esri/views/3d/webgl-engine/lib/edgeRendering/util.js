@@ -1,0 +1,6 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports","./interfaces","../../shaders/sources/edgeRenderer/EdgeUtil.glsl"],function(f,d,h){f.determineEdgeTransparency=function(c){let b=d.Transparency.INVISIBLE;for(const {material:a}of c)if(0<a.size*a.color[3]*a.opacity){if(1>a.color[3]*a.opacity)return d.Transparency.TRANSPARENT;b=d.Transparency.OPAQUE}return b};f.determineObjectTransparency=function(c){let b=d.Transparency.INVISIBLE;for(const {material:a}of c)if(0<a.size*a.color[3]*a.opacity){switch(a.objectTransparency){case d.Transparency.TRANSPARENT:case d.Transparency.INVISIBLE:return d.Transparency.TRANSPARENT;
+case d.Transparency.OPAQUE:if(1>a.opacity)return d.Transparency.TRANSPARENT}b=d.Transparency.OPAQUE}return b};f.determineRendererType=function(c){let b;for(const a of c)if(c=a.type,0<a.size*a.color[3])if(null==b)b=c;else if(b!==c)return h.EdgeType.Mixed;return b??h.EdgeType.Mixed};f.fillComponentBufferIndices=function(c,b,a,k){for(let g=0;g<c.length;g++){const l=c[g].index;var e=b[g];const m=b[g+1];if(k)for(;e<m;e++)a.set(k[e],l);else for(;e<m;e++)a.set(e,l)}};Object.defineProperty(f,Symbol.toStringTag,
+{value:"Module"})});

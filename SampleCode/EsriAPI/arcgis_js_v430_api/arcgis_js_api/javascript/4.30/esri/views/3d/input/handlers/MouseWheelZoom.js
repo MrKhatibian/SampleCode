@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports","../../../../core/screenUtils","../../state/controllers/ZoomStepControllerGlobal","../../state/controllers/ZoomStepControllerLocal","../../../input/InputHandler"],function(c,d,e,f,g){class h extends g.InputHandler{constructor(a,b){super(!0);this._view=a;this.registerIncoming("mouse-wheel",b,k=>this._handleMouseWheel(k))}_handleMouseWheel(a){if(this._view.navigation.mouseWheelZoomEnabled){var b=a.data;this._cameraController&&this._cameraController.active||(this._cameraController=
+this._view.state.isGlobal?new e.ZoomStepControllerGlobal({view:this._view,mode:"interaction"}):new f.ZoomStepControllerLocal({view:this._view,mode:"interaction"}),this._view.state.switchCameraController(this._cameraController));this._cameraController.zoomStep(-1/60*b.deltaY,d.createScreenPointArray(b.x,b.y));a.preventDefault();a.stopPropagation()}}}c.MouseWheelZoom=h;Object.defineProperty(c,Symbol.toStringTag,{value:"Module"})});

@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Sketch in 3D | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: ghostwhite;
+      }
+
+      #sketchPanel {
+        width: 305px;
+        padding: 10px;
+        background-color: rgba(243, 243, 243, 0.8);
+      }
+
+      #edgeoperationbuttons {
+        display: none;
+      }
+
+      .update-options {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .edge-button,
+      .shape-button {
+        flex: 1;
+        border-style: solid;
+        border-width: 1px;
+        border-image: none;
+      }
+
+      .edge-button-selected,
+      .shape-button-selected {
+        background: #4c4c4c;
+        color: #fff;
+      }
+    </style>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/views/3d/environment/SunLighting",
+        "esri/widgets/Sketch/SketchViewModel",
+        "esri/widgets/Sketch",
+        "esri/geometry/Extent",
+        "esri/layers/support/ImageElement",
+        "esri/layers/support/ExtentAndRotationGeoreference",
+        "esri/layers/MediaLayer",
+        "esri/layers/GraphicsLayer",
+        "esri/layers/ElevationLayer",
+        "esri/symbols/PolygonSymbol3D",
+        "esri/symbols/ExtrudeSymbol3DLayer",
+        "esri/symbols/edges/SolidEdges3D",
+        "esri/symbols/LineSymbol3D",
+        "esri/symbols/PathSymbol3DLayer",
+        "esri/symbols/PointSymbol3D",
+        "esri/symbols/ObjectSymbol3DLayer",
+        "esri/geometry/Polygon",
+        "esri/geometry/Polyline",
+        "esri/geometry/Point",
+        "esri/Graphic"
+      ], (
+        Map,
+        SceneView,
+        SunLighting,
+        SketchViewModel,
+        Sketch,
+        Extent,
+        ImageElement,
+        ExtentAndRotationGeoreference,
+        MediaLayer,
+        GraphicsLayer,
+        ElevationLayer,
+        PolygonSymbol3D,
+        ExtrudeSymbol3DLayer,
+        SolidEdges3D,
+        LineSymbol3D,
+        PathSymbol3DLayer,
+        PointSymbol3D,
+        ObjectSymbol3DLayer,
+        Polygon,
+        Polyline,
+        Point,
+        Graphic
+      ) => {
+        const imageSettings = {
+          units: "meter",
+          width: 120,
+          height: 170,
+          minx: 1769934.4770259405,
+          miny: 5905359.483770887
+        };
+        let extent = new Extent({
+          spatialReference: {
+            wkid: 2193
+          },
+          // South-West corner of the image
+          xmin: imageSettings.minx,
+          ymin: imageSettings.miny,
+          // North-East corner of the image
+          xmax: imageSettings.minx + imageSettings.width,
+          ymax: imageSettings.miny + imageSettings.height
+        });
+        const imageElement = new ImageElement({
+          image: "https://developers.arcgis.com/javascript/latest/sample-code/sketch-3d/live/site-plan_1-100.png",
+          georeference: new ExtentAndRotationGeoreference({
+            extent: extent
+          })
+        });
+        const plan = new MediaLayer({
+          source: [imageElement],
+          title: "Neighborhood plan"
+        });
+        /**********************************************
+         * Graphics layer to sketch on
+         *********************************************/
+        // The layer where the graphics are sketched
+        const sketchLayer = new GraphicsLayer({
+          elevationInfo: {
+            mode: "absolute-height"
+          },
+          title: "Sketched geometries"
+        });
+        /**********************************************
+         * Environment
+         *********************************************/
+        const elevation = new ElevationLayer({
+          url: "https://services1.arcgisonline.co.nz/arcgis/rest/services/Elevation/New_Zealand_Elevation/ImageServer"
+        });
+        const map = new Map({
+          layers: [sketchLayer, plan]
+        });
+        map.ground.when(() => {
+          map.ground.layers.add(elevation);
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          clippingArea: extent,
+          map: map,
+          spatialReference: {
+            wkid: 2193
+          },
+          camera: {
+            position: {
+              spatialReference: {
+                wkid: 2193,
+                vcsWkid: 7839,
+                latestVcsWkid: 7839
+              },
+              x: 1769923.9503542555,
+              y: 5905519.653277661,
+              z: 109.14496273535647
+            },
+            heading: 121.15776891615667,
+            tilt: 48.37913547040831
+          },
+          alphaCompositingEnabled: true,
+          environment: {
+            atmosphereEnabled: false,
+            starsEnabled: false,
+            lighting: new SunLighting({
+              date: new Date("March 18, 2021 13:30:00 UTC+12"),
+              directShadowsEnabled: true
+            })
+          }
+        });
+        /**********************************************
+         * Symbologies
+         *********************************************/
+        // Polygon symbol used for sketching the extruded building footprints
+        const buildingSymbology = new PolygonSymbol3D({
+          symbolLayers: [
+            new ExtrudeSymbol3DLayer({
+              size: 3.5, // extrude by 3.5m meters
+              material: {
+                color: [255, 255, 255, 0.8]
+              },
+              edges: new SolidEdges3D({
+                size: 1,
+                color: [82, 82, 122, 1]
+              })
+            })
+          ]
+        });
+        // Polyline symbol used for sketching parcels
+        const borderSymbology = new LineSymbol3D({
+          symbolLayers: [
+            new PathSymbol3DLayer({
+              profile: "quad", // creates a path symbol with rectangular profile
+              width: 0.3, // symbology width in meters
+              height: 2.6, // symbology height in meters
+              material: {
+                color: "#a57e5e"
+              },
+              cap: "square",
+              profileRotation: "heading"
+            })
+          ]
+        });
+        const treeSymbology = new PointSymbol3D({
+          symbolLayers: [
+            new ObjectSymbol3DLayer({
+              resource: {
+                href: "https://static.arcgis.com/arcgis/styleItems/ThematicTrees/gltf/resource/PlatanusOccidentalis.glb"
+              },
+              height: 10
+            })
+          ]
+        });
+        // Add the container for the widget and custom buttons to the view
+        view.ui.add("sketchPanel", "top-right");
+        // Set-up event handlers for buttons and click events
+        const edgeoperationbuttons = document.getElementById("edgeoperationbuttons");
+        // Define the SketchViewModel and pass in the symbols for each geometry type
+        // Enable snapping to the layer with sketched geometries
+        const sketchViewModel = new SketchViewModel({
+          layer: sketchLayer,
+          view: view,
+          pointSymbol: treeSymbology,
+          polylineSymbol: borderSymbology,
+          polygonSymbol: buildingSymbology,
+          snappingOptions: {
+            enabled: true,
+            featureSources: [
+              {
+                layer: sketchLayer
+              }
+            ]
+          },
+          // Show absolute direction value in tooltips
+          valueOptions: {
+            directionMode: "absolute"
+          },
+          tooltipOptions: {
+            enabled: true
+          },
+          labelOptions: {
+            enabled: true
+          },
+          defaultUpdateOptions: {
+            tool: "reshape",
+            reshapeOptions: {
+              edgeOperation: "offset"
+            }
+          }
+        });
+        // Create the Sketch widget and add it to the "sketchWidget" container inside the "sketchPanel" <div>
+        const sketch = new Sketch({
+          view,
+          viewModel: sketchViewModel,
+          // Remove some buttons from the widget
+          visibleElements: {
+            createTools: {
+              rectangle: false,
+              circle: false
+            }
+          },
+          container: "sketchWidget"
+        });
+        // After drawing the geometry, enter the update mode to update the geometry
+        // and the deactivate the buttons
+        sketchViewModel.on("create", (event) => {
+          if (event.tool === "polygon" || event.tool === "polyline") {
+            // When starting to draw, always show the absolute direction mode
+            if (event.state === "start") {
+              sketchViewModel.valueOptions.directionMode = "absolute";
+            }
+            // After the second vertex is drawn, change to relative direction mode (deflection)
+            if (
+              event.state === "active" &&
+              event.toolEventInfo.type === "vertex-add" &&
+              event.toolEventInfo.vertices[0].vertexIndex === 1
+            ) {
+              sketchViewModel.valueOptions.directionMode = "relative";
+            }
+            if (event.state === "complete") {
+              sketchViewModel.valueOptions.directionMode = "absolute";
+              // Initialize the update operation once a polygon or polyline is complete - then one can directly start updating e.g. the geometry's vertices.
+              // Note that this is not called for points, which allows to place several point geometries one after another.
+              sketchViewModel.update(event.graphic);
+            } else if (event.state === "cancel") {
+              sketchViewModel.valueOptions.directionMode = "absolute";
+            }
+          }
+        });
+        sketchViewModel.on("update", (event) => {
+          if (event.state === "start") {
+            if (event.graphics[0].geometry.type === "polygon" || event.graphics[0].geometry.type === "polyline") {
+              edgeoperationbuttons.style.display = "inline";
+            }
+          }
+          if (event.state === "complete") {
+            edgeoperationbuttons.style.display = "none";
+          }
+        });
+        // Default values for edge/move operations
+        let edgeType = "split";
+        let shapeType = "move";
+        // Handling the configuration for edge operation
+        const noneEdgeBtn = document.getElementById("none-edge-button");
+        const splitEdgeBtn = document.getElementById("split-edge-button");
+        const offsetEdgeBtn = document.getElementById("offset-edge-button");
+        noneEdgeBtn.onclick = edgeChangedClickHandler;
+        splitEdgeBtn.onclick = edgeChangedClickHandler;
+        offsetEdgeBtn.onclick = edgeChangedClickHandler;
+
+        function edgeChangedClickHandler(event) {
+          edgeType = event.target.value;
+          // Handle the buttons
+          const buttons = document.getElementsByClassName("edge-button");
+          for (const button of buttons) {
+            button.classList.remove("edge-button-selected");
+          }
+          this.classList.add("edge-button-selected");
+          restartUpdateMode({
+            reshapeOptions: {
+              edgeOperation: edgeType,
+              shapeOperation: shapeType
+            }
+          });
+        }
+
+        // Handling the configuration for move operation
+        const noneShapeButton = document.getElementById("none-shape-button");
+        const moveShapeButton = document.getElementById("move-shape-button");
+        noneShapeButton.onclick = shapeChangedClickHandler;
+        moveShapeButton.onclick = shapeChangedClickHandler;
+
+        function shapeChangedClickHandler(event) {
+          shapeType = event.target.value;
+          // Handle the buttons
+          const buttons = document.getElementsByClassName("shape-button");
+          for (const button of buttons) {
+            button.classList.remove("shape-button-selected");
+          }
+          this.classList.add("shape-button-selected");
+          restartUpdateMode({
+            reshapeOptions: {
+              edgeOperation: edgeType,
+              shapeOperation: shapeType
+            }
+          });
+        }
+
+        function restartUpdateMode(updateOptions) {
+          sketchViewModel.defaultUpdateOptions = {
+            ...sketchViewModel.defaultUpdateOptions,
+            ...updateOptions
+          };
+
+          if (sketchViewModel.activeTool) {
+            if (
+              sketchViewModel.activeTool === "transform" ||
+              sketchViewModel.activeTool === "move" ||
+              sketchViewModel.activeTool === "reshape"
+            ) {
+              updateOptions.tool = sketchViewModel.activeTool;
+              sketchViewModel.update(sketchViewModel.updateGraphics.toArray(), updateOptions);
+            }
+          }
+        }
+        /**********************************************
+         * Add some graphics to mark neighboring buildings, fences, and trees
+         *********************************************/
+
+        const neighboringBuildingRings = [
+          [
+            [
+              [1769982.8109641282, 5905488.246634324, 44.157889118285176],
+              [1769992.8048723985, 5905487.8976393575, 44.157889118285176],
+              [1769992.6303749152, 5905482.900685223, 44.157889118285176],
+              [1769997.6273290503, 5905482.7261877395, 44.157889118285176],
+              [1769997.2783340837, 5905472.732279469, 44.157889118285176],
+              [1769982.2874716783, 5905473.255771919, 44.157889118285176],
+              [1769982.8109641282, 5905488.246634324, 44.157889118285176]
+            ]
+          ],
+          [
+            [
+              [1769997.2783340837, 5905472.732279469, 47.657889118285176],
+              [1769987.2844258135, 5905473.081274435, 47.657889118285176],
+              [1769987.63342078, 5905483.075182706, 47.657889118285176],
+              [1769997.6273290503, 5905482.7261877395, 47.657889118285176],
+              [1769997.2783340837, 5905472.732279469, 47.657889118285176]
+            ]
+          ],
+          [
+            [
+              [1770007.9297347101, 5905446.220591848, 46.80599073043461],
+              [1770011.8565904098, 5905445.459143028, 46.80599073043461],
+              [1770012.6180392292, 5905449.38599873, 46.80599073043461],
+              [1770020.4717506312, 5905447.863101091, 46.80599073043461],
+              [1770019.7103018113, 5905443.936245388, 46.80599073043461],
+              [1770023.6371575126, 5905443.174796571, 46.80599073043461],
+              [1770022.114259874, 5905435.321085167, 46.80599073043461],
+              [1770018.187404173, 5905436.082533987, 46.80599073043461],
+              [1770017.4259553538, 5905432.155678285, 46.80599073043461],
+              [1770009.5722439517, 5905433.678575924, 46.80599073043461],
+              [1770010.3336927716, 5905437.605431627, 46.80599073043461],
+              [1770006.4068370706, 5905438.366880444, 46.80599073043461],
+              [1770007.9297347101, 5905446.220591848, 46.80599073043461]
+            ]
+          ]
+        ];
+        const neighboringFencePaths = [
+          [
+            [
+              [1769974.732449817, 5905463.614254161, 46.175382368172855],
+              [1769976.2279306757, 5905501.3240167685, 43.08038127988593],
+              [1770004.1538149612, 5905500.216541608, 44.22409676130782],
+              [1770033.1847706852, 5905499.065241902, 45.11985778808594],
+              [1770031.6879938268, 5905461.32279961, 46.0829565421918]
+            ]
+          ],
+          [
+            [
+              [1770002.9904745375, 5905462.266715094, 46.36200109935357],
+              [1770004.1538149612, 5905500.216541608, 44.22409676130782]
+            ]
+          ],
+          [
+            [
+              [1770031.6879938268, 5905461.32279961, 46.0829565421918],
+              [1770002.9904745375, 5905462.266715094, 46.36200109935357],
+              [1769974.732449817, 5905463.614254161, 46.175382368172855]
+            ]
+          ]
+        ];
+
+        const neighboringTreePositions = [
+          {
+            x: 1769998.6416463067,
+            y: 5905496.664463191,
+            z: 43.93369707049256
+          },
+          {
+            x: 1769975.297965149,
+            y: 5905434.076133291,
+            z: 47.56038217652107
+          },
+          {
+            x: 1770022.8011121373,
+            y: 5905455.175166307,
+            z: 46.48137074697415
+          }
+        ];
+        function addBuildings(allRings) {
+          allRings.forEach((ring) => {
+            const building = new Graphic({
+              geometry: new Polygon({
+                spatialReference: { wkid: 2193 },
+                rings: ring
+              }),
+              symbol: buildingSymbology
+            });
+            sketchLayer.add(building);
+          });
+        }
+        addBuildings(neighboringBuildingRings);
+
+        function addFences(allPaths) {
+          allPaths.forEach((path) => {
+            const fence = new Graphic({
+              geometry: new Polyline({
+                spatialReference: { wkid: 2193 },
+                paths: path
+              }),
+              symbol: borderSymbology
+            });
+            sketchLayer.add(fence);
+          });
+        }
+        addFences(neighboringFencePaths);
+
+        function addTrees(allPositions) {
+          allPositions.forEach((position) => {
+            const tree = new Graphic({
+              geometry: new Point({
+                spatialReference: { wkid: 2193 },
+                x: position.x,
+                y: position.y,
+                z: position.z
+              }),
+              symbol: treeSymbology
+            });
+            sketchLayer.add(tree);
+          });
+        }
+        addTrees(neighboringTreePositions);
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+
+    <div id="sketchPanel" class="esri-widget">
+      <div id="sketchWidget"></div>
+      <div id="edgeoperationbuttons">
+        Select the edge operation:
+        <div class="update-options" id="edge">
+          <button class="esri-widget--button edge-button" id="none-edge-button" value="none">None</button>
+          <button class="esri-widget--button edge-button" id="split-edge-button" value="split">Split</button>
+          <button class="esri-widget--button edge-button edge-button-selected" id="offset-edge-button" value="offset">
+            Offset
+          </button>
+        </div>
+        Select the move operation:
+        <div class="update-options" id="shape">
+          <button class="esri-widget--button shape-button" id="none-shape-button" value="none">None</button>
+          <button class="esri-widget--button shape-button shape-button-selected" id="move-shape-button" value="move">
+            Move
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

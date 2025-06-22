@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>FeatureTable | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <script>
+      require([
+        "esri/layers/FeatureLayer",
+        "esri/widgets/FeatureTable"
+      ], (FeatureLayer, FeatureTable) => {
+
+        const featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/CollegesUniversities/FeatureServer/0",
+          title: "US Colleges and Universities"
+        });
+
+        // Create the FeatureTable from the provided FeatureLayer
+        const featureTable = new FeatureTable({
+          layer: featureLayer,
+          multiSortEnabled: true,
+          visibleElements: {selectionColumn: false},
+          tableTemplate: { // autocastable to TableTemplate
+          // The table template's columnTemplates are used to determine which attributes are shown in the table
+					  columnTemplates: [ // Array of either FieldColumnTemplates or GroupColumnTemplates
+            { // autocastable to FieldColumnTemplate
+              type: "field",
+              fieldName: "FID",
+              label: "ID",
+              // This field will not be shown in the table
+              visible: false
+            },
+            {
+              type: "field",
+              fieldName: "NAME",
+              label: "School Name",
+              // The table will be sorted by this column
+              // in ascending order
+              direction: "asc", // This is required for initial sorting
+              initialSortPriority: 1 // This columns get priority after Enrollment
+            },
+            {
+              type: "field",
+              fieldName: "TOT_ENROLL",
+              label: "Enrollment",
+              direction: "asc", // This is required for initial sorting
+              initialSortPriority: 0 // This column gets the highest sort priority
+            },
+            {
+              type: "field",
+              fieldName: "WEBSITE",
+              label: "Website"
+            },
+            {
+              type: "field",
+              fieldName: "ADDRESS",
+              label: "Address",
+              visible: false
+            },
+            {
+              type: "field",
+              fieldName: "CITY",
+              label: "City"
+            },
+            {
+              type: "field",
+              fieldName: "STATE",
+              label: "State"
+            },
+            {
+              type: "field",
+              fieldName: "ZIP",
+              label: "Zip Code"
+            },
+            {
+              type: "field",
+              fieldName: "TELEPHONE",
+              label: "Phone Number"
+            }
+          ]
+          },
+          container: document.getElementById("tableDiv")
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div id="tableDiv"></div>
+    </div>
+  </body>
+</html>
+

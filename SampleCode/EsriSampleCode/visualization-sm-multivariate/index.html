@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Multivariate data exploration | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .widget-background {
+        background-color: white;
+        font-size: 12pt;
+        text-align: center;
+        padding: 6px;
+        width: 320px;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/smartMapping/ColorSlider",
+        "esri/widgets/smartMapping/SizeSlider",
+        "esri/smartMapping/statistics/histogram",
+        "esri/smartMapping/statistics/summaryStatistics"
+      ], (
+        WebMap,
+        MapView,
+        Legend,
+        Expand,
+        ColorSlider,
+        SizeSlider,
+        histogram,
+        summaryStatistics
+      ) => {
+        // The web map must have one layer with a size
+        // and color visual variable set on the renderer
+        // (i.e. a Color + Size visualization)
+        const map = new WebMap({
+          portalItem: {
+            id: "b4cfa4a48dbb49b8b150c14bb6cca6f9"
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map
+        });
+        view.ui.move("zoom", "top-right");
+
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "bottom-left"
+        );
+
+        // Create the slider widgets for data exploration
+        view.when(() => {
+          const layer = view.map.layers.getItemAt(0);
+          const renderer = layer.renderer;
+
+          const sizeVV = getVisualVariableByType(renderer, "size");
+
+          // give color visual variable meaningful description
+          // in the Legend
+          const colorVV = getVisualVariableByType(renderer, "color");
+
+          if (!sizeVV || !colorVV) {
+            console.error("Web map layer must have a Color + Size visualization.");
+            return;
+          }
+
+          // Create an Expand instance and set the content
+          // property to the DOM node of the size slider widget
+
+          const sizeSliderExpand = new Expand({
+            view: view,
+            content: document.getElementById("size-container"),
+            expandIcon: "pie-chart",
+            group: "top-left"
+          });
+          view.ui.add(sizeSliderExpand, "top-left");
+
+          // Create an Expand instance and set the content
+          // property to the DOM node of the color slider widget
+
+          const colorSliderExpand = new Expand({
+            view: view,
+            content: document.getElementById("color-container"),
+            expandIcon: "brightness",
+            group: "top-left"
+          });
+          view.ui.add(colorSliderExpand, "top-left");
+
+          return getHistogramForVisualVariable(colorVV)
+            .then((colorHistogram) => {
+              createColorSlider(layer, colorHistogram.bins);
+              return getHistogramForVisualVariable(sizeVV);
+            })
+            .then((sizeHistogram) => {
+              return getStatsForVisualVariable(sizeVV).then((statistics) => {
+                return createSizeSlider(layer, sizeHistogram, statistics);
+              });
+            });
+        }).catch((error) => {
+          console.error(error);
+        });
+
+        // Creates a new instance of the ColorSlider widget
+        // based on the renderer already saved to the layer
+
+        function createColorSlider(layer, histogramBins) {
+          const renderer = layer.renderer;
+          const theme = getTheme(renderer);
+          const colorVariable = getVisualVariableByType(renderer, "color");
+          const stats = getStatsFromVisualVariable(renderer, "color");
+          const colorSlider = new ColorSlider({
+            container: "color-slider",
+            primaryHandleEnabled: theme === "above-and-below",
+            stops: colorVariable.stops,
+            histogramConfig: {
+              bins: histogramBins,
+              average: stats.avg
+            },
+            min: stats.min,
+            max: stats.max
+          });
+
+          function changeEventHandler () {
+            const layer = view.map.layers.getItemAt(0);
+            const renderer = layer.renderer.clone();
+            const colorVariable = getVisualVariableByType(renderer, "color");
+            const sizeVariable = getVisualVariableByType(renderer, "size");
+            colorVariable.stops = colorSlider.stops;
+            renderer.visualVariables = [ colorVariable, sizeVariable ];
+            layer.renderer = renderer;
+          }
+
+          colorSlider.on(["thumb-change", "thumb-drag", "min-change", "max-change"] , changeEventHandler);
+        }
+
+        // Creates a new instance of the SizeSlider widget
+        // based on the renderer already saved to the layer
+
+        function createSizeSlider(layer, histogram, stats) {
+          const renderer = layer.renderer;
+          const sizeVariable = getVisualVariableByType(renderer, "size");
+          if(!stats){
+            stats = getStatsFromVisualVariable(renderer, "size");
+          }
+          stats.stddev = null;
+          const sizeSlider = SizeSlider.fromRendererResult({
+            renderer: renderer,
+            statistics: stats,
+            visualVariables: [ sizeVariable ]
+          }, histogram);
+          sizeSlider.container = "size-slider";
+          sizeSlider.viewModel.precision = 0;
+          sizeSlider.labelFormatFunction = (value) => {
+            return parseInt(value.toFixed(0)).toLocaleString();
+          }
+
+          function changeEventHandler () {
+            const layer = view.map.layers.getItemAt(0);
+            const renderer = layer.renderer.clone();
+            const colorVariable = getVisualVariableByType(renderer, "color");
+            const sizeVariable = getVisualVariableByType(renderer, "size");
+            renderer.visualVariables = [ colorVariable, sizeSlider.updateVisualVariable(sizeVariable) ];
+            layer.renderer = renderer;
+          }
+
+          sizeSlider.on(["thumb-change", "thumb-drag", "min-change", "max-change"], changeEventHandler);
+        }
+
+        function getVisualVariableByType(renderer, type) {
+          const visualVariables = renderer.visualVariables;
+          return (
+            visualVariables &&
+            visualVariables.filter((vv) => {
+              return vv.type === type;
+            })[0]
+          );
+        }
+
+        function getTheme(renderer) {
+          const colorVVAuthInfo = renderer.authoringInfo.visualVariables.filter((vv) => {
+            return vv.type === "color";
+          })[0];
+          return colorVVAuthInfo.theme;
+        }
+
+        function getStatsFromVisualVariable(renderer, type) {
+          const visualVariable = getVisualVariableByType(renderer, type);
+
+          let avg, stddev;
+          if (type === "color") {
+            avg = visualVariable.stops[2].value;
+            stddev = visualVariable.stops[4].value - avg;
+          }
+
+          const visualVariableAuthInfo = renderer.authoringInfo.visualVariables.filter((vv) => {
+            return vv.type === type;
+          })[0];
+
+          const stats = {
+            avg: avg,
+            stddev: stddev,
+            min: visualVariableAuthInfo.minSliderValue,
+            max: visualVariableAuthInfo.maxSliderValue
+          };
+          return stats;
+        }
+
+        function getHistogramForVisualVariable(visualVariable) {
+          const params = {
+            layer: view.map.layers.getItemAt(0),
+            field: visualVariable.field,
+            normalizationField: visualVariable.normalizationField,
+            numBins: 30
+          };
+
+          return histogram(params);
+        }
+
+        function getStatsForVisualVariable(visualVariable) {
+          const params = {
+            layer: view.map.layers.getItemAt(0),
+            field: visualVariable.field,
+            normalizationField: visualVariable.normalizationField
+          };
+
+          return summaryStatistics(params);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="color-container" class="widget-background">
+      <h3>% of truck traffic per day</h3>
+      <div id="color-slider"></div>
+    </div>
+    <div id="size-container" class="widget-background">
+      <h3>Daily traffic volume</h3>
+      <div id="size-slider"></div>
+    </div>
+  </body>
+</html>
+

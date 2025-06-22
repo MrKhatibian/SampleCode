@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom Basemap | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/layers/VectorTileLayer",
+        "esri/Map",
+        "esri/Basemap",
+        "esri/widgets/BasemapToggle",
+        "esri/views/SceneView"
+      ], (VectorTileLayer, Map, Basemap, BasemapToggle, SceneView) => {
+        // Create a VectorTileLayer from a style URL 
+        const mapBaseLayer = new VectorTileLayer({
+          url: "https://arcgis.com/sharing/rest/content/items/b5676525747f499687f12746441101ef/resources/styles/root.json"
+        });
+        // Create a Basemap with the VectorTileLayer. The thumbnailUrl will be used for
+        // the image in the BasemapToggle widget.
+        const customBasemap = new Basemap({
+          baseLayers: [mapBaseLayer],
+          title: "Terrain",
+          id: "terrain",
+          thumbnailUrl: "https://arcgis.com/sharing/rest/content/items/b5676525747f499687f12746441101ef/info/thumbnail/ago_downloaded.png"
+        });
+
+        const map = new Map({
+          basemap: "satellite",
+          ground: "world-elevation"
+        });
+
+        const initCamera = {
+          heading: 124.7,
+          tilt: 82.9,
+          position: {
+            latitude: 40.713906,
+            longitude: -111.848111,
+            z: 1990
+          }
+        };
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: initCamera
+        });
+
+        view.when(() => {
+          // Add a basemap toggle widget to toggle between basemaps
+          const toggle = new BasemapToggle({
+            visibleElements: {
+              title: true
+            },
+            view: view,
+            nextBasemap: customBasemap
+          });
+
+          // Add widget to the top right corner of the view
+          view.ui.add(toggle, "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

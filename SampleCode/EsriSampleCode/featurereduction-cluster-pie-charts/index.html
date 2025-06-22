@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+    <title>Clusters as pie charts | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script type="text/javascript">
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/Home",
+        "esri/smartMapping/labels/clusters",
+        "esri/smartMapping/renderers/pieChart"
+      ], function (
+        WebMap,
+        MapView,
+        Legend,
+        Expand,
+        Home,
+        clusterLabelCreator,
+        pieChartRendererCreator
+      ) {
+        (async () => {
+
+          const map = new WebMap({
+            portalItem: {
+              id: "433b5f7f524a4d1ebf3a9f8e1bd49ee0"
+            }
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map,
+            constraints: {
+              snapToZoom: false
+            }
+          });
+
+          await view.when();
+          const layer = view.map.layers.getItemAt(0);
+          layer.effect = "drop-shadow(2px, 2px, 2px, gray)";
+
+
+          layer.when()
+            .then(generateClusterConfig)
+            .then((featureReduction) => {
+
+              layer.featureReduction = featureReduction;
+
+            }).catch((error) => {
+              console.error(error);
+            });
+
+
+          async function generateClusterConfig(layer){
+            // generates default labelingInfo
+            const { labelingInfo, clusterMinSize } = await clusterLabelCreator
+              .getLabelSchemes({ layer, view })
+              .then(labelSchemes => labelSchemes.primaryScheme );
+
+            const labelSymbol = labelingInfo[0].symbol;
+            labelSymbol.color = labelSymbol.haloColor.clone();
+            labelSymbol.haloColor = [255,255,255,0.3];
+            labelSymbol.font.size = 10;
+
+
+            const { renderer, fields } = await pieChartRendererCreator
+              .createRendererForClustering({
+                layer,
+                shape: "donut"
+              });
+
+            renderer.holePercentage = 0.66;
+
+            const fieldInfos = fields.map( field => {
+              return {
+                fieldName: field.name,
+                label: field.alias,
+                format: {
+                  places: 0,
+                  digitSeparator: true
+                }
+              }
+            });
+
+            // maps the field names for the popup chart
+            const fieldNames = fieldInfos.map(field => {
+              return field.fieldName
+            });
+
+            const popupTemplate = {
+              content: [{
+                type: "text",
+                text: "This cluster represents <b>{cluster_count}</b> features."
+              },
+              {
+                type: "media",
+                mediaInfos: [{
+                  title: "311 Reports",
+                  type: "pie-chart",
+                  value: {
+                    fields: fieldNames
+                  }
+                }]
+              },
+              {
+                type: "fields"
+              }],
+              fieldInfos
+            };
+
+            return {
+              type: "cluster",
+              popupTemplate,
+              labelingInfo,
+              clusterMinSize,
+
+              fields,
+              renderer
+
+            };
+          }
+
+
+          view.ui.add(
+            new Home({
+              view
+            }),
+            "top-left"
+          );
+
+          view.ui.add(
+            new Expand({
+              view: view,
+              content: new Legend({
+                view
+              }),
+              expandIcon: "list-bullet",
+              expanded: true
+            }),
+            "top-left"
+          );
+
+        })()
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

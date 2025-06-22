@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports","../../../../../core/arrayUtils","../../../../../core/mathUtils","../../lib/screenSizePerspectiveUtils"],function(f,k,l,m){function h(c,a){a=a?h(a):{};for(const b in c){let d=c[b];d?.forEach&&(d=n(d));null==d&&b in a||(a[b]=d)}return a}function n(c){const a=[];c.forEach(b=>a.push(b));return a}f.colorMixModes={multiply:1,ignore:2,replace:3,tint:4};f.copyParameters=h;f.updateParameters=function(c,a){let b=!1;for(const d in a){const e=a[d];void 0!==e&&(Array.isArray(e)?null===c[d]?
+(c[d]=e.slice(),b=!0):k.update(c[d],e)&&(b=!0):c[d]!==e&&(b=!0,c[d]=e))}return b};f.verticalOffsetAtDistance=function(c,a,b,d,e){let g=(b.screenLength||0)*c.pixelRatio;null!=e&&(g=m.scale(g,d,a,e));return l.clamp(g*Math.tan(.5*c.fovY)/(.5*c.fullHeight)*a,b.minWorldLength||0,null!=b.maxWorldLength?b.maxWorldLength:Infinity)};Object.defineProperty(f,Symbol.toStringTag,{value:"Module"})});

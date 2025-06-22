@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Create a static heatmap | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend"
+      ], (WebMap, FeatureLayer, MapView, Legend) => {
+
+        const renderer = {
+          type: "heatmap",
+          colorStops: [
+            { color: [133, 193, 200, 0], ratio: 0 },
+            { color: [133, 193, 200, 0], ratio: 0.01 },
+            { color: [133, 193, 200, 255], ratio: 0.01 },
+            { color: [133, 193, 200, 255], ratio: 0.01 },
+            { color: [144, 161, 190, 255], ratio: 0.0925 },
+            { color: [156, 129, 132, 255], ratio: 0.175 },
+            { color: [167, 97, 170, 255], ratio: 0.2575 },
+            { color: [175, 73, 128, 255], ratio: 0.34 },
+            { color: [184, 48, 85, 255], ratio: 0.4225 },
+            { color: [192, 24, 42, 255], ratio: 0.505 },
+            { color: [200, 0, 0, 255], ratio: 0.5875 },
+            { color: [211, 51, 0, 255], ratio: 0.67 },
+            { color: [222, 102, 0, 255], ratio: 0.7525},
+            { color: [233, 153, 0, 255], ratio: 0.835},
+            { color: [244, 204, 0, 255], ratio: 0.9175},
+            { color: [255, 255, 0, 255], ratio: 1 }
+          ],
+          maxDensity: 0.319,
+          minDensity: 0,
+          // settings for heatmap apply only to this scale
+          // so renderer will look consistent without
+          // dynamically updating on zoom
+          referenceScale: 36111,
+          radius: 6,
+          legendOptions: {
+            minLabel: "Low tree density",
+            maxLabel: "High tree density"
+          }
+        };
+
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "a38dd6ef1000447b94bda500084c14c7"
+          },
+          popupTemplate: {
+            title: "<i>{spc_latin}</i>",
+            content: "<b>{spc_common}</b> in <b>{health}</b> condition located at {address}, {borough}."
+          },
+          renderer,
+          blendMode: "multiply"
+        });
+
+        const map = new WebMap({
+          layers: [layer],
+          basemap: "gray-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          center: [-73.95697002727704, 40.626402246806926],
+          scale: 72223,
+          rotation: 78,
+          map,
+          constraints: {
+            maxScale: 9027,
+            snapToZoom: false
+          }
+        });
+
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "bottom-left"
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

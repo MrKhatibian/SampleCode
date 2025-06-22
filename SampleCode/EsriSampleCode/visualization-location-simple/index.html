@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Visualize all features with the same symbol | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: rgba(15, 15, 15, 1);
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        Map,
+        MapView,
+        FeatureLayer,
+        Legend
+      ) => {
+        /******************************************************************
+         *
+         * Set up renderer for visualizing all cities with a single symbol
+         *
+         ******************************************************************/
+
+        const citiesRenderer = {
+          type: "simple", // autocasts as new SimpleRenderer()
+          symbol: {
+            type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+            size: 5,
+            color: [0, 255, 255],
+            outline: null
+          }
+        };
+
+        const citiesLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/WorldCities/FeatureServer/0",
+          renderer: citiesRenderer,
+          definitionExpression: "adm = 'United States of America'"
+        });
+
+        /******************************************************************
+         *
+         * Set up renderer for visualizing all highways with a single symbol
+         *
+         ******************************************************************/
+
+        const hwyRenderer = {
+          type: "simple", // autocasts as new SimpleRenderer()
+          symbol: {
+            type: "simple-line", // autocasts as new SimpleLineSymbol()
+            width: 1,
+            color: [0, 255, 255, 0.2]
+          }
+        };
+
+        const hwyLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/TIGER_Roads_2021_view/FeatureServer/0",
+          definitionExpression: "MTFC = 'Primary Road'",
+          renderer: hwyRenderer,
+          minScale: 0,
+          maxScale: 0,
+          title: "Freeways"
+        });
+
+        /******************************************************************
+         *
+         * Set up renderer for visualizing all states with a single symbol
+         *
+         ******************************************************************/
+
+        const statesRenderer = {
+          type: "simple", // autocasts as new SimpleRenderer()
+          symbol: {
+            type: "simple-fill", // autocasts as new SimpleFillSymbol()
+            color: [0, 0, 0, 0],
+            outline: {
+              color: [50, 50, 50, 0.7],
+              width: 0.5
+            }
+          }
+        };
+
+        const statesLayer = new FeatureLayer({
+          url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/3",
+          renderer: statesRenderer
+        });
+
+        // Add the layers to the map
+        const map = new Map({
+          layers: [statesLayer, hwyLayer, citiesLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          extent: {
+            xmin: -3094834,
+            ymin: -44986,
+            xmax: 2752687,
+            ymax: 3271654,
+            spatialReference: {
+              wkid: 5070
+            }
+          },
+          spatialReference: {
+            // NAD_1983_Contiguous_USA_Albers
+            wkid: 5070
+          }
+        });
+
+        view.ui.add(
+          new Legend({
+            view: view,
+            layerInfos: [
+              {
+                layer: hwyLayer
+              }
+            ]
+          }),
+          "bottom-left"
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

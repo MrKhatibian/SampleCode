@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom popup actions per feature attribute | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      #viewDiv {
+        position: absolute;
+        right: 0;
+        left: 0;
+        top: 0;
+        bottom: 0;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/core/reactiveUtils",
+        "esri/popup/content/TextContent"
+      ], (Map, MapView, FeatureLayer, reactiveUtils, TextContent) => {
+        const map = new Map({
+          basemap: "streets-navigation-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-101.94981250000075, 41.20977753557709],
+          zoom: 5
+        });
+
+        /********************
+         * Add feature layer
+         ********************/
+        // sampling of breweries
+        const featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/OpenBeerDB/FeatureServer/0",
+          popupTemplate: {
+            title: "{name}",
+            outFields: ["*"],
+            lastEditInfoEnabled: false,
+            fieldInfos: [
+              {
+                fieldName: "name"
+              },
+              {
+                fieldName: "address1",
+                label: "address"
+              },
+              {
+                fieldName: "city"
+              },
+              {
+                fieldName: "state"
+              },
+              {
+                fieldName: "phone"
+              },
+              {
+                fieldName: "website"
+              }
+            ],
+            actions: [
+              {
+                id: "find-brewery",
+                image: "https://developers.arcgis.com/javascript/latest/sample-code/popup-custom-action/live/beer.png",
+                title: "Brewery Info"
+              }
+            ],
+            content: formatContent
+          }
+        });
+
+        // Use a function to format the content of the popup
+        function formatContent(event) {
+          const attributes = event.graphic.attributes;
+          let text = "";
+          // Only display the attributes if they exist
+          text += attributes.website
+            ? `Brewery: <a href="${attributes.website}">${attributes.name}</a><br>`
+            : `Brewery: ${attributes.name}<br>`;
+          text += attributes.address1 ? `Address:<br>${attributes.address1}<br>` : `Located in: `;
+          text += attributes.city && attributes.state ? `${attributes.city},${attributes.state}<br>` : ``;
+          text += attributes.phone !== null ? `Phone:${attributes.phone}` : ``;
+          let textElement = new TextContent({
+            text: text
+          });
+          return [textElement];
+        }
+
+        map.add(featureLayer);
+
+        view.when(() => {
+          // Watch for when features are selected
+          reactiveUtils.watch(
+            () => view.popup.selectedFeature,
+            (graphic) => {
+              if (graphic) {
+                // Set the action's visible property to true if the 'website' field value is not null, otherwise set it to false
+                const graphicTemplate = graphic.getEffectivePopupTemplate();
+                graphicTemplate.actions.items[0].visible = graphic.attributes.website ? true : false;
+              }
+            }
+          );
+          // Watch for the trigger-action event on the popup
+          reactiveUtils.on(
+            () => view.popup,
+            "trigger-action",
+            (event) => {
+              if (event.action.id === "find-brewery") {
+                const attributes = view.popup.selectedFeature.attributes;
+                // Get the 'website' field attribute
+                const info = attributes.website;
+                // Make sure the 'website' field value is not null
+                if (info) {
+                  // Open up a new browser using the URL value in the 'website' field
+                  window.open(info.trim());
+                }
+              }
+            }
+          );
+        });
+      });
+    </script>
+  </head>
+
+  <body class="light">
+    <div id="viewDiv" class="esri-widget"></div>
+  </body>
+</html>
+

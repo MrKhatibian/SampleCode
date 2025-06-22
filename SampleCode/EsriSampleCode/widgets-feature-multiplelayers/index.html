@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+
+    <title>Feature widget - Query graphics from multiple layers | Sample | 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      calcite-panel {
+        overflow: auto;
+      }
+
+      .esri-feature__title {
+        background-color: #e6e6e6;
+        padding: 0.25em;
+      }
+
+      .esri-feature__size-container {
+        background: #f5f5f5;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/core/Handles",
+        "esri/views/MapView",
+        "esri/widgets/Feature",
+        "esri/widgets/Popup",
+        "esri/core/reactiveUtils"
+      ], (WebMap, Handles, MapView, Feature, Popup, reactiveUtils) => {
+        (async () => {
+          const handles = new Handles();
+          let layerBlockArray = [];
+          let layerViews = [];
+          const panel = document.getElementById("panel");
+          const map = new WebMap({
+            portalItem: {
+              // autocasts as new PortalItem
+              id: "bad7aec9c85040b882de64b8224f174c"
+            }
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-118.91, 34.12],
+            zoom: 11,
+            popupEnabled: false,
+            popup: new Popup()
+          });
+
+          // When view is ready
+          await map.when();
+          map.layers.forEach(async (layer) => {
+            await layer.load();
+            // Create a new Calcite block for each layer and add to an array to access later.
+            const layerBlock = document.createElement("calcite-block");
+            layerBlock.id = layer.title;
+            layerBlock.heading = layer.title;
+            layerBlock.open = true;
+            layerBlockArray.push(layerBlock);
+            // Create an array of layerViews to be able to highlight selected features.
+            if (layer.type === "feature") {
+              const layerView = await view.whenLayerView(layer);
+              layerViews.push(layerView);
+            }
+          });
+
+          // On view click, first remove all the previously added features (if any).
+          reactiveUtils.on(
+            () => view,
+            "click",
+            async (event) => {
+              // Remove any existing highlighted features
+              handles.removeAll();
+              layerBlockArray.forEach((block) => {
+                while (block.lastElementChild) {
+                  block.removeChild(block.lastElementChild);
+                }
+              });
+
+              // Call fetchFeatures and pass in the click event location.
+              const fetchFeaturesResponse = await view.popup.fetchFeatures(event);
+
+              // Iterate through the returned graphics once the allGraphicsPromise resolves.
+              const graphics = await fetchFeaturesResponse.allGraphicsPromise;
+              if (graphics.length > 0) {
+                graphics.forEach((graphic) => {
+                  // For each layer's calcite block, loop through the graphics and add
+                  // the graphic to a feature widget into that block.
+                  layerBlockArray.forEach((block) => {
+                    const layerTitle = graphic.layer.title;
+                    if (block.heading === layerTitle) {
+                      panel.appendChild(block);
+                      const featureChild = new Feature({
+                        container: document.createElement("div"),
+                        graphic: graphic
+                      });
+                      block.appendChild(featureChild.container);
+                      // If the graphic comes from a feature layer, add a highlight
+                      // to that feature using the layerView.highlight method.
+                      if (graphic.layer.type === "feature") {
+                        layerViews.forEach((layerView) => {
+                          if (graphic.layer.name === layerView.layer.name) {
+                            handles.add(layerView.highlight(graphic));
+                          }
+                        });
+                      }
+                    }
+                  });
+                });
+              }
+            }
+          );
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-shell>
+      <calcite-shell-panel id="shell-panel" slot="panel-start" position="start" width-scale="l">
+        <calcite-block
+          heading="Display Feature widgets for different layers"
+          description="This map has a combination of an imagery layer and a feature layer. All of the layers have an associated popup template. Click on the map to access these individual layers and their respective details."
+        ></calcite-block>
+        <calcite-panel id="panel"></calcite-panel>
+      </calcite-shell-panel>
+      <div id="viewDiv"></div>
+    </calcite-shell>
+  </body>
+</html>
+

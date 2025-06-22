@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Basemap places | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        transition: opacity 200ms;
+      }
+
+      .tooltip>div {
+        margin: 0 auto;
+        padding: 12px;
+        border-radius: 4px;
+        box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.75);
+        transform: translate3d(-50%, -125%, 0);
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/VectorTileLayer",
+        "esri/config",
+        "esri/Basemap",
+        "esri/support/BasemapStyle",
+        "esri/core/promiseUtils",
+        "esri/rest/places",
+        "esri/rest/support/FetchPlaceParameters",
+        "esri/rest/support/PlacesQueryParameters",
+        "esri/widgets/Expand"
+      ], (
+        Map,
+        MapView,
+        VectorTileLayer,
+        esriConfig,
+        Basemap,
+        BasemapStyle,
+        promiseUtils,
+        places,
+        FetchPlaceParameters,
+        PlacesQueryParameters,
+        Expand
+     ) => (async () => {
+        const apiKey = "%YOUR_API_KEY_PROD%"
+        esriConfig.apiKey = apiKey;
+
+        // Display places with the basemap style.
+        const basemap = new Basemap({
+          style: new BasemapStyle({
+            id: "arcgis/navigation",
+            places: "attributed" // returns the place's esri_place_id
+          })
+        });
+
+        const map = new Map({
+          basemap: basemap
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-118.49178, 34.01185],
+          zoom: 15,
+          constraints: {
+            minScale: 72223.81928607849
+          }
+        });
+
+        await view.when();
+
+        // get the places layer from the basemap
+        const layer = map.allLayers.getItemAt(0);
+
+        let vtlTooltip = createTooltip();
+        let pointerMoveHandle = pointerMoveHandler();
+
+        // Call hitTest from pointer-move to get place features from the places vector tile layer
+        function pointerMoveHandler (){
+          return view.on("pointer-move", async (event) => {
+            let hits;
+            try {
+              hits = await hitTest(event);
+              let displayContent;
+              if (hits) {
+                displayContent = `Name: ${hits[0].attributes["_name"]}`;
+                vtlTooltip.show(hits.screenPoint, displayContent);
+              } else {
+                vtlTooltip.hide();
+              }
+            } catch {}
+          });
+        }
+
+        let searchedPlaceId, displayContent;
+        const tooltipDiv = document.getElementById("vtlTooltip");
+        tooltipDiv.addEventListener("click", ()=>{
+          tooltipDiv.style["pointer-events"] = "none";
+          pointerMoveHandle = pointerMoveHandler();
+          vtlTooltip.hide();
+        });
+
+        view.on("key-down", (event)=>{
+         if (event.key=== "Escape") {
+          tooltipDiv.style["pointer-events"] = "none";
+          pointerMoveHandle = pointerMoveHandler();
+          vtlTooltip.hide();
+         }
+        });
+
+        // open the place of interest's website when user clicks on POI
+        view.on("click", async(event) => {
+          hits = await hitTest(event);
+          if (hits && hits[0].attributes["esri_place_id"] !== searchedPlaceId) {
+            // remove the pointer move event handler
+            pointerMoveHandle.remove();
+            tooltipDiv.style["pointer-events"] = "auto";
+            // user clicked on a feature once, get additional info about the place using the placeId
+            const placeResult = await getPlace(hoverGraphic.attributes["esri_place_id"]);
+
+            // searchedPlaceId is used to check if user is clicking on same feature
+            searchedPlaceId = placeResult.placeId;
+
+            // create a content to display containing the place info
+            const address = [
+              placeResult?.address?.streetAddress,
+              placeResult?.address?.locality,
+              placeResult?.address?.postcode
+            ].filter(Boolean).join(", ");
+
+            const phone = [placeResult?.contactInfo?.telephone].filter(Boolean).join(", ");
+            const link = [placeResult?.contactInfo?.website].filter(Boolean).join(", ");
+            displayContent = "Name: " + hoverGraphic.attributes["_name"];
+
+            for (const [index, string] of [address, phone, link].entries()) {
+              if (string !== null && string.length > 0) {
+                if (index == 0) {
+                  displayContent += "<br> Address: " + string;
+                } else if (index == 1) {
+                  displayContent += "<br> Phone: " + string;
+                } else {
+                  displayContent += "<br> Website: <a target='_blank' href='" + string + "'>" + string + "</a>";
+                }
+              }
+            }
+            vtlTooltip.show({x: event.x, y: event.y}, displayContent);
+          }  else if (hits && hits[0]?.attributes["esri_place_id"] == searchedPlaceId) {
+            pointerMoveHandle.remove();
+            tooltipDiv.style["pointer-events"] = "auto";
+            vtlTooltip.show({x: event.x, y: event.y}, displayContent);
+          } else {
+            vtlTooltip.hide();
+          }
+        });
+
+        let hoverGraphic;
+        // debounce the hittest as user moves the mouse over the map to improve performance
+        const hitTest = await promiseUtils.debounce(async (event) => {
+          // get hit test results only from the vector tile layer
+          const hit = await view.hitTest(event, {include: layer});
+          const mapPoint = view.toMap({x: event.x, y: event.y});
+          if (hit.results.length) {
+            // check if the hittest result contains graphics from places vector tile layer
+            const placesHitTestResult = await Promise.all(hit?.results?.filter((result) => {
+              if (result.graphic.attributes["esri_place_id"]) {
+                return result.graphic;
+              };
+            })
+            .map(async (filterResult)=>{
+              if (filterResult) {
+                if (hoverGraphic?.attributes["esri_place_id"] === filterResult.graphic.attributes["esri_place_id"]){
+                  return hoverGraphic;
+                } else {
+                  hoverGraphic = filterResult.graphic.clone();
+                  return filterResult.graphic;
+                }
+              }
+            }));
+
+            placesHitTestResult.screenPoint = hit.screenPoint;
+            if (!placesHitTestResult.length) {
+              return null;
+            }
+            return placesHitTestResult;
+          } else {
+            return null;
+          }
+        });
+
+        // This function is called from as user moves the mouse over the places features
+        // Fetches additional info about the place from the places API to be displayed in a tooltip
+        async function getPlace(placeId) {
+          const fetchPlaceParameters = new FetchPlaceParameters({
+            apiKey,
+            placeId,
+            requestedFields: ["all"],
+          });
+
+          // Get the additional info about the place using the placeID
+          const fetchPlaceResult = await places.fetchPlace(fetchPlaceParameters);
+          const placeDetails = fetchPlaceResult.placeDetails;
+          return placeDetails;
+        }
+
+        // create and set up tool tip to show the labels from vector tile layer
+        // as user moves the pointer over the map
+        function createTooltip() {
+          const tooltip = document.createElement("div");
+          tooltip.id = "vtlTooltip";
+          const style = tooltip.style;
+          tooltip.setAttribute("role", "tooltip");
+          tooltip.classList.add("tooltip");
+          const textElement = document.createElement("div");
+          textElement.classList.add("esri-widget");
+          tooltip.appendChild(textElement);
+          view.container.appendChild(tooltip);
+          let x = 0, y = 0;
+          let targetX = 0, targetY = 0;
+          let visible = false;
+          // move the tooltip progressively
+          function move() {
+            x += (targetX - x) * 0.1;
+            y += (targetY - y) * 0.1;
+            if (Math.abs(targetX - x) < 1 && Math.abs(targetY - y) < 1) {
+              x = targetX;
+              y = targetY;
+            } else {
+              requestAnimationFrame(move);
+            }
+            style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px, 0)";
+          }
+          return {
+            show: (point, text) => {
+              if (!visible) {
+                x = point.x;
+                y = point.y;
+              }
+              targetX = point.x;
+              targetY = point.y;
+              style.opacity = 1;
+              visible = true;
+              textElement.innerHTML = text;
+              move();
+            },
+            hide: () => {
+              style.opacity = 0;
+              visible = false;
+            }
+          };
+        }
+
+        // Displays instructions to the user for understanding the sample
+        // And places them in an Expand widget instance
+        const sampleInstructions = document.createElement("div");
+        sampleInstructions.style.padding = "10px";
+        sampleInstructions.style.backgroundColor = "white";
+        sampleInstructions.style.width = "300px";
+        sampleInstructions.innerHTML =[
+          "<b>Move</b> the pointer over the points of interest",
+          "to see the place name.",
+          "<b>Click</b> the POI to access its address, phone # and website.",
+          "<b>Click</b> the provided link to visit the website of the place.",
+          "<b>Press Escape</b> to resume exploring other places."
+        ].join(" ");
+
+        const instructionsExpand = new Expand({
+          expandIcon: "question",
+          expandTooltip: "How to use this sample",
+          expanded: true,
+          view: view,
+          content: sampleInstructions
+        });
+        view.ui.add(instructionsExpand, "top-left");
+        setTimeout(()=>{
+          instructionsExpand.expanded = false;
+        }, 5000)
+     })());
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+
+

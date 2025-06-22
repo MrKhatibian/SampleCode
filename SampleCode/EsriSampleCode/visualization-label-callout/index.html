@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Using callout lines with labels | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #toggleView {
+        position: absolute;
+        width: 200px;
+        bottom: 40px;
+        left: 50%;
+        margin-left: -100px;
+      }
+
+      #titleDiv {
+        padding: 20px;
+        font-size: 18pt;
+        font-family: "Belleza", sans-serif;
+        text-align: center;
+        background-color: rgb(255, 255, 255, 1);
+        border-radius: 7px;
+      }
+    </style>
+
+    <script>
+      require(["esri/WebScene", "esri/layers/FeatureLayer", "esri/views/SceneView"], (
+        WebScene,
+        FeatureLayer,
+        SceneView
+      ) => {
+        /***********************************
+         * Load Scene and create a SceneView
+         ***********************************/
+        // Create view and load an existing webscene into it
+        const webscene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "ac98048566114b83807f8e0aec9332a4"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene,
+          environment: {
+            lighting: {
+              directShadowsEnabled: true
+            }
+          }
+        });
+
+        const labelClasses = [
+          { above: 4000, fontSize: 14 },
+          { above: 3000, fontSize: 12 },
+          { above: 2000, fontSize: 10 }
+        ];
+
+        // Create layer with the mountain peaks
+        const peaks = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/AlpineSummits/FeatureServer",
+          elevationInfo: {
+            mode: "relative-to-ground"
+          },
+          returnZ: false,
+          screenSizePerspectiveEnabled: false,
+          // Set a renderer that will show the points with icon symbols
+          renderer: {
+            type: "simple", // autocasts as new SimpleRenderer()
+            symbol: {
+              type: "point-3d", // autocasts as new PointSymbol3D()
+              symbolLayers: [
+                {
+                  type: "icon", // autocasts as new IconSymbol3DLayer()
+                  resource: {
+                    primitive: "circle"
+                  },
+                  material: {
+                    color: "black"
+                  },
+                  size: 4
+                }
+              ]
+            }
+          },
+          outFields: ["*"],
+
+          // Add labels with callouts of type line to the icons
+          labelingInfo: labelClasses.map(({ above, fontSize }) => ({
+            // autocasts as new LabelClass()
+            labelPlacement: "above-center", // When using callouts on labels, "above-center" is the only allowed position
+            labelExpressionInfo: {
+              expression: `$feature.NAME + TextFormatting.NewLine + Text($feature.HOEHE, "#,### m")`
+            },
+            where: "HOEHE > " + above, // The scene view picks the first label class that satisfies this condition
+            symbol: {
+              type: "label-3d", // autocasts as new LabelSymbol3D()
+              symbolLayers: [
+                {
+                  type: "text", // autocasts as new TextSymbol3DLayer()
+                  material: { color: "black" },
+                  halo: {
+                    color: [255, 255, 255, 0.7],
+                    size: 1.2
+                  },
+                  font: {
+                    family: "Belleza" // This font will be loaded from https://static.arcgis.com/fonts
+                  },
+                  size: fontSize // Larger font sizes will be prioritized when deconflicting labels
+                }
+              ],
+              // Labels need a small vertical offset that will be used by the callout
+              verticalOffset: {
+                screenLength: 75,
+                maxWorldLength: 1000,
+                minWorldLength: 30
+              },
+              // The callout has to have a defined type (currently only line is possible)
+              // The size, the color and the border color can be customized
+              callout: {
+                type: "line", // autocasts as new LineCallout3D()
+                size: 0.5,
+                color: [0, 0, 0],
+                border: {
+                  color: [255, 255, 255, 0.7]
+                }
+              }
+            }
+          }))
+        });
+
+        webscene.add(peaks);
+
+        // Make the button toggle between top-down and bird eye's view
+        const button = document.getElementById("toggleView");
+        button.addEventListener("click", () => {
+          if (button.innerHTML == "Top view") {
+            button.innerHTML = "Bird eye's view";
+          } else {
+            button.innerHTML = "Top view";
+          }
+          view.goTo(view.camera.tilt < 1 ? { tilt: 80 } : { tilt: 0 }).catch((error) => {
+            if (error.name !== "AbortError") {
+              console.error(error);
+            }
+          });
+        });
+
+        // Add the title to the map
+        view.ui.add("titleDiv", "top-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv" class="esri-widget"></div>
+    <calcite-button id="toggleView">Toggle view</calcite-button>
+    <div id="titleDiv">Peaks higher than 2,500 m</div>
+  </body>
+</html>
+

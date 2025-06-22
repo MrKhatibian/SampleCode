@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+*/
+import{O as n}from"./ray.js";import{b as r,i as s,c as t,l as o,e}from"./vec3.js";import{c as i}from"./vec3f64.js";import{c as a}from"./lineSegment.js";import"./plane.js";function c(n,t,o){const e=1e-5,{direction:i,origin:a}=t,{p0:c,p1:p,p2:f}=n,m=p[0]-c[0],u=p[1]-c[1],j=p[2]-c[2],b=f[0]-c[0],l=f[1]-c[1],g=f[2]-c[2],v=i[1]*g-l*i[2],w=i[2]*b-g*i[0],d=i[0]*l-b*i[1],h=m*v+u*w+j*d;if(h>-e&&h<e)return!1;const x=1/h,y=a[0]-c[0],M=a[1]-c[1],O=a[2]-c[2],S=x*(y*v+M*w+O*d);if(S<0||S>1)return!1;const k=M*j-u*O,q=O*m-j*y,z=y*u-m*M,A=x*(i[0]*k+i[1]*q+i[2]*z);return!(A<0||S+A>1||(o&&(r(o,i,x*(b*k+l*q+g*z)),s(o,a,o)),0))}function p(n,r,s){const t=r[0]-n[0],o=r[1]-n[1],e=s[0]-n[0],i=s[1]-n[1];return.5*Math.abs(t*i-o*e)}function f(n,r,s){return t(m,r,n),t(u,s,n),.5*o(e(m,m,u))}new n(a),new n((()=>({p0:i(),p1:i(),p2:i()})));const m=i(),u=i();export{p as a,f as b,c as i};

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Chồng xếp lớp</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Chồng xếp lớp"></h2>
+        <hr/>
+    <p>Chồng xếp lớp kết hợp hai hoặc nhiều lớp v&agrave;o th&agrave;nh một lớp duy nhất. Bạn c&oacute; thể hiểu chồng xếp như thao t&aacute;c nh&igrave;n xuy&ecirc;n qua một tập bản đồ v&agrave; tạo ra một bản đồ duy nhất c&oacute; chứa tất cả c&aacute;c th&ocirc;ng tin t&igrave;m thấy trong tập bản đồ n&agrave;y. Chồng xếp kh&ocirc;ng chỉ l&agrave; sự kết hợp về kh&ocirc;ng gian; m&agrave; tất cả c&aacute;c thuộc t&iacute;nh của đối tượng trong lớp chồng xếp đều được đưa v&agrave;o sản phẩm cuối c&ugrave;ng. Chồng xếp được sử dụng để trả lời một trong những c&acirc;u hỏi cơ bản nhất về địa l&yacute;: C&aacute;i g&igrave; nằm tr&ecirc;n c&aacute;i g&igrave;? 
+    </p>
+    <p>Dưới đ&acirc;y l&agrave; c&aacute;c v&iacute; dụ:
+        <ul>
+            <li>L&ocirc; đất n&agrave;o nằm trong v&ugrave;ng ngập lụt 100 năm? (Kh&aacute;i niệm Trong v&ugrave;ng chỉ l&agrave; một c&aacute;ch n&oacute;i của nằm tr&ecirc;n.)
+                  
+            </li>
+            <li>Loại h&igrave;nh sử dụng đất n&agrave;o đang nằm tr&ecirc;n loại đất n&agrave;o?
+                 
+            </li>
+            <li>Giếng nước n&agrave;o nằm trong căn cứ qu&acirc;n sự bị bỏ hoang?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Nếu chọn  <b>Sử dụng phạm vi bản đồ hiện tại</b>, th&igrave; chỉ c&aacute;c đối tượng được nh&igrave;n thấy trong lớp đầu v&agrave;o v&agrave; lớp phủ b&ecirc;n trong phạm vi bản đồ hiện tại mới được chồng lớp l&ecirc;n. Nếu bỏ chọn mục n&agrave;y, tất cả c&aacute;c đối tượng trong cả lớp đầu v&agrave;o v&agrave; lớp chồng xếp sẽ được chồng xếp, ngay cả khi ch&uacute;ng nằm ngo&agrave;i phạm vi bản đồ hiện tại.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Chọn lớp đầu vào</h2></div>
+        <hr/>
+        <div>
+            <p>Lớp điểm, đường, hoặc v&ugrave;ng sẽ được chồng xếp.
+            </p>
+            <p>B&ecirc;n cạnh việc chọn một lớp từ bản đồ của bạn, bạn c&oacute; thể chọn  <b>Chọn Lớp Ph&acirc;n t&iacute;ch</b> ở dưới c&ugrave;ng trong danh s&aacute;ch xổ xuống. T&ugrave;y chọn n&agrave;y mở ra một thư viện, tại đ&oacute; bạn c&oacute; thể duyệt v&agrave; chọn c&aacute;c bộ dữ liệu từ nhiều nguồn kh&aacute;c nhau để sử dụng trong ph&acirc;n t&iacute;ch của m&igrave;nh. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Chọn lớp chồng xếp</h2></div>
+        <hr/>
+        <div>
+            <p>Lớp n&agrave;y sẽ được chồng l&ecirc;n lớp đầu v&agrave;o.  
+            </p>
+            <p>B&ecirc;n cạnh việc chọn một lớp dữ liệu từ bản đồ, bạn c&oacute; thể chọn mục  <b>Chọn Lớp Ph&acirc;n t&iacute;ch</b> ở dưới danh s&aacute;ch thả xuống để t&igrave;m đến nội dung của m&igrave;nh cho bộ dữ liệu chia sẻ tệp dữ liệu lớn hoặc lớp đối tượng. Bạn c&oacute; thể t&ugrave;y &yacute; &aacute;p dụng bộ lọc tr&ecirc;n lớp đầu v&agrave;o hoặc &aacute;p dụng lựa chọn tr&ecirc;n c&aacute;c lớp được lưu trữ được th&ecirc;m v&agrave;o bản đồ của bạn. C&aacute;c bộ lọc v&agrave; lựa chọn chỉ được &aacute;p dụng cho ph&acirc;n t&iacute;ch. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Chọn phương pháp chồng xếp</h2></div>
+        <hr/>
+        <div>
+            <p>X&aacute;c định phương ph&aacute;p chồng xếp sẽ được d&ugrave;ng để kết hợp lớp đầu v&agrave;o v&agrave; lớp chồng xếp.  
+
+                <ul>
+                    <li> <b>Giao cắt</b>&mdash;Chỉ c&aacute;c đối tượng hoặc c&aacute;c phần của đối tượng trong lớp chồng xếp m&agrave; chồng khớp với c&aacute;c đối tượng trong lớp đầu v&agrave;o mới được kết hợp.
+                    </li>
+                    <li> <b>X&oacute;a</b>&mdash;Chỉ c&aacute;c đối tượng hoặc c&aacute;c phần của đối tượng trong lớp chồng xếp m&agrave; kh&ocirc;ng chồng khớp với c&aacute;c v&ugrave;ng trong lớp đầu v&agrave;o mới được kết hợp.
+                    </li>
+                    <li> <b>Hợp nhất</b>&mdash;Tất cả đối tượng ở cả hai lớp sẽ được kết hợp, tạo ra một li&ecirc;n kết h&igrave;nh học giữa lớp đầu v&agrave;o v&agrave; lớp chồng xếp. Tất cả đối tượng v&agrave; thuộc t&iacute;nh của ch&uacute;ng sẽ được ghi v&agrave;o lớp n&agrave;y.
+                    </li>
+                    <li> <b>X&aacute;c định</b>&mdash;C&aacute;c đối tượng hoặc c&aacute;c phần của đối tượng trong lớp đầu v&agrave;o v&agrave; lớp chồng xếp sẽ được kết hợp. C&aacute;c đối tượng hoặc c&aacute;c phần của đối tượng chồng khớp ở cả lớp đầu v&agrave;o v&agrave; lớp chồng xếp sẽ được ghi v&agrave;o lớp kết quả.
+                    </li>
+                    <li> <b>Ph&acirc;n biệt đối xứng</b>&mdash;C&aacute;c đối tượng hoặc c&aacute;c phần của đối tượng trong lớp đầu v&agrave;o v&agrave; lớp chồng xếp m&agrave; kh&ocirc;ng chồng khớp với nhau th&igrave; sẽ được kết hợp.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Tên lớp kết quả</h2></div>
+        <hr/>
+        <div>
+            <p>T&ecirc;n lớp sẽ được tạo trong  <b>Nội dung của t&ocirc;i</b> v&agrave; được th&ecirc;m v&agrave;o bản đồ. Kết quả sẽ c&oacute; c&ugrave;ng kiểu kh&ocirc;ng gian(v&ugrave;ng, đường hoặc điểm) như lớp đầu v&agrave;o v&agrave; lớp chồng xếp. T&ecirc;n mặc định dựa v&agrave;o phương ph&aacute;p chồng lớp v&agrave; t&ecirc;n lớp đầu v&agrave;o. Nếu lớp đ&atilde; tồn tại, bạn sẽ được y&ecirc;u cầu cung cấp t&ecirc;n kh&aacute;c.
+            </p>
+            <p>Sử dụng chức năng  <b>Lưu kết quả trong</b> hộp xổ xuống để chỉ định t&ecirc;n thư mục trong <b>Nội Dung Của T&ocirc;i</b> để lưu trữ kết quả của bạn.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

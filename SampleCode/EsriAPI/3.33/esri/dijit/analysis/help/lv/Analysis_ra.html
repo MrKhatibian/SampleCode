@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="raToolbox">
+        <p>Rastra analīze ļauj veikt lielu rastra datu kopu analīzi, izmantojot  ArcGIS Image Server. Tādējādi varat ātrāk analizēt lielāku datu apjomu, izmantojot servera jaudu. Rīku kopas, kas pa&scaron;laik ir pieejamas, izmantojot  Portal for ArcGIS tīmekļa lietotāju pieredzi, ir  <b>Apkopot datus</b>, <b>Analizēt modeļus</b>, <b>Izmantot tuvumu</b>, <b>Analizēt attēlu</b>, <b>Analizēt reljefu</b>, <b>Pārvaldīt datus</b>, <b>Deep Learning</b> un <b>Multidimensiju analīze</b>.
+        </p>
+    </div>
+    <div id="SummarizeDataCategory" class="smallsize">
+        <h2>Apkopot datus</h2>
+        <hr/>
+        <p>&Scaron;ajā rīku komplektā ir iekļauts rīks, kas ļauj aprēķināt rastra slāņa statistiku jūsu definētās platības robežās. 
+            <ul>
+                <li> <b>Apkopot rastu &scaron;eit:</b> aprēķina statistiku rastru &scaron;ūnām, kas atrodas definētās platības robežās.
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="SummarizeRasterWithinTool" class="largesize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Apkopot rastru šeit:</h2></td>
+                    <td>
+                    <img src="../images/GUID-D61C156C-2B2C-488C-BF28-B6CB9277BF4B-web.png" class="titleImage" alt="Rīks Apkopot rastru &scaron;eit:">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Aprēķina kopsavilkuma statistiku rastru &scaron;ūnām definētās platībās.
+            </p>
+            <p>Daži pielietojumu piemēri: 
+
+                <ul>
+                    <li>Ja ir dots ūdens&scaron;ķirtnes platības slānis un augstuma rastra slānis, aprēķiniet augstuma diapazonu katrā ūdens&scaron;ķirtnē, lai noteiktu, kurās no tām ir spēcīgākā ūdens plūsma.
+                        
+
+                    </li>
+                    <li>Ja ir dots administratīvās pārvaldības vienību slānis un zemes lietojuma kategoriju rastra slānis, aprēķiniet zemes lietojuma dispersiju katrā pārvaldības platībā, lai noteiktu, kurās no tām jāiegulda visvairāk darba, lai izveidotu pārvaldības plānu.
+                        
+
+                    </li>
+                </ul>
+                
+            </p>
+            <br/>
+        </div>
+    <div id="AnalyzePatternsCategory" class="regularsize">
+        <h2>Modeļu analīze</h2>
+        <hr/>
+        <p>&Scaron;ie rīki palīdzēs jums identificēt, aprēķināt un vizualizēt jūsu datu telpiskos modeļus. 
+
+            <ul>
+                <li>Rīks  <b>Blīvuma aprēķinā&scaron;ana</b> izmanto kādas parādības zināmo daudzumu un izveido blīvuma karti, izklājot &scaron;o daudzumu visā kartē.
+                    
+
+                </li>
+                <li>Rīks  <b>Interpolēt punktus</b> sniedz iespēju prognozēt vērtības jaunos izvietojumos, pamatojoties uz mērījumiem no punktu kolekcijas.
+                    
+
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="CalculateDensityRasterTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Blīvuma aprēķināšana</h2></td>
+                    <td>
+                    <img src="../images/GUID-4EE4838C-E210-43CE-99C7-1A648A18C10B-web.png" class="titleImage" alt="Blīvuma aprēķinā&scaron;anas rīks">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Rīks Blīvuma aprēķinā&scaron;ana izmanto kādas parādības zināmo daudzumu un izveido blīvuma karti, izklājot &scaron;o daudzumu visā kartē. Varat izmantot &scaron;o rīku, piemēram, lai attēlotu zibens spērienu vai tornado koncentrāciju, piekļuvi veselības aprūpes iestādēm un apdzīvotības blīvumu.
+            </p>
+            <br/>
+        </div>
+        <div id="InterpolatePointsEBKTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Punktu interpolēšana</h2></td>
+                    <td>
+                    <img src="../images/GUID-06D80BB3-7154-4FAA-9C9B-D665450EF3BC-web.png" class="titleImage" alt="Punktu interpolē&scaron;anas rīks">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks sniedz iespēju prognozēt vērtības jaunos izvietojumos, pamatojoties uz mērījumiem no punktu kolekcijas. Rīks izmanto punkta datus ar vērtībām katrā punktā un atgriež teritorijas, ko klasificē prognozētās vērtības. Varat izmantot &scaron;o rīku, piemēram, lai prognozētu lietusgāžu līmeni ūdens&scaron;ķirtnē, pamatojoties uz mērījumiem, kas iegūti no atsevi&scaron;ķām lietus mērierīcēm.
+            </p>
+            <br/>
+        </div>
+    <div id="UseProximityCategory" class="regularsize">
+        <h2>Lietot tuvumu</h2>
+        <hr/>
+        <p>&Scaron;ie rīki palīdz jums atbildēt uz vienu no visbiežāk uzdotajiem jautājumiem par telpisko analīzi: &ldquo;Kas atrodas tuvumā kam?&rdquo;
+
+            <ul>
+                <li>Rīks  <b>Aprēķināt attālumu</b> aprēķina Eiklīda attālumu, virzienu un sadalījumu no viena avota vai avotu kopas.
+                    
+
+                </li>
+                <li>Rīks  <b>Optimālo ceļo&scaron;anas izmaksu tīkla noteik&scaron;ana</b> aprēķina optimālo izmaksu tīklu no ievades reģionu kopas.
+                    
+
+                </li>
+                <li>Rīks  <b>Noteikt ceļo&scaron;anas izmaksu ceļu kā polilīniju</b> aprēķina minimālo izmaksu polilīniju ceļu starp avotiem un zināmiem galamērķiem.
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="CalculateDistanceTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Aprēķināt attālumu</h2></td>
+                    <td>
+                    <img src="../images/GUID-34E2E6F3-2F60-43F5-B499-D5735DE08602-web.png" class="titleImage" alt="Aprēķināt attālumu">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Aprēķina Eiklīda attālumu, virzienu un sadalījumu no viena avota vai avotu kopas. Jūs varat izmantot &scaron;o rīku, lai noteiktu, kādā attālumā no ceļa, ēkas vai parka atrodas novietojums. Jūs varat arī noteikt, kurā virzienā no novietojuma jums jāceļo, lai atgrieztos atpakaļ pie avota pa vistaisnāko ceļu. Jūs varat redzēt ikvienu novietojumu pētāmajā teritorijā, kas ir vistuvākais avots.
+            </p>
+            <br/>
+        </div>
+        <div id="DetermineOptimumTravelCostNetworkTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Optimālo ceļošanas izmaksu tīklu noteikšana</h2></td>
+                    <td>
+                    <img src="../images/GUID-097BDD6E-0AD8-44F2-BB70-C5395F4B1AF4-web.png" class="titleImage" alt="Rīka Optimālo ceļo&scaron;anas izmaksu tīklu noteik&scaron;ana ilustrācija">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Aprēķina optimālo ceļo&scaron;anas izmaksu tīklu no ievades reģionu kopas.
+            </p>
+            <br/>
+        </div>
+        <div id="DetermineTravelCostPathAsPolylineTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Noteikt ceļošanas izmaksu ceļu kā polilīniju</h2></td>
+                    <td>
+                    <img src="../images/GUID-9A27DEB7-0276-483C-A12F-3E70D636550D-web.png" class="titleImage" alt="Rīka Noteikt ceļo&scaron;anas izmaksu ceļu kā polilīniju ilustrācija">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Aprēķina minimālo izmaksu polilīniju ceļu starp avotiem un zināmiem galamērķiem.
+            </p>
+            <br/>
+        </div>
+    <div id="AnalyzeImageCategory" class="smallsize">
+        <h2>Analizēt attēlu</h2>
+        <hr/>
+        <p>Zemāk norādītais rīks palīdz analizēt attēlus. 
+            <ul>
+                <li>Rīks  <b>Lietot rastra funkciju sagatavi</b> apstrādā jūsu attēlus, izmantojot funkciju vai funkciju virkni, kā norādīts rastra funkcijas sagatavē.
+                </li>
+                <li> <b>Pārraudzīt veģetāciju</b> attēlā nosaka veģetāciju, pamatojoties uz aritmētiskām joslu darbībām.
+                    
+
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="ApplyRFxTemplateTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Lietot rastra funkciju sagatavi</h2></td>
+                    <td>
+                    <img src="../images/GUID-6464A140-88C7-4CCB-BB2A-07548ADC9981-web.png" class="titleImage" alt="Lietot rastra funkciju sagatavi">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Apstrādā jūsu attēlus, izmantojot funkciju vai funkciju virkni, kā norādīts rastra funkcijas sagatavē.
+            </p>
+            <br/>
+        </div>
+        <div id="MonitorVegetationTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Pārraudzīt veģetāciju</h2></td>
+                    <td>
+                    <img src="../images/GUID-7763FCC0-2EA1-463B-98D0-4EBDF6150907-web.png" class="titleImage" alt="Portāla veģetācijas pārraudzības rīks">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Veic aritmētisku darbību vairākjoslu rastra slāņa joslās, lai atklātu pētījumu teritorijas veģetācijas seguma informāciju.
+            </p>
+            <br/>
+        </div>
+    <div id="AnalyzeTerrainCategory" class="regularsize">
+        <h2>Reljefa analīze</h2>
+        <hr/>
+        <p>&Scaron;os rīkus var izmantot, lai analizētu rastra virsmas. 
+            <ul>
+                <li>Rīks  <b>Slīpuma aprēķinā&scaron;ana</b> aprēķina reljefa slīpumu.
+                    
+
+                </li>
+                <li>Rīks  <b>Aspekta atvasinā&scaron;ana</b> aprēķina stāvākā slīpuma virzienu katram novietojumam.
+                    
+
+                </li>
+                <li>Rīks  <b>Redzamības lauka izveide</b> nosaka, ko var redzēt no jebkura punkta ainavā.
+                    
+
+                </li>
+                <li>Rīks  <b>Ūdens&scaron;ķirtne</b> aprēķina atbilsto&scaron;o teritoriju virs identificētajām atra&scaron;anās vietām uz virsmas.
+                    
+
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="CalculateSlopeTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Aprēķināt slīpumu</h2></td>
+                    <td>
+                    <img src="../images/GUID-D33862C6-01BB-445E-B0C3-BC8B8C1858DA-web.png" class="titleImage" alt="Portāla rīks Aprēķināt slīpumu">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Identificē virsmu, kas norāda ievades augstuma datu slīpumu. Slīpums norāda augstuma maiņas līmeni katrai digitālā augstuma modeļa (digital elevation model&nbsp;&mdash; DEM) &scaron;ūnai.
+            </p>
+            <br/>
+        </div>
+        <div id="DeriveAspectTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Atvasināt aspektu</h2></td>
+                    <td>
+                    <img src="../images/GUID-D03FF025-0530-4D0D-87A3-B25D6716F8F0-web.png" class="titleImage" alt="Portāla rīks Atvasināt aspektu">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Identificē lejupvērstā slīpuma virzienu maksimālajam vērtības maiņas līmenim no katras &scaron;ūnas uz tās kaimiņiem. Aspektu var uzskatīt par slīpuma virzienu.
+            </p>
+            <br/>
+        </div>
+        <div id="CreateViewshedRasterTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Izveidot redzamības lauku</h2></td>
+                    <td>
+                    <img src="../images/GUID-BB8B8CAF-330E-4C41-9D94-AF4728D0D0F3-web.png" class="titleImage" alt="Rīks Izveidot redzamības lauku">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Nosaka novietojumus uz rastra virsmas, kas ir redzami vērotāju kopai.
+            </p>
+            <br/>
+        </div>
+        <div id="WatershedTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Ūdensšķirtne</h2></td>
+                    <td>
+                    <img src="../images/GUID-AF749369-8C2D-46FF-9D74-2CF7CAB7C7B0-web.png" class="titleImage" alt="Ūdens&scaron;ķirtnes uzdevums">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Nosaka atbilsto&scaron;o teritoriju virs rastra &scaron;ūnu kopas.
+            </p>
+            <br/>
+        </div>
+    <div id="ManageDataCategory" class="regularsize">
+        <h2>Datu pārvaldība</h2>
+        <hr/>
+        <p>&Scaron;ie rīki tiek izmantoti gan ikdienas ģeogrāfisko datu pārvaldī&scaron;anai, gan datu apvieno&scaron;anai pirms analīzes. 
+            <ul>
+                <li> <b>Izvilkt rastru</b> izgriež rastra datu kopas fragmentus turpmākas analīzes veik&scaron;anai.
+                    
+
+                </li>
+                <li> <b>Pārkartēt vērtības</b> pie&scaron;ķir dažādas vērtības rastru &scaron;ūnām.
+                    
+
+                </li>
+                <li>Rīks  <b>Pārvērst elementu par rastru</b> vektora datus pārvēr&scaron; rastra attēlā.
+                    
+
+                </li>
+                <li>Rīks  <b>Pārvērst rastru par elementu</b> rastra datus pārvēr&scaron; vektoru attēlā.
+                    
+
+                </li>
+                <li>Rīks  <b>Paraugs</b> izgūst datus no rastra vai rastru kopām norādītās atra&scaron;anās vietās.
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="ExtractRasterTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Izvilkt rastru</h2></td>
+                    <td>
+                    <img src="../images/GUID-DC9CBCB9-A07C-42D3-A0CB-2FB1483CBF4C-web.png" class="titleImage" alt="Portāla rīks Izvilkt rastru">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Izvelciet &scaron;ūnas no rastra, pamatojoties uz citas datu kopas vērtību, formu vai pārklājumu.
+            </p>
+            <br/>
+        </div>
+        <div id="RemapValuesTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Pārkartēt vērtības</h2></td>
+                    <td>
+                    <img src="../images/GUID-4006E442-A60B-469A-891D-5ED442F64CB8-web.png" class="titleImage" alt="Portāla rīks Pārkartēt vērtības">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Mainiet atsevi&scaron;ķas &scaron;ūnu vērtības vai to diapazonus uz jaunām vērtībām.
+            </p>
+            <br/>
+        </div>
+        <div id="ConvertFeatureToRasterTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Konvertēt elementu par rastru</h2></td>
+                    <td>
+                    <img src="../images/GUID-FC535A9C-A946-419A-9A85-95EB31E4D3A0-web.png" class="titleImage" alt="Rīks konvertēt elementu par rastru">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Izveidojiet jaunu rastra datu kopu no eso&scaron;ās elementu datu kopas.
+            </p>
+            <br/>
+        </div>
+        <div id="ConvertRasterToFeatureTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Pārvērst rastru par elementu</h2></td>
+                    <td>
+                    <img src="../images/GUID-7BBBCE28-2FDA-46B8-99D7-65F560AB2F2B-web.png" class="titleImage" alt="Rīks Pārvērst rastru par elementu">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Izveidojiet jaunu elementu datu kopu no eso&scaron;ās rastra datu kopas.
+            </p>
+            <br/>
+        </div>
+        <div id="SampleTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Paraugs</h2></td>
+                    <td>
+                    <img src="../images/GUID-3950CCA3-C1D0-493F-A33D-93673443ADD2-web.png" class="titleImage" alt="Paraugs">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>Izveido tabulas vai punktu elementu klasi ar datu vērtībām norādītajās atra&scaron;anās vietās, kas izgūtas no rastra vai rastru kopas.
+            </p>
+            <br/>
+        </div>
+    <div id="DeepLearningCategory" class="largesize">
+        <h2>Deep Learning</h2>
+        <hr/>
+        <p>&Scaron;ie rīki tiek izmantoti, lai noteiktu vai klasificētu konkrētus attēla elementus vai klasificētu pikseļus rastra datu kopā. Deep Learning ir mākslīgā intelekta ma&scaron;īnmācību metode, kas nosaka elementus attēlos, izmantojot vairākus slāņus neironu tīklos, kur katrs slānis spēj izgūt vienu vai vairākus unikālus attēla elementus. &Scaron;ie rīki izmanto modeļus, kas ir trenēti noteikt īpa&scaron;as iezīmes tre&scaron;ās puses Deep Learning struktūrās, piemēram, TensorFlow, CNTK un Keras&mdash;un izvades elementus vai klases kartes.
+            <ul>
+                <li> <b>Klasificēt pikseļus, izmantojot Deep Learning,</b> veido klasificētu rastru, izmantojot Deep Learning modeli.
+                </li>
+                <li> <b>Noteikt objektus, izmantojot Deep Learning</b> izveido elementu klasi, kas satur objektus, kurus funkcija atrod ievades rastrā, izmantojot apmācītu Deep Learning modeli.
+                </li>
+                <li> <b>Klasificēt objektus, izmantojot Deep Learning</b> izveido elementu klasi vai tabulu, kurā katram ievades rastra ievades objektam tiek pie&scaron;ķirts klases apzīmējums, izmantojot apmācītu Deep Learning modeli.
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="ClassifyPixelsUsingDeepLearningTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Funkcija Klasificēt pikseļus, izmantojot Deep Learning</h2></td>
+                    <td>
+                    <img src="../images/GUID-88BE63A6-B06C-4C61-9AB1-8DA5A08C6783-web.png" class="titleImage" alt="Klasificēt pikseļus, izmantojot Deep Learning">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks izmanto trenētu Deep Learning modeli uz ievades rastra, lai izveidotu klasificētu rastru, un katram derīgajam pikselim ir pie&scaron;ķirta klases atzīme.
+            </p>
+            <br/>
+        </div>
+        <div id="DetectObjectsUsingDeepLearningTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Funkcija Noteikt objektus, izmantojot Deep Learning</h2></td>
+                    <td>
+                    <img src="../images/GUID-EE76A33E-0B8F-48EE-94F8-782FAD241D72-web.png" class="titleImage" alt="Noteikt objektus, izmantojot Deep Learning">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks izmanto trenētu Deep Learning modeli uz ievades rastra, lai izveidotu elementu klasi, kurā ir atrastie objekti. &Scaron;ie elementi var būt lodziņi vai laukumi ap atrastajiem objektiem vai punkti objektu centros.
+            </p>
+            <br/>
+        </div>
+        <div id="ClassifyObjectsUsingDeepLearningTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Klasificēt objektus, izmantojot Deep Learning</h2></td>
+                    <td>
+                    <img src="../images/GUID-F31B4A21-3E5C-4667-B66B-155CC35CD62B-web.png" class="titleImage" alt="Klasificēt objektus, izmantojot Deep Learning">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks izmanto Deep Learning modeli ievades rastra vai papildu elementu klasei, lai izveidotu elementu klasi vai tabulu, kurā katram ievades objektam ir pie&scaron;ķirts klases apzīmējums.
+            </p>
+            <br/>
+        </div>
+    <div id="MultidimensionalAnalysisCategory" class="largesize">
+        <h2>Multidimensiju analīze</h2>
+        <hr/>
+        <p>Multidimensiju analīzes rīku komplektā pieejamie rīki jums ļauj analizēt zinātniskos datus dažādu mainīgo un dimensiju ietvaros.
+        </p>
+        <p>Multidimensiju dati ir dažādos laikos, dziļumos un augstumos savākti dati. &Scaron;ī veida datus parasti izmanto atmosfēras, okeanogrāfijas un zemes zinātnē. &Scaron;ajā rīku komplektā jūsu varat analizēt multidimensiju rastra datus dažādos formātos, tostarp netCDF, HDF, GRIB, multidimensiju mozaīkas datu kopā un Esri Cloud Raster Format (CRF).
+        </p>
+        <p>Tālāk redzamajā tabulā ir norādīti multidimensiju analīzes rīki un īss katra rīka aprasts.
+            <ul>
+                <li>Rīks  <b>Apkopot multidimensiju rastru</b> ģenerē multidimensiju rastra datu kopu, dimensijā apkopojot eso&scaron;ā multidimensiju rastra mainīgos.
+                </li>
+                <li>Rīks  <b>Ģenerēt multidimensiju anomāliju</b> aprēķina katra sektora anomāliju multidimensiju rastrā, lai ģenerētu multidimensiju rastru.
+                </li>
+                <li>Rīks  <b>Ģenerēt tendences rastru</b> izvērtē katra pikseļa tendenci dimensijā vienam vai vairākiem multidimensiju rastra mainīgajiem.
+                </li>
+                <li>Rīks  <b>Prognozēt, izmantojot tendenču rastru</b> aprēķina prognozēto multidimensiju rastru, izmantojot rīka <b>Ģenerēt tendenču rastru</b> izvades tendenču rastru.
+                </li>
+                <li>Rīks  <b>Atrast argumenta statistiku</b> izgūst dimensijas vērtību jeb joslas indeksu, pie kura katram pikselim multidimensiju vai vairāku joslu rastrā tiek panākta konkrēta statistika.
+                </li>
+            </ul>
+            
+        </p>
+    </div>
+        <div id="AggregateMultidimensionalRasterTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Apkopot multidimensiju rastru</h2></td>
+                    <td>
+                    <img src="../images/GUID-2C2320A3-EC6E-4FFC-B59B-9551BB02C545-web.png" class="titleImage" alt="Apkopot multidimensiju rastru">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks ģenerē multidimensiju rastru datu kopu, apkopojot dimensijā eso&scaron;os multidimensiju rastra mainīgos.
+            </p>
+            <br/>
+        </div>
+        <div id="FindArgumentStatisticsTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Atrast argumenta statistiku</h2></td>
+                    <td>
+                    <img src="../images/GUID-6DE9D49F-C9CA-48B8-B14F-C8EF05FBFA42-web.png" class="titleImage" alt="Atrast argumenta statistiku">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks izgūst dimensijas vērtību jeb joslas indeksu, pie kura katram pikselim multidimensiju vai vairāku joslu rastrā tiek panākta konkrēta statistika.
+            </p>
+            <br/>
+        </div>
+        <div id="GenerateMultidimensionalAnomalyTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Ģenerēt multidimensiju anomāliju</h2></td>
+                    <td>
+                    <img src="../images/GUID-8D54C66F-5C16-4EE5-93E9-80722D10AF12-web.png" class="titleImage" alt="Ģenerēt multidimensiju anomāliju">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks aprēķina katras sadaļas anomāliju multidimensiju rastrā, lai ģenerētu multidimensiju rastru.
+            </p>
+            <br/>
+        </div>
+        <div id="GenerateTrendRasterTool" class="smallsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Ģenerēt tendences rastru</h2></td>
+                    <td>
+                    <img src="../images/GUID-A95F821A-8CAF-45F3-93E5-14BDF5DA0BCD-web.png" class="titleImage" alt="Ģenerēt tendences rastru">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks izvērtē katra pikseļa tendenci dimensijā vienam vai vairākiem multidimensiju rastra mainīgajiem.
+            </p>
+            <br/>
+        </div>
+        <div id="PredictUsingTrendRasterTool" class="regularsize">
+            <table class="toolSummaryTable">
+                <thead></thead>
+                <tbody><tr>
+                    <td><h2>Prognozēt, izmantojot tendenču rastru</h2></td>
+                    <td>
+                    <img src="../images/GUID-E3758820-51A9-46DE-AAF6-E27B68DE4012-web.png" class="titleImage" alt="Prognozēt, izmantojot tendenču rastru">
+                    </td>
+                </tr></tbody>
+            </table>
+<hr/>
+            <p>&Scaron;is rīks aprēķina prognozēto multidimensiju rastru, izmantojot rīka  <b>Ģenerēt tendenču rastru</b> izvades tendenču rastru.
+            </p>
+            <br/>
+        </div>
+</div>
+</html>

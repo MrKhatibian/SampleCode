@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>VoxelLayer and time | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #timeSlider {
+        position: absolute;
+        left: 5%;
+        right: 5%;
+        bottom: 20px;
+      }
+    </style>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend",
+        "esri/TimeExtent",
+        "esri/widgets/TimeSlider"
+      ], (SceneView, WebScene, Expand, Legend, TimeExtent, TimeSlider) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "220c04143e704fbe8b17cb3d30639f3b"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: false
+        });
+        const timeSlider = new TimeSlider({
+            container: "timeSlider",
+            view: view,
+            timeVisible: true, // Show the time stamps on the timeSlider
+            loop: true,
+            mode: "instant", // The slider will show temporal data that falls on a single instance in time.
+            playRate: 3000
+        });
+        view.ui.add(legendExpand, "top-right");
+        map.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          view.whenLayerView(vxlLayer).then((layerView) => {
+            const vxlVolume = vxlLayer.getVolume(null);
+            const vxlVolumeType = vxlVolume.volumeType;
+            // Check that the volume type is xyzt
+            if (vxlVolumeType === "xyzt") {
+                // Configure the timeSlider to use the layer's timeInfo.stops
+                timeSlider.fullTimeExtent = vxlLayer.timeInfo.fullTimeExtent;
+                timeSlider.stops = {
+                    dates: vxlLayer.timeInfo.stops
+                };
+                timeSlider.tickConfigs = [{
+                  mode: "position",
+                  values: vxlLayer.timeInfo.stops.map((date) => date.getTime()),
+                  labelsVisible: true,
+                  labelFormatFunction: (value) => {
+                    const date = new Date(value);
+                    return `${date.getFullYear()}`;
+                  }
+                }];
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="timeSlider"></div>
+  </body>
+</html>
+

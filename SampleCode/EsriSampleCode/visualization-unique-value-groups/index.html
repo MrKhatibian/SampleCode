@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Unique value groups with headings | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #viewDiv {
+        float: left;
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 75%;
+      }
+      #legend-node {
+        float: left;
+        width: 25%;
+        height: 100%;
+        padding: 1em;
+        overflow: scroll;
+        max-height: 100%;
+        border-width: 2px;
+        border-color: #323232;
+        border-style: solid;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend"
+      ], (
+        MapView,
+        WebMap,
+        FeatureLayer,
+        Legend
+      ) => {
+
+        const renderer = {
+          type: "unique-value",
+          field: "zonecode",
+          uniqueValueGroups: [{
+            heading: "Commercial",
+            classes: [{
+              label: "C-1 | Neighborhood Commercial",
+              symbol: createSymbol([189,145,145]),
+              values: "C-1"
+            }, {
+              label: "C-2 | Community Commercial",
+              symbol: createSymbol([255,179,219]),
+              values: "C-2"
+            }, {
+              label: "C-3 | Major Commercial",
+              symbol: createSymbol([255,0,0]),
+              values: "C-3"
+            }]
+          }, {
+            heading: "Office",
+            classes: [{
+              label: "GO | General Office",
+              symbol: createSymbol([176,196,222]),
+              values: "GO"
+            }, {
+              label: "E-1 | Campus Employment",
+              symbol: createSymbol([230,230,230]),
+              values: "E-1"
+            }, {
+              label: "E-2 | Mixed Use Employment",
+              symbol: createSymbol([255,20,255]),
+              values: "E-2"
+            }]
+          }, {
+            heading: "Residential",
+            classes: [{
+              label: "R-1 | Low-Density Residential",
+              symbol: createSymbol([255,255,224]),
+              values: "R-1"
+            }, {
+              label: "R-1.5 | Rowhouse",
+              symbol: createSymbol([255,255,0]),
+              values: "R-1.5"
+            }, {
+              label: "R-2 | Medium-Density Residential",
+              symbol: createSymbol([240,230,140]),
+              values: "R-2"
+            }, {
+              label: "R-3 | Limited High-Density Residential",
+              symbol: createSymbol([255,214,0]),
+              values: "R-3"
+            }, {
+              label: "R-4 | High-Density Residential",
+              symbol: createSymbol([255,166,0]),
+              values: "R-4",
+            }]
+          }, {
+            heading: "Industrial",
+            classes: [{
+              label: "I-2 | Light-Medium Industrial",
+              symbol: createSymbol([219,112,214]),
+              values: "I-2"
+            }, {
+              label: "I-3 | Heavy Industrial",
+              symbol: createSymbol([148,112,219]),
+              values: "I-3"
+            }]
+          }, {
+            heading: "Open Space",
+            classes: [{
+              label: "NR | Natural Resource",
+              symbol: createSymbol([125,252,0]),
+              values: "NR"
+            }, {
+              label: "PRO | Park, Recreation & Open Space",
+              symbol: createSymbol([0,255,128]),
+              values: "PRO"
+            }]
+          }, {
+            heading: "Other",
+            classes: [{
+              label: "AG | Agricultural",
+              symbol: createSymbol([219,166,33]),
+              values: "AG"
+            }, {
+              label: "PL | Public Land",
+              symbol: createSymbol([0,191,255]),
+              values: "PL"
+            }, {
+              label: "S | Special Area",
+              symbol: createSymbol([161,237,237]),
+              values: ["S-DW", "S-DR", "S-RP", "S-JW", "S-RN", "S-WS", "S-CN", "S-HB", "S-F", "S-W", "S-E", "S-C"]
+            }, {
+              label: "S-H | Historic",
+              symbol: createSymbol([0,0,204]),
+              values: "S-H"
+            }]
+          }]
+        };
+
+        const layer = new FeatureLayer({
+          minScale: 0,
+          maxScale: 0,
+          portalItem: {
+            id: "ebb2e1f38f274f2dbbe4cba16c6c66af"
+          },
+          renderer,
+          blendMode: "multiply"
+        });
+
+        function createSymbol(color){
+          return {
+            type: "simple-fill",
+            style: "solid",
+            color,
+            outline: null
+          };
+        }
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: new WebMap({
+            basemap: "osm",
+            layers: [layer]
+          }),
+          center: [ -123.12645, 44.06416 ],
+          scale: 72223,
+          constraints: {
+            snapToZoom: false
+          }
+        });
+
+        new Legend({
+          view,
+          container: "legend-node"
+        });
+
+        view.when().then(async ()=> {
+          const osmBaseLayer = view.map.basemap.baseLayers.getItemAt(0);
+          osmBaseLayer.effect = "grayscale(100%)";
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="legend-node" class="esri-widget"></div>
+    <div id="viewDiv"></div>
+  </body>
+
+</html>

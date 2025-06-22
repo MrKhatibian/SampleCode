@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>SceneView memory resources | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        font-family: "Avenir Next W00", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      #performanceInfo {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 1em;
+      }
+
+      table {
+        margin: 1em 0;
+      }
+
+      .center {
+        text-align: center;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView"], (WebScene, SceneView) => {
+        const webscene = new WebScene({
+          portalItem: {
+            id: "1e2765e700774e5b809d5bbd768be6a0"
+          }
+        });
+
+        // create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene,
+          highlightOptions: {
+            haloOpacity: 0
+          }
+        });
+
+        view.when(() => {
+          view.ui.add("performanceInfo", "bottom-left");
+          updatePerformanceInfo();
+        });
+
+        const updatePerformanceInfo = () => {
+          const performanceInfo = view.performanceInfo;
+          updateMemoryTitle(performanceInfo.usedMemory, performanceInfo.totalMemory, performanceInfo.quality);
+          updateTables(performanceInfo);
+          setTimeout(updatePerformanceInfo, 1000);
+        };
+
+        function updateMemoryTitle(used, total, quality) {
+          const title = document.getElementById("title");
+          title.innerHTML = `Memory: ${getMB(used)}MB/${getMB(total)}MB  -  Quality: ${Math.round(100 * quality)} %`;
+        }
+
+        function updateTables(stats) {
+          const tableMemoryContainer = document.getElementById("memory");
+          const tableCountContainer = document.getElementById("count");
+          tableMemoryContainer.innerHTML = `<tr>
+            <th>Resource</th>
+            <th>Memory(MB)</th>
+          </tr>`;
+          for (layerInfo of stats.layerPerformanceInfos) {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${layerInfo.layer.title}</td><td class="center">${getMB(layerInfo.memory)}</td>`;
+            tableMemoryContainer.appendChild(row);
+          }
+
+          tableCountContainer.innerHTML = `<tr>
+            <th>Layer - Features</th>
+            <th>Displayed / Max<br>(count)</th>
+            <th>Total<br>(count)</th>
+          </tr>`;
+
+          for (layerInfo of stats.layerPerformanceInfos) {
+            if (layerInfo.maximumNumberOfFeatures) {
+              const row = document.createElement("tr");
+              row.innerHTML = `<td>${layerInfo.layer.title}`;
+              row.innerHTML += `<td class="center">${
+                layerInfo.displayedNumberOfFeatures ? layerInfo.displayedNumberOfFeatures : "-"
+              } / ${layerInfo.maximumNumberOfFeatures ? layerInfo.maximumNumberOfFeatures : "-"}</td>`;
+              row.innerHTML += `<td class="center">${
+                layerInfo.totalNumberOfFeatures ? layerInfo.totalNumberOfFeatures : "-"
+              }</td>`;
+              tableCountContainer.appendChild(row);
+            }
+          }
+        }
+
+        function getMB(bytes) {
+          const kilobyte = 1024;
+          const megabyte = kilobyte * 1024;
+          return Math.round(bytes / megabyte);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="performanceInfo">
+        <h4 id="title"></h4>
+        <table id="memory"></table>
+        <table id="count"></table>
+      </div>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define("exports ../../lib/basicInterfaces ../../../../../chunks/Compositing.glsl ../../shaders/CompositingTechnique ../../shaders/CompositingTechniqueConfiguration ../../../../webgl/enums".split(" "),function(d,e,f,g,h,k){class l{constructor(a){this.techniques=a;this._blitConfiguration=new h.CompositingTechniqueConfiguration;this._blitParameters=new f.CompositingPassParameters}render(a,m,b,n,p){a.bindFramebuffer(b.fbo);const c=this.techniques.acquire(g.CompositingTechnique,this._blitConfiguration);
+a.setClearColor(0,0,0,1);a.clear(k.ClearBufferBit.COLOR_BUFFER_BIT);if(!c?.compiled)return p(e.RenderRequestType.UPDATE),b;this._blitParameters.texture=m.getTexture();a.bindTechnique(c,n,this._blitParameters);a.screen.draw();c.release();return b}}d.Blit=l;Object.defineProperty(d,Symbol.toStringTag,{value:"Module"})});

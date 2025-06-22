@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/analysis/nls/pl/ClassifyPixelsUsingDeepLearning",{toolDefine:"Klasyfikuj piksele metod\u0105 Deep Learning",outputLayerName:"${layername}_sklasyfikowana",modelLabel:"Wybierz model Deep Learning u\u017cywany do klasyfikowania pikseli",modelArgsLabel:"Podaj argumenty modelu Deep Learning",nameLabel:"Nazwa",valueLabel:"Warto\u015b\u0107",queryModelArgsMsg:"Wysy\u0142anie zapytania o argumenty modelu...",queryModelArgsErrMsg:"Zapytanie o argumenty modelu zako\u0144czy\u0142o si\u0119 niepowodzeniem.",
+analysisLayerLabel:"Wybierz obraz u\u017cywany do klasyfikowania pikseli",itemDescription:"Us\u0142uga rastrowa analizy wygenerowana w wyniku u\u017cycia narz\u0119dzia Klasyfikuj piksele metod\u0105 Deep Learning",itemTags:"Wynik analizy rastrowej, Klasyfikuj piksele metod\u0105 Deep Learning, ${layername}",itemSnippet:"Us\u0142uga rastrowa analizy wygenerowana w wyniku u\u017cycia narz\u0119dzia Klasyfikuj piksele metod\u0105 Deep Learning"});

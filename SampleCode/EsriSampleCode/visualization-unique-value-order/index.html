@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+    <title>Sort features by legend order | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/Home",
+      ], (Map, FeatureLayer, MapView, Legend, Expand, Home) => {
+
+        // Esri color ramps - Sunset Fade
+        const colors = ["#b30000", "rgba(0, 182, 199, 0.5)", "rgba(235, 220, 120, 0.5)"];
+
+        const year = 2020;
+
+        const layer = new FeatureLayer({
+          title: "Motor vehicle crashes (2020)",
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/NYC_motor_crashes/FeatureServer/0",
+          popupTemplate: {
+            title: "Crash location",
+            fieldInfos: [
+              {
+                fieldName: "CRASH_DATE",
+                label: "Date",
+                format: {
+                  dateFormat: "day-short-month-year"
+                }
+              },
+              {
+                fieldName: "NUMBER_OF_PERSONS_KILLED",
+                label: "Fatalities"
+              },
+              {
+                fieldName: "NUMBER_OF_PERSONS_INJURED",
+                label: "Injuries"
+              }
+            ],
+            content: [
+              {
+                type: "text",
+                text: `Crash occurred on <b>{CRASH_DATE}</b>. There were <b><span style='color: ${colors[0]}'>{NUMBER_OF_PERSONS_KILLED}</span></b> fatalities and <b><span style='color: ${colors[1]}'> {NUMBER_OF_PERSONS_INJURED}</span></b> injuries.`
+              }
+            ]
+          },
+          definitionExpression: `CRASH_DATE > Date '12-31-${
+            year - 1
+          }' AND CRASH_DATE < Date '01-01-${year + 1}'`,
+          renderer: {
+            type: "unique-value",
+            legendOptions: {
+              title: "Crash location"
+            },
+            orderByClassesEnabled: true,
+            valueExpression: `
+              When(
+                $feature.NUMBER_OF_PERSONS_KILLED > 0, "Fatality",
+                $feature.NUMBER_OF_PERSONS_INJURED > 0, "Injury",
+                "None"
+              )
+            `,
+            uniqueValueInfos: [
+              {
+                value: "Fatality",
+                label: "Resulted in fatality",
+                symbol: {
+                  type: "cim",
+                  data: {
+                    "type" : "CIMSymbolReference",
+                    "symbol" : {
+                      "type" : "CIMPointSymbol",
+                      "symbolLayers" : [
+                        {
+                          "type" : "CIMVectorMarker",
+                          "enable" : true,
+                          "anchorPointUnits" : "Relative",
+                          "dominantSizeAxis3D" : "Z",
+                          "size" : 12,
+                          "billboardMode3D" : "FaceNearPlane",
+                          "frame" : {
+                            "xmin" : 2,
+                            "ymin" : 2,
+                            "xmax" : 17,
+                            "ymax" : 17
+                          },
+                          "markerGraphics" : [
+                            {
+                              "type" : "CIMMarkerGraphic",
+                              "geometry" : {
+                                "rings" : [
+                                  [
+                                    [
+                                      11.95,
+                                      6.42
+                                    ],
+                                    [
+                                      17,
+                                      3
+                                    ],
+                                    [
+                                      14,
+                                      8
+                                    ],
+                                    [
+                                      19,
+                                      11.85
+                                    ],
+                                    [
+                                      13.17,
+                                      10.5
+                                    ],
+                                    [
+                                      17.05,
+                                      15.95
+                                    ],
+                                    [
+                                      10.67,
+                                      13
+                                    ],
+                                    [
+                                      7.09,
+                                      18
+                                    ],
+                                    [
+                                      7.33,
+                                      13
+                                    ],
+                                    [
+                                      1.92,
+                                      13.96
+                                    ],
+                                    [
+                                      7.33,
+                                      9.67
+                                    ],
+                                    [
+                                      3.97,
+                                      5.1
+                                    ],
+                                    [
+                                      9,
+                                      6.89
+                                    ],
+                                    [
+                                      9,
+                                      2
+                                    ],
+                                    [
+                                      11.95,
+                                      6.42
+                                    ]
+                                  ]
+                                ]
+                              },
+                              "symbol" : {
+                                "type" : "CIMPolygonSymbol",
+                                "symbolLayers" : [
+                                  {
+                                    "type" : "CIMSolidFill",
+                                    "enable" : true,
+                                    "color" : [ 200, 0, 0, 255 ]
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "scaleSymbolsProportionally" : true,
+                          "respectFrame" : true
+                        }
+                      ],
+                      "haloSize" : 1,
+                      "scaleX" : 1,
+                      "angleAlignment" : "Display"
+                    }
+                  }
+                }
+              },
+              {
+                value: "Injury",
+                label: "Resulted in injury",
+                symbol: {
+                  type: "simple-marker",
+                  color: colors[1],
+                  size: 5,
+                  outline: null
+                }
+              },
+              {
+                value: "None",
+                label: "No injuries or fatalities",
+                symbol: {
+                  type: "simple-marker",
+                  color: colors[2],
+                  size: 5,
+                  outline: null
+                }
+              }
+            ],
+          }
+        });
+
+        const map = new Map({
+          layers: [layer],
+          basemap: "gray-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          center: [ -73.91013, 40.84610 ],
+          scale: 72223,
+          map,
+          constraints: {
+            snapToZoom: false
+          }
+        });
+
+        view.ui.add(
+          new Home({
+            view: view
+          }),
+          "top-left"
+        );
+
+        const legend = new Legend({
+          view
+        });
+
+        view.ui.add(
+          new Expand({
+            view: view,
+            content: legend,
+            expanded: true
+          }),
+          "top-left"
+        );
+
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

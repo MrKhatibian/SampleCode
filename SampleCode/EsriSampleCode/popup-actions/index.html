@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Popup actions | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/geometry/geometryEngine",
+        "esri/core/reactiveUtils"
+      ], (Map, FeatureLayer, MapView, geometryEngine, reactiveUtils) => {
+        // Create the Map
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+
+        // Create the MapView
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-117.08, 34.1],
+          zoom: 11
+        });
+
+        /*************************************************************
+         * The PopupTemplate content is the text that appears inside the
+         * popup. Bracketed {fieldName} can be used to reference the value
+         * of an attribute of the selected feature. HTML elements can be
+         * used to provide structure and styles within the content.
+         **************************************************************/
+
+        // Add this action to the popup so it is always available in this view
+        const measureThisAction = {
+          title: "Measure Length",
+          id: "measure-this",
+          image: "https://developers.arcgis.com/javascript/latest/sample-code/popup-actions/live/Measure_Distance16.png"
+        };
+
+        const template = {
+          // autocasts as new PopupTemplate()
+          title: "Trail run",
+          content: "{name}",
+          actions: [measureThisAction]
+        };
+
+        const featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/TrailRuns/FeatureServer/0",
+          popupTemplate: template
+        });
+
+        map.add(featureLayer);
+
+        // Execute each time the "Measure Length" is clicked
+        function measureThis() {
+          const geom = view.popup.selectedFeature.geometry;
+          const initDistance = geometryEngine.geodesicLength(geom, "miles");
+          const distance = parseFloat(Math.round(initDistance * 100) / 100).toFixed(2);
+          view.popup.content =
+            view.popup.selectedFeature.attributes.name +
+            "<div style='background-color:DarkGray;color:white'>" +
+            distance +
+            " miles.</div>";
+        }
+
+        // Event handler that fires each time an action is clicked.
+        reactiveUtils.on(
+          () => view.popup,
+          "trigger-action",
+          (event) => {
+            // Execute the measureThis() function if the measure-this action is clicked
+            if (event.action.id === "measure-this") {
+              measureThis();
+            }
+          }
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

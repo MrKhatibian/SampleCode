@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom ElevationLayer - Exaggerating elevation | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/ElevationLayer",
+        "esri/layers/BaseElevationLayer",
+        "esri/Basemap",
+        "esri/layers/TileLayer"
+      ], (Map, SceneView, ElevationLayer, BaseElevationLayer, Basemap, TileLayer) => {
+        //////////////////////////////////////////////
+        //
+        //   Create a subclass of BaseElevationLayer
+        //
+        /////////////////////////////////////////////
+
+        const ExaggeratedElevationLayer = BaseElevationLayer.createSubclass({
+          // Add an exaggeration property whose value will be used
+          // to multiply the elevations at each tile by a specified
+          // factor. In this case terrain will render 100x the actual elevation.
+
+          properties: {
+            exaggeration: 70
+          },
+
+          // The load() method is called when the layer is added to the map
+          // prior to it being rendered in the view.
+          load: function () {
+            // TopoBathy3D contains elevation values for both land and ocean ground
+            this._elevation = new ElevationLayer({
+              url: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/TopoBathy3D/ImageServer"
+            });
+
+            // wait for the elevation layer to load before resolving load()
+            this.addResolvingPromise(
+              this._elevation.load().then(() => {
+                // get tileInfo, spatialReference and fullExtent from the elevation service
+                // this is required for elevation services with a custom spatialReference
+                this.tileInfo = this._elevation.tileInfo;
+                this.spatialReference = this._elevation.spatialReference;
+                this.fullExtent = this._elevation.fullExtent;
+              })
+            );
+
+            return this;
+          },
+
+          // Fetches the tile(s) visible in the view
+          fetchTile: function (level, row, col, options) {
+            // calls fetchTile() on the elevationlayer for the tiles
+            // visible in the view
+            return this._elevation.fetchTile(level, row, col, options).then(
+              function (data) {
+                const exaggeration = this.exaggeration;
+                // `data` is an object that contains the
+                // the width and the height of the tile in pixels,
+                // and the values of each pixel
+                for (let i = 0; i < data.values.length; i++) {
+                  // Multiply the given pixel value
+                  // by the exaggeration value
+                  data.values[i] = data.values[i] * exaggeration;
+                }
+
+                return data;
+              }.bind(this)
+            );
+          }
+        });
+
+        const basemap = new Basemap({
+          baseLayers: [
+            new TileLayer({
+              url: "https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/terrain_with_heavy_bathymetry/MapServer",
+              copyright:
+                'Bathymetry, topography and satellite imagery from <a href="https://visibleearth.nasa.gov/view_cat.php?categoryID=1484" target="_blank">NASA Visible Earth</a> | <a href="http://www.aag.org/global_ecosystems" target="_blank">World Ecological Land Units, AAG</a> | Oceans, glaciers and water bodies from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>'
+            })
+          ]
+        });
+
+        const elevationLayer = new ExaggeratedElevationLayer();
+
+        // Add the exaggerated elevation layer to the map's ground
+        // in place of the default world elevation service
+        const map = new Map({
+          basemap: basemap,
+          ground: {
+            layers: [elevationLayer]
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          alphaCompositingEnabled: true,
+          camera: {
+            position: [-55.039, 14.948, 19921223.3],
+            heading: 2.03,
+            tilt: 0.13
+          },
+          environment: {
+            background: {
+              type: "color",
+              color: [255, 252, 244, 0]
+            },
+            starsEnabled: false,
+            atmosphereEnabled: false,
+            lighting: {
+              type: "virtual"
+            }
+          },
+          constraints: {
+            altitude: {
+              min: 5000000
+            }
+          },
+          popup: {
+            dockEnabled: true,
+            dockOptions: {
+              position: "top-right",
+              breakpoint: false,
+              buttonEnabled: false
+            },
+            collapseEnabled: false
+          },
+          highlightOptions: {
+            color: [255, 255, 255],
+            haloOpacity: 0.5
+          }
+        });
+
+        let exaggerated = true;
+
+        document.getElementById("exaggerate").addEventListener("click", (event) => {
+          if (exaggerated) {
+            map.ground = "world-elevation";
+            event.target.innerHTML = "Enable exaggeration";
+            exaggerated = false;
+          } else {
+            map.ground = {
+              layers: [elevationLayer]
+            };
+            event.target.innerHTML = "Disable exaggeration";
+            exaggerated = true;
+          }
+        });
+      });
+    </script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      body {
+        background: radial-gradient(#12bff2, #0269a1);
+      }
+
+      #viewDiv canvas {
+        filter: saturate(1.2) drop-shadow(0 0 20px white);
+      }
+
+      .buttons {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+
+      .esri-button {
+        display: inline;
+        max-width: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div class="buttons">
+      <button id="exaggerate" class="esri-button">Disable exaggeration</button>
+    </div>
+  </body>
+</html>
+

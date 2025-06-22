@@ -1,0 +1,395 @@
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Search Knowledge Graph | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+        html,
+        body,
+        #edits {
+            height: max-content;
+        }
+
+        select {
+            height: 32px;
+            width: 150px;
+            margin-right: 10px;
+        }
+
+        calcite-button {
+            height: 32px;
+        }
+
+        calcite-input,
+        #update-content {
+            margin-right: 10px;
+        }
+
+        calcite-segmented-control {
+            margin: 10px;
+        }
+
+        calcite-button {
+            display: inline-block;
+        }
+        #alert,
+        #updates,
+        #deletes {
+            display: none;
+        }
+
+        calcite-panel {
+            margin: 0px 10px 0px 10px;
+            padding: 10px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .section-label {
+            margin-top: 10px;
+        }
+
+        #adds {
+            height: 886px;
+        }
+
+        #updates {
+            height: 250px;
+        }
+
+        #deletes {
+            height: 200px;
+        }
+
+        #results,
+        #adds,
+        #updates,
+        #deletes {
+            padding: 10px
+        }
+
+        .edit-info {
+            padding-left: 25px
+        }
+        
+    </style>
+
+    <script>
+        require([
+            "esri/rest/knowledgeGraphService",
+            "esri/rest/knowledgeGraph/Entity",
+            "esri/rest/knowledgeGraph/Relationship",
+            "esri/identity/IdentityManager"
+        ], (KnowledgeGraph, Entity, Relationship, IdentityManager) => {
+
+            /**
+            * Credentials to sign in to the knowledge graph service:
+            * Username: editor01
+            * Password: S7#i2LWmYH75
+            */
+            const url = "https://sampleserver7.arcgisonline.com/server/rest/services/Hosted/BumbleBeeEdits/KnowledgeGraphServer";
+            const alert = document.getElementById("alert");
+            document
+                .getElementById("add-user")
+                .addEventListener("click", () => {
+                    if(document.getElementById("user-name").value != ""){
+                        alert.style.display='none'
+                    createEntity('User', document.getElementById("user-name").value)
+                }else{
+                        alert.style.display='block'
+                    }
+                });
+
+            document
+                .getElementById("add-project")
+                .addEventListener("click", () => {
+                    if (document.getElementById("project-name").value != ""){
+                        alert.style.display='none'
+                    createEntity('Project', document.getElementById("project-name").value)
+                }else{
+                        alert.style.display='block'
+                    }
+                });
+            /**
+             * Add an entity by providing the named type and the properties. If there are required properties for 
+             * the entity type, the add operation will fail if they are not provided. 
+             */
+            const createEntity = (type, name) => {
+                KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                    const entityAdd = new Entity({
+                        typeName: type,
+                        properties: {
+                            name: name
+                        }
+                    });
+                    KnowledgeGraph
+                        .executeApplyEdits(kg, {
+                            entityAdds: [entityAdd]
+                        })
+                        .then((editResult) => {
+                            formatResults(editResult)
+                            updateLists();
+                            getEntityOptions();
+
+                        });
+                });
+            }
+
+            /**
+             * Add a relationship. In order to add a relationship, both the origin and destination entity must
+             * already exist in the graph. To add a relationship, provide the named type, origin entity unique identifier,
+             * destination entity unique identifier and any properties. 
+             */
+            document
+                .getElementById("add-memberof")
+                .addEventListener("click", () => {
+                    KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                        const queryString = `MATCH (u:User {name: '${document.getElementById("user-select").value}'}), (p:Project {name: '${document.getElementById("project-select").value}'}) RETURN u.globalid, p.globalid`
+                        KnowledgeGraph.executeQuery(kg, { openCypherQuery: queryString }).then((result) => {
+                            const relationshipAdd = new Relationship({
+                                typeName: "MemberOf",
+                                originId: result['resultRows'][0][0],
+                                destinationId: result['resultRows'][0][1],
+                                properties: {}
+                            });
+                            KnowledgeGraph
+                                .executeApplyEdits(kg, {
+                                    relationshipAdds: [relationshipAdd]
+                                })
+                                .then((editResult) => {
+                                    formatResults(editResult)
+                                    updateLists();
+                                    getEntityOptions();
+
+                                });
+                        })
+
+                    });
+                });
+
+            /**
+             * Update an entity. The properties of any entity or relationship record can be updated. In this example the
+             * `name` property on a `User` entity is updated.  
+             */
+            document
+                .getElementById("user-update")
+                .addEventListener("click", () => {
+                    if (document.getElementById("update-input").value) {
+                        alert.style.display='none'
+                    KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                        const queryString = `MATCH (u:User {name: '${document.getElementById("all-select").value}'}) RETURN u.globalid`
+                        KnowledgeGraph.executeQuery(kg, { openCypherQuery: queryString }).then((result) => {
+                            const entityUpdate = new Entity({
+                                typeName: "User",
+                                id: result['resultRows'][0][0],
+                                properties: { "name": `${document.getElementById("update-input").value}` }
+                            });
+                            KnowledgeGraph
+                                .executeApplyEdits(kg, {
+                                    entityUpdates: [entityUpdate]
+                                })
+                                .then((editResult) => {
+                                    formatResults(editResult)
+                                    updateLists();
+                                    getEntityOptions();
+
+                                });
+                        })
+
+                    });
+                }else{
+                        alert.style.display='block'
+                    }
+                });
+            /**
+             * Delete an entity. Entity or relationship records can be deleted.
+             * When deleting entities, if the entity is the origin or destination of any relationships,
+             * the delete operation will fail unless `cascadeDelete` is set to true. When `cascadeDelete` is true
+             * the entity and all connected relationships will be deleted. 
+             */
+            document.getElementById("user-delete").addEventListener('click', () => {
+                KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                    const queryString = `MATCH (u:User {name: '${document.getElementById("all-select-delete").value}'}) RETURN u.globalid`
+                    KnowledgeGraph.executeQuery(kg, { openCypherQuery: queryString }).then((result) => {
+                        KnowledgeGraph
+                            .executeApplyEdits(kg, {
+                                entityDeletes: [{
+                                    typeName: "User",
+                                    ids: [result['resultRows'][0][0]]
+                                }],
+                                options: {
+                                    cascadeDelete: true
+                                }
+                            })
+                            .then((editResult) => {
+                                formatResults(editResult)
+                                updateLists();
+                                getEntityOptions();
+
+                            });
+                    });
+                });
+            });
+
+            /**
+            * Get the knowledge graph data model and then retrieve the instances of 
+            * the `User` and `Project` Entity types to populate the dropdowns
+            */
+            const getEntityOptions = () => {
+                KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                    KnowledgeGraph.executeQuery(kg, { openCypherQuery: 'MATCH (u:User) RETURN collect({name: u.name, globalid: u.globalid})' }).then((users) => {
+                        options = "";
+                        users['resultRows'][0][0].forEach(addToList);
+                        function addToList(item, index, arr) {
+                            if (item['properties']['name'] != null) {
+                                options += `<option>${item['properties']['name']}</option>`
+                            }
+                            document.getElementById("user-select").innerHTML = options
+                        }
+                    });
+                    KnowledgeGraph.executeQuery(kg, { openCypherQuery: 'MATCH (p:Project) RETURN collect({name: p.name, globalid: p.globalid})' }).then((projects) => {
+                        options = "";
+                        if (projects.resultRows.length > 0) {
+                            projects['resultRows'][0][0].forEach(addToList);
+                            function addToList(item, index, arr) {
+                                if (item['properties']['name'] != null) {
+                                    options += `<option>${item['properties']['name']}</option>`
+                                }
+                                document.getElementById("project-select").innerHTML = options
+                            }
+                        }
+                    });
+                });
+            }
+            getEntityOptions();
+            /**
+             * Update the dropdown lists of User entities 
+             */
+            const updateLists = () => {
+                KnowledgeGraph.fetchKnowledgeGraph(url).then((kg) => {
+                    KnowledgeGraph.executeQuery(kg, { openCypherQuery: 'MATCH (n:User) RETURN n.name' }).then((entities) => {
+                        options = "";
+                        entities['resultRows'].forEach(addToList);
+                        function addToList(item, index, arr) {
+                            if (item[0] != null) {
+                                options += `<option>${item[0]}</option>`
+                            }
+                            document.getElementById("all-select").innerHTML = options;
+                            document.getElementById("all-select-delete").innerHTML = options;
+                        }
+                    });
+                });
+            }
+            updateLists();
+            /**
+             * format the response from the apply edits
+             */
+            const formatResults = (results) => {
+                let html = '';
+                if (results.hasError && results.errorMessage != "") {
+                    html = `<p>${results.error.errorMessage}</p>`
+                } else {
+                    const message = (editInfo) => {
+                        return `<div class="edit-info"><calcite-label layout="inline">ID: ${editInfo[0].id}</calcite-label>
+                                <calcite-label layout="inline">Errors: ${editInfo[0].error.errorCode == 0 ? "no errors" : editInfo[0].error.errorMessage}</calcite-label>
+                                </div>`
+                    }
+                    for (edits of results.editResults) {
+                        html += `<h3>${edits.typeName}</h3>`;
+                        html += `<calcite-label>Added: ${edits.adds.length > 0 ? message(edits.adds) : "none"}</calcite-label>`
+                        html += `<calcite-label>Updated: ${edits.updates.length > 0 ? message(edits.updates) : "none"}</calcite-label>`
+                        html += `<calcite-label>Deleted: ${edits.deletes.length > 0 ? message(edits.deletes) : "none"}</calcite-label>`
+                    }
+                }
+                document.getElementById("results").innerHTML = html;
+            }
+
+            document.getElementById("add-records").addEventListener('click', () => {
+                document.getElementById("adds").style = "display: block";
+                document.getElementById("updates").style = "display:none";
+                document.getElementById("deletes").style = "display:none";
+            });
+            document.getElementById("update-records").addEventListener('click', () => {
+                document.getElementById("adds").style = "display:none";
+                document.getElementById("updates").style = "display: block";
+                document.getElementById("deletes").style = "display:none";
+                document.getElementById("all-select").dispatchEvent(new Event('change'));
+            });
+            document.getElementById("delete-records").addEventListener('click', () => {
+                document.getElementById("adds").style = "display:none";
+                document.getElementById("updates").style = "display:none";
+                document.getElementById("deletes").style = "display:block";
+            });
+
+            document.getElementById("all-select").addEventListener('change', (e) => {
+                document.getElementById('update-input').setAttribute('placeholder', e.target.value)
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <calcite-shell>
+        <calcite-panel id="edits" heading="Modify knowledge graph data">
+            <calcite-segmented-control>
+                <calcite-segmented-control-item id="add-records" value="add-records" checked>Add New
+                    Records</calcite-segmented-control-item>
+                <calcite-segmented-control-item id="update-records" value="update-records">Update Existing
+                    Records</calcite-segmented-control-item>
+                <calcite-segmented-control-item id="delete-records" value="delete-records">Delete
+                    Records</calcite-segmented-control-item>
+            </calcite-segmented-control>
+            <div id="adds">
+                <calcite-label class="section-label">Add a new user entity by providing a username</calcite-label>
+                <div class="flex">
+                    <calcite-input id="user-name" placeholder="Enter a name"></calcite-input>
+                    <calcite-button id="add-user">Add New User Entity</calcite-button>
+                </div>
+                <calcite-label class="section-label">Add a new project entity by providing a project name </calcite-label>
+                <div class="flex">
+                    <calcite-input id="project-name" placeholder="Enter a name"></calcite-input>
+                    <calcite-button id="add-project">Add new Project Entity</calcite-button>
+                </div>
+                <calcite-label class="section-label">Enter an origin and destination entities to create a `MemberOf`
+                    relationship</calcite-label>
+                <div class="flex">
+                    <select id="user-select"></select>
+                    <calcite-label layout="inline">- MemberOf ->
+                        <select id="project-select"></select> </calcite-label>
+                    <calcite-button id="add-memberof">Add MemberOf Relationship</calcite-button>
+                </div>
+            </div>
+            <div id="updates">
+                <calcite-label class="section-label">Choose any User to modify</calcite-label>
+                <div class="flex">
+                    <select id="all-select"></select>
+                    <calcite-label layout="inline" id="update-content">name:<calcite-input id="update-input"
+                            placeholder="ph"></calcite-input> </calcite-label>
+                    <calcite-button id="user-update">Update User</calcite-button>
+                </div>
+            </div>
+            <div id="deletes">
+                <calcite-label class="section-label">Choose a User to delete </calcite-label>
+                <div class="flex">
+                    <select id="all-select-delete"></select>
+                    <calcite-button id="user-delete">Delete User</calcite-button>
+                </div>
+            </div>
+        </calcite-panel>
+        <calcite-alert id="alert" kind="danger" icon open label="Danger alert">
+            <div slot="title">Please enter a name</div>
+        </calcite-alert>
+        <calcite-panel heading="Edit results">
+            <div id="results">Add, update or delete records from the knowledge graph</div>
+        </calcite-panel>
+    </calcite-shell>
+</body>
+
+</html>

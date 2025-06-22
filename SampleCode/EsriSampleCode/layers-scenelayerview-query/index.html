@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query client-side 3D extents | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #infoDiv {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/rest/support/Query"], (WebScene, SceneView, Query) => {
+        // load web scene from ArcGIS Online
+        const webscene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "cdb4415be735405ca2f2972ae23a2058"
+          }
+        });
+
+        // create the scene view
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene
+        });
+
+        // wait until the webscene finished loading
+        webscene.when(() => {
+          // retrieve the scene layer from the webscene - in this case it is the first layer
+          const sceneLayer = webscene.layers.getItemAt(0);
+          // get all attributes for the query
+          sceneLayer.outFields = ["*"];
+
+          // retrieve the layer view of the scene layer
+          view.whenLayerView(sceneLayer).then((sceneLayerView) => {
+            // register a click event on the view
+            view.on("click", (event) => {
+              // use hitTest to find if any graphics were clicked
+              view.hitTest(event).then((response) => {
+                // check if a graphic is returned from the hitTest
+                if (response.results[0] && response.results[0].graphic) {
+                  // Create query object: by specifying objectIds, the query will return results only for
+                  // the feature matching the graphic's objectid
+                  const query = new Query({
+                    objectIds: [response.results[0].graphic.attributes.OBJECTID],
+                    // indicates the query should return all attributes
+                    outFields: ["*"]
+                  });
+
+                  // queryExtent() will return the 3D extent of the feature that satisfies the query
+                  sceneLayerView.queryExtent(query).then((result) => {
+                    view
+                      .goTo(
+                        {
+                          target: result.extent.expand(2),
+                          tilt: 60
+                        },
+                        {
+                          duration: 1000,
+                          easing: "out-expo"
+                        }
+                      )
+                      .catch((error) => {
+                        if (error.name != "AbortError") {
+                          console.error(error);
+                        }
+                      });
+                  });
+                }
+              });
+            });
+          });
+        });
+
+        // add HTML element to the view
+        view.ui.add(document.getElementById("infoDiv"), "top-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="infoDiv" class="esri-widget">Click on a building to zoom to it and get more information</div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

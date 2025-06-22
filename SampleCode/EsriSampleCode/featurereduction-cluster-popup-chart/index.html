@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Popup charts for point clusters | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/smartMapping/labels/clusters"
+      ], function (WebMap, MapView, FeatureLayer, Legend, Expand, clusterLabelCreator) {
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "eb54b44c65b846cca12914b87b315169"
+          }
+        });
+
+        const map = new WebMap({
+          basemap: {
+            portalItem: {
+              id: "75a08e8cd8b64dcfa6945bb7f624ccc5"
+            }
+          },
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map,
+          extent: {
+            spatialReference: {
+              latestWkid: 3857,
+              wkid: 102100
+            },
+            xmin: -15327459,
+            ymin: 2740044,
+            xmax: -6076744,
+            ymax: 6878650
+          },
+          popup: {
+            dockEnabled: true,
+            dockOptions: {
+              breakpoint: false,
+              position: "top-right"
+            }
+          }
+        });
+
+        view.ui.add(
+          new Expand({
+            content: new Legend({ view }),
+            view
+          }),
+          "top-left"
+        );
+
+        layer
+          .when()
+          .then(generateClusterConfig)
+          .then(async (featureReduction) => {
+            // sets generated cluster configuration on the layer
+            layer.featureReduction = featureReduction;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+
+        async function generateClusterConfig(layer) {
+          let popupTemplate = {
+            title: "Power plant summary",
+            content: [
+              {
+                type: "text",
+                text: "This cluster represents <b>{cluster_count}</b> power plants. The following lists the most common fuel types for generating power within this cluster."
+              },
+              {
+                type: "expression",
+                // lists the top 5 most common fuel types
+                expressionInfo: {
+                  expression: `
+                  Expects($aggregatedFeatures, "fuel1", "capacity_mw")
+
+                  var statsFS = GroupBy($aggregatedFeatures,
+                    [
+                      { name: 'Type', expression: 'fuel1'},
+                    ],
+                    [
+                      { name: 'num_features', expression: '1', statistic: 'COUNT' }
+                    ]
+                  );
+                  var ordered = Top(OrderBy(statsFs, 'num_features DESC'), 5);
+
+                  // create an HTML ordered list as a string and return in a rich text element
+                  var list = "<ol>";
+
+                  for (var group in ordered){
+                    list += \`<li>\${group.Type} (\${Text(group.num_features, "#,###")})</li>\`
+                  }
+                  list += "</ol>";
+
+                  return {
+                    type: "text",
+                    text: list
+                  }
+                `,
+                  title: "List of fuel types"
+                }
+              },
+              {
+                // creates two pie charts; one for summarizing each fuel
+                // type by count; the other for each fuel type by capacity
+                type: "expression",
+                expressionInfo: {
+                  expression: `
+                  Expects($aggregatedFeatures, "fuel1", "capacity_mw");
+                  var attributes = {};
+                  var countFieldNames = [];
+                  var capacityFieldNames = [];
+                  var rendererColors = {
+                    Hydro: [166,206,227], 
+                    Solar: [178,223,138], 
+                    Wind: [51,160,44], 
+                    Gas: [251,154,153], 
+                    Oil: [227,26,28], 
+                    Coal: [253,191,111], 
+                    Biomass: [255,127,0], 
+                    Waste: [202,178,214], 
+                    Nuclear: [106,61,154], 
+                    Geothermal: [31,120,180]
+                  };
+                  
+                  var chartColors = [];
+
+                  var types = Distinct($aggregatedFeatures, "fuel1");
+                  for(var t in types){
+                    var type = t.fuel1;
+                    var filtered = Filter($aggregatedFeatures, "fuel1 = @type");
+                    var color = iif(hasValue(rendererColors, type), rendererColors[type], [128,128,128,255]);
+
+                    var countFieldName = type + " count";
+                    attributes[countFieldName] = Count(filtered);
+  
+                    var capacityFieldName = type + " capacity (mW)";
+                    attributes[capacityFieldName] = DefaultValue(Sum(filtered, "capacity_mw"), 0);
+    
+                    Push(countFieldNames, countFieldName);
+                    Push(capacityFieldNames, capacityFieldName);
+                    Push(chartColors, color);
+                  }
+
+                  return {
+                    type: "media",
+                    attributes: attributes,
+                    title: "Count vs. capacity comparison",
+                    mediaInfos: [{
+                      type: "piechart",
+                      title: "Total count",
+                      value: {
+                        fields: countFieldNames,
+                        colors: chartColors
+                      }
+                    }, {
+                      type: "piechart",
+                      title: "Total capacity (mW)",
+                      value: {
+                        fields: capacityFieldNames,
+                        colors: chartColors
+                      }
+                    }]
+                  }
+                `,
+                  title: "Pie charts"
+                }
+              }
+            ]
+          };
+          // generates default labelingInfo
+          const { labelingInfo, clusterMinSize } = await clusterLabelCreator
+            .getLabelSchemes({
+              layer,
+              view
+            })
+            .then((labelSchemes) => labelSchemes.primaryScheme);
+
+          return {
+            type: "cluster",
+            popupTemplate,
+            labelingInfo,
+            clusterMinSize
+          };
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>3D hiking map with line patterns | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/Color",
+        "esri/renderers/UniqueValueRenderer",
+        "esri/renderers/SimpleRenderer",
+        "esri/symbols/LineSymbol3DLayer",
+        "esri/symbols/LineSymbol3D",
+        "esri/symbols/patterns/LineStylePattern3D",
+        "esri/symbols/support/symbolUtils"
+      ], (
+        SceneView,
+        WebScene,
+        Color,
+        UniqueValueRenderer,
+        SimpleRenderer,
+        LineSymbol3DLayer,
+        LineSymbol3D,
+        LineStylePattern3D,
+        symbolUtils
+      ) => {
+        const scene = new WebScene({
+          portalItem: {
+            id: "02b635b4926c42ddb4fa21c99305fb23"
+          }
+        });
+
+        const view = new SceneView({
+          map: scene,
+          container: "viewDiv",
+          popupEnabled: false
+        });
+
+        scene.when(function () {
+          const cableCarLayer = scene.allLayers.find((layer) => layer.title === "CableCars");
+          const railwayLayer = scene.allLayers.find((layer) => layer.title === "Railway");
+          const hikingPathLayer = scene.allLayers.find((layer) => layer.title === "HikingPaths");
+
+          // Cable cars
+          cableCarLayer.elevationInfo = {
+            // Using feature line's absolute z-values for the cable cars.
+            mode: "absolute-height",
+            offset: 10
+          };
+          cableCarLayer.renderer = cableCarRenderer;
+
+          // Railway
+          railwayLayer.elevationInfo = {
+            mode: "on-the-ground"
+          };
+          railwayLayer.renderer = railwayRenderer;
+
+          // Hiking paths
+          hikingPathLayer.elevationInfo = {
+            mode: "on-the-ground"
+          };
+          hikingPathLayer.renderer = hikingPathRenderer;
+        });
+
+        // * * * * * * * * * *
+        // Cable cars
+        // * * * * * * * * * *
+
+        const cableCarsSymbol = new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              pattern: new LineStylePattern3D({
+                style: "solid" // Using solid for status === "open"
+              }),
+              material: { color: [30, 30, 30] },
+              size: "2px"
+            })
+          ]
+        });
+
+        const winterServiceSymbol = new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              pattern: new LineStylePattern3D({
+                style: "long-dash" // Using a pattern for status === "winter"
+              }),
+              material: { color: [30, 30, 30] },
+              size: "2px"
+            })
+          ]
+        });
+
+        const cableCarRenderer = new UniqueValueRenderer({
+          field: "status",
+          legendOptions: {
+            title: "Cable cars"
+          },
+          uniqueValueInfos: [
+            {
+              value: "open",
+              symbol: cableCarsSymbol
+            },
+            {
+              value: "winter",
+              symbol: winterServiceSymbol
+            }
+          ]
+        });
+
+        // * * * * * * * * * *
+        // Railway
+        // * * * * * * * * * *
+
+        const railwaySymbol = new LineSymbol3D({
+          symbolLayers: [
+            new LineSymbol3DLayer({
+              material: { color: [30, 30, 30] },
+              size: "2.7px"
+            }),
+            new LineSymbol3DLayer({
+              material: { color: [240, 240, 240] },
+              size: "1.5px"
+            }),
+            new LineSymbol3DLayer({
+              pattern: new LineStylePattern3D({
+                style: "dash"
+              }),
+              material: { color: [30, 30, 30] },
+              size: "1.5px"
+            })
+          ]
+        });
+
+        const railwayRenderer = new SimpleRenderer({
+          symbol: railwaySymbol
+        });
+
+        // * * * * * * * * * *
+        // Hiking paths
+        // * * * * * * * * * *
+
+        const easyHikingPathSymbol = getHikingPathSymbol("solid", [252, 194, 1]);
+        const mediumHikingPathSymbol = getHikingPathSymbol("dash", [252, 194, 1]);
+        const difficultHikingPathSymbol = getHikingPathSymbol("dot", [252, 194, 1]);
+
+        const easyPanoramaPathSymbol = getHikingPathSymbol("solid", [250, 59, 32]);
+        const mediumPanoramaPathSymbol = getHikingPathSymbol("dash", [250, 59, 32]);
+        const difficultPanoramaPathSymbol = getHikingPathSymbol("dot", [250, 59, 32]);
+
+        const hikingPathRenderer = new UniqueValueRenderer({
+          field: "difficulty",
+          field2: "theme",
+          fieldDelimiter: ", ",
+          legendOptions: {
+            title: "Hiking paths"
+          },
+          uniqueValueInfos: [
+            {
+              value: "easy, ",
+              symbol: easyHikingPathSymbol
+            },
+            {
+              value: "medium, ",
+              symbol: mediumHikingPathSymbol
+            },
+            {
+              value: "difficult, ",
+              symbol: difficultHikingPathSymbol
+            },
+            {
+              value: "easy, panoramic",
+              symbol: easyPanoramaPathSymbol
+            },
+            {
+              value: "medium, panoramic",
+              symbol: mediumPanoramaPathSymbol
+            },
+            {
+              value: "difficult, panoramic",
+              symbol: difficultPanoramaPathSymbol
+            }
+          ]
+        });
+
+        function getHikingPathSymbol(patternStyle, color) {
+          // Each line is rendered with two symbol layers: an opaque line and a semi-transparent background of the same color underneath it.
+          const patternColor = new Color(color);
+          const backgroundColor = new Color(color);
+          // Adding an alpha value to make the background transparent.
+          backgroundColor.a = 0.2;
+
+          return new LineSymbol3D({
+            symbolLayers: [
+              new LineSymbol3DLayer({
+                // If no pattern is specified, line is rendered as solid.
+                material: { color: backgroundColor },
+                size: patternStyle === "dot" ? "3px" : "2px"
+              }),
+              new LineSymbol3DLayer({
+                pattern: new LineStylePattern3D({
+                  // Using pattern to mark difficulty
+                  style: patternStyle
+                }),
+                cap: "round",
+                join: "round",
+                material: { color: patternColor },
+                size: patternStyle === "dot" ? "3px" : "1.6px"
+              })
+            ]
+          });
+        }
+
+        // * * * * * * * * * *
+        // Create a custom legend
+        // * * * * * * * * * *
+
+        view.ui.add("legend", "manual");
+
+        addLegendSymbol("easyHikingSymbol", easyHikingPathSymbol);
+        addLegendSymbol("mediumHikingSymbol", mediumHikingPathSymbol);
+        addLegendSymbol("difficultHikingSymbol", difficultHikingPathSymbol);
+        addLegendSymbol("panoramaHikingSymbol", easyPanoramaPathSymbol);
+        addLegendSymbol("cableCarSymbol", cableCarsSymbol);
+        addLegendSymbol("winterServiceSymbol", winterServiceSymbol);
+        addLegendSymbol("railwaySymbol", railwaySymbol);
+
+        function addLegendSymbol(divId, symbol) {
+          const node = document.getElementById(divId);
+          symbolUtils.renderPreviewHTML(symbol, { node });
+        }
+      });
+    </script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .container {
+        padding: 5px;
+        bottom: 16px;
+        width: auto;
+        min-width: 680px;
+        max-width: 99vw;
+        margin-bottom: 10px;
+        display: flex;
+        left: 50%;
+        transform: translate(-50%, 0);
+      }
+
+      .legend-section {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: 10px;
+      }
+
+      .title {
+        margin-left: 15px;
+        margin-right: 15px;
+        margin-bottom: 6px;
+        border-bottom: 1px solid #dddddd;
+        padding-bottom: 4px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .legend-section-items {
+        display: flex;
+        flex-direction: row;
+        flex-grow: 1;
+        align-items: left;
+        text-align: left;
+      }
+
+      .legend-item {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: 5px;
+        align-items: center;
+        text-align: center;
+      }
+
+      .symbol {
+        padding-bottom: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="legend" class="esri-widget container">
+      <div class="legend-section">
+        <div class="title">Hiking paths</div>
+        <div class="legend-section-items">
+          <div class="legend-item">
+            <div class="symbol" id="easyHikingSymbol"></div>
+            <div class="legend-item-title">Easy</div>
+          </div>
+          <div class="legend-item">
+            <div class="symbol" id="mediumHikingSymbol"></div>
+            <div class="legend-item-title">Medium</div>
+          </div>
+          <div class="legend-item">
+            <div class="symbol" id="difficultHikingSymbol"></div>
+            <div class="legend-item-title">Difficult</div>
+          </div>
+          <div class="legend-item">
+            <div class="symbol" id="panoramaHikingSymbol"></div>
+            <div class="legend-item-title">Panoramic</div>
+          </div>
+        </div>
+      </div>
+      <div class="legend-section">
+        <div class="title">Public transport</div>
+        <div class="legend-section-items">
+          <div class="legend-item">
+            <div class="symbol" id="cableCarSymbol"></div>
+            <div class="legend-item-title">Cable cars</div>
+          </div>
+          <div class="legend-item">
+            <div class="symbol" id="winterServiceSymbol"></div>
+            <div class="legend-item-title">Winter service</div>
+          </div>
+          <div class="legend-item">
+            <div class="symbol" id="railwaySymbol"></div>
+            <div class="legend-item-title">Railway</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

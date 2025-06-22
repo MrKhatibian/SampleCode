@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/core/charts/tooltips/_PieDonutRingChartTooltipBuilder",["dojo/dom-construct","dojo/string","./_BuilderUtil","dojo/i18n!esri/nls/jsapi"],function(f,g,b,c){c=c.geoenrichment.dijit.ReportPlayer.ChartTooltip;return{buildPieDonutRingChartTooltip:function(a,d){a.showTitle&&b.addTitle(d,a.label,a);a.richTextFieldInfo&&b.buildRichText(a,d);var e=f.create("div",{"class":"chartTooltip_row esriGERowHigh"},d);b.addRowOffset(e);a.isUnavailableData?b.addLabel(c.unavailableData,
+e):a.isBenchmarked?b.addBenchmarkValue(a,e):(b.addLabel(g.substitute(c.pieChartTooltip_label,{value:a.valueLabel,total:a.sumValueLabel}),e),d=b.buildStatLabels(a,d,c.weight,c.minValue,c.maxValue,c.avgValue),b.formatTable(d));e.style.display=a.showValue?"":"none"}}});

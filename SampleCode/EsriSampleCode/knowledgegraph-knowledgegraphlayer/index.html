@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Search Knowledge Graph | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/rest/knowledgeGraphService",
+            "esri/layers/KnowledgeGraphLayer",
+            "esri/layers/support/LabelClass",
+            "esri/PopupTemplate",
+            "esri/widgets/Legend",
+        ], (EsriMap, MapView, KnowledgeGraphService, KnowledgeGraphLayer, LabelClass, PopupTemplate,  Legend) => {
+            /**
+             * Credentials to sign in to the knowledge graph service:
+             * username: viewer01
+             * password: I68VGU^nMurF
+             */
+            //url to knowledge graph service
+            const url = "https://sampleserver7.arcgisonline.com/server/rest/services/Hosted/BumbleBees/KnowledgeGraphServer";
+            //initialize map canvas and map view
+            const map = new EsriMap({
+                basemap: "gray-vector"
+            });
+
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                zoom: 2,
+                center: [-30, 30],
+                constraints: { minZoom: 2 }
+            });
+            view.ui.add(new Legend({ view: view }), "bottom-right");
+
+            //define renderer for the geometry (all of the Observations are point geometry)
+            const observationRenderer = {
+                type: "simple", // autocasts as new SimpleFillSymbol()
+                symbol: {
+                    type: "simple-marker",
+                    size: 6,
+                    color: "yellow",
+                    outline: {  // autocasts as new SimpleLineSymbol()
+                        width: 0.5,
+                        color: "black"
+                    }
+                }
+            };
+
+            //define labels
+            const observationLabels = new LabelClass({
+                labelExpressionInfo: {
+                    expression: `$feature.species_guess`
+                },
+                labelPlacement: "above-center",
+                symbol: {
+                    type: "text",  // autocasts as new TextSymbol()
+                    color: "black"
+                }
+            })
+
+            const initializeLayer = async () => {
+                //fetch the knowledge graph
+                knowledgeGraph = await KnowledgeGraphService.fetchKnowledgeGraph(url)
+                //query the knowledge graph to get only the research grade observations
+                observationList = await KnowledgeGraphService.executeQuery(knowledgeGraph, {
+                    openCypherQuery: `MATCH (o:Observation{quality_grade: "research"}) RETURN o`
+                })
+                //create a map of the ids of those research grade observations to include in the layer.
+                //Since we only returned one variable we know that the first item in the array will be the observation entity
+                let members = new Map();
+                for (observation of observationList.resultRows) {
+                    members.set(observation[0].id, { id: observation[0].id })
+                }
+                //Define an inclusion list that limits the layer to only one sublayer for
+                //only the research grade observation returned from the query.
+                let namedTypes = new Map();
+                //only one named type, and only the subset of instance of that type.
+                namedTypes.set("Observation", { useAllData: false, members: members });
+                //only create a sublayer for the specified named types.
+                const inclusionDef = {
+                    generateAllSublayers: false,
+                    namedTypeDefinitions: namedTypes
+                }
+
+                //create the layer
+                //the inclusionModeDefinition is optional. If excluded, all named types in the array will be included as sublayers.
+                //Any non spatial entity types and all relationship types will be included as table sublayers and will not be drawn on the map
+                const compositeLayer = new KnowledgeGraphLayer({
+                    url: url,
+                    inclusionModeDefinition: inclusionDef
+                });
+
+                //once the layer has loaded, enable popups and apply the renderer to each sublayer
+                //since an inclusion list is set to only return Observations, there will only be one sublayer
+                await compositeLayer.load()
+                compositeLayer.layers.items.forEach((sublayer) => {
+                    console.log(sublayer)
+                    sublayer.popupTemplate = sublayer.createPopupTemplate();
+                    sublayer.renderer = observationRenderer;
+                    sublayer.labelingInfo = [observationLabels];
+                    sublayer.labelsVisible = true;
+                });
+                map.add(compositeLayer);
+            }
+            initializeLayer()
+        })
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Generate univariate continuous size and color visualization in 3D | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #containerDiv {
+        background-color: white;
+        padding: 3px;
+        text-align: center;
+      }
+
+      #title {
+        font-size: 14pt;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/FeatureLayer",
+        "esri/smartMapping/renderers/univariateColorSize",
+        "esri/smartMapping/statistics/histogram",
+        "esri/widgets/smartMapping/ColorSizeSlider"
+      ], (
+        Map,
+        SceneView,
+        FeatureLayer,
+        colorAndSizeRendererCreator,
+        histogram,
+        ColorSizeSlider
+      ) => {
+        const map = new Map({
+          basemap: "topo-vector"
+        });
+
+        // The minSize and maxSize of volumetric symbols are determined
+        // based on the view/camera the data will be displayed in.
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            tilt: 52,
+            heading: 355.8,
+            position: {
+              x: 1431052,
+              y: 4394025,
+              z: 922291,
+              spatialReference: {
+                wkid: 3857
+              }
+            }
+          }
+        });
+
+        // Create FeatureLayer instance with popupTemplate
+
+        const layer = new FeatureLayer({
+          url:
+            "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Enriched%20World%20Cities/FeatureServer/0",
+          visible: false,
+          popupTemplate: {
+            // autocasts as new PopupTemplate()
+            title: "{CITY_NAME}, {CNTRY_NAME}",
+            content: "Total population: {POP}",
+            fieldInfos: [
+              {
+                fieldName: "POP",
+                format: {
+                  digitSeparator: true,
+                  places: 0
+                }
+              }
+            ]
+          }
+        });
+        map.add(layer);
+
+        // configure parameters for the renderer generator.
+        // the layer must be specified along with a field name
+        // or arcade expression. The view and other properties determine
+        // the appropriate default color and size schemes.
+
+        const params = {
+          layer: layer,
+          field: "POP",
+          view: view,
+          symbolType: "3d-volumetric",
+          minValue: 0,
+          maxValue: 1500000
+        };
+
+        // Generate a renderer visualizing a single variable
+        // with continuous color and size based on the
+        // statistics of the data in the provided layer
+        // and field name.
+        //
+        // This resolves to an object containing several helpful
+        // properties, including size/color schemes, statistics,
+        // the renderer, and visual variables
+        let rendererResult = null;
+
+        view.when().then(() => {
+          colorAndSizeRendererCreator
+            .createContinuousRenderer(params)
+            .then((response) => {
+              // set generated renderer on the layer and add it to the map
+              rendererResult = response;
+              layer.renderer = response.renderer;
+              if(!layer.visible){
+                layer.visible = true;
+              }
+
+              // generate a histogram for use in the slider. Input the layer
+              // and field name to generate it.
+              // You can also use an arcade expression instead of
+              // a field and normalization field
+
+              return histogram({
+                layer: layer,
+                field: params.field,
+                numBins: 40,
+                minValue: params.minValue,
+                maxValue: params.maxValue
+              });
+            })
+            .then((histogramResult) => {
+
+              const slider = ColorSizeSlider.fromRendererResult(rendererResult, histogramResult);
+              slider.container = "slider";
+              slider.viewModel.precision = 0;
+              slider.labelFormatFunction = (value) => {
+                return parseInt(value.toFixed(0)).toLocaleString();
+              };
+              slider.histogramConfig.standardDeviation = null;
+              view.ui.add("containerDiv", "bottom-left");
+
+              // when the user slides the handle(s), update the renderer
+              // with the updated color and size visual variable objects
+
+              function changeEventHandler () {
+                const renderer = layer.renderer.clone();
+                renderer.visualVariables = slider.updateVisualVariables(renderer.visualVariables);
+                layer.renderer = renderer;
+              }
+
+              slider.on(["thumb-change", "thumb-drag", "min-change", "max-change"], changeEventHandler);
+            })
+            .catch(console.error);
+
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="containerDiv">
+      <span id="title" class="esri-widget">Total population</span>
+      <div id="slider"></div>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/core/conversion/portalToEditorUtils/metadata/TradeAreaCalculatorsParser",["esri/dijit/geoenrichment/utils/JsonXmlConverter","./VariableScriptCollector","../../../supportClasses/templateJsonUtils/fieldInfo/FieldLibrary"],function(c,d,e){return{parseTradeAreaCalculators:function(a,f,b){a=c.queryJson(a,"SpecialTradeAreaFields");f.metadata.specialTradeAreaCalculatorName=a[0]&&a[0].attributes&&a[0].attributes.Name;a.forEach(function(a){b.variableProvider.isPlayerOnly&&
+d.getObjects(a,!0).variableObjects.forEach(function(a){a.alias=a.alias||e.getFieldLabel(a.id);b.variableProvider.addVariable(a)})})}}});

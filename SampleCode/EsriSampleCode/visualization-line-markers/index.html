@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Line markers and label placement | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: rgb(237, 233, 219, 1);
+      }
+
+      #viewDiv canvas {
+        filter: drop-shadow(16px 16px 10px rgba(0, 0, 0, 0.5));
+      }
+
+      #titleDiv {
+        padding: 10px;
+        font-size: 20pt;
+        font-family: "IM FELL DW Pica";
+        font-style: italic;
+        text-align: right;
+        background-color: rgb(237, 233, 219, 0.7);
+        border-radius: 10px;
+        box-shadow: none;
+      }
+    </style>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=IM+Fell+DW+Pica:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      require(["esri/views/SceneView", "esri/WebScene"], (SceneView, WebScene) => {
+        /***********************************
+         * Load Scene and create a SceneView
+         ***********************************/
+        // Load scene from the portal
+        const scene = new WebScene({
+          portalItem: {
+            id: "ff7aaf017b604b02ae7b39a4b72bf3fa"
+          }
+        });
+
+        // Create new SceneView and set the lighting to virtual
+        const view = new SceneView({
+          container: "viewDiv",
+          map: scene,
+
+          constraints: {
+            altitude: {
+              min: 9000000,
+              max: 25000000
+            }
+          },
+
+          environment: {
+            lighting: {
+              type: "virtual" // Virtual lighting provides a nicely lit globe without shadows
+            },
+            // Remove realistic elements for the thematic visualization
+            atmosphereEnabled: false,
+            starsEnabled: false,
+            background: {
+              type: "color",
+              color: [0, 0, 0, 0] // Just for visualization purposes, to be able to add a drop-shadow
+            }
+          },
+          alphaCompositingEnabled: true // Just for visualization purposes, to be able to add a drop-shadow
+        });
+
+        /***********************************
+         * Set the line patterns and markers
+         ***********************************/
+        scene.when(() => {
+          // Get the two layers we want to change
+          const paths = scene.allLayers.find((layer) => layer.title === "Bellinghausen Exp Path");
+          const labels = scene.allLayers.find((layer) => layer.title === "Bellinghausen Exp Labels");
+
+          paths.renderer = {
+            type: "simple", // autocasts as new SimpleRenderer()
+            symbol: {
+              type: "line-3d", // autocasts as new LineSymbol3D()
+
+              // Add two symbolizations on top of each other
+              symbolLayers: [
+                {
+                  //1.  White background line, transparent
+                  type: "line", // autocasts as new LineSymbol3DLayer()
+                  material: {
+                    color: [255, 255, 255, 0.3]
+                  },
+                  size: "8px"
+                },
+                {
+                  // 2. Dashed line with arrows as markers
+                  type: "line", // autocasts as new LineSymbol3DLayer()
+                  material: {
+                    color: [121, 72, 0]
+                  },
+                  size: "3px",
+                  pattern: {
+                    type: "style", // autocasts as new LineStylePattern3D()
+                    style: "long-dash"
+                  },
+                  marker: {
+                    type: "style", // autocasts as new LineStyleMarker3D()
+                    style: "arrow",
+                    placement: "end"
+                  }
+                }
+              ]
+            }
+          };
+
+          /***********************************
+           * Define the label style
+           ***********************************/
+
+          // Define the text for the labels. Combine name of the location with the arrival date in a nice format
+          var labelExpression = `
+  var months = [
+    "January","February","March","April","May","June","July", "August","September","October","November","December"
+  ];
+  var arrival = Date($feature['Start_Date']);
+  var label = $feature.Location_Name + TextFormatting.NewLine + months[Month(arrival)] + " " + Day(arrival) + ", " + Year(arrival);
+
+  return label;
+  `;
+
+          // Define the label symbol: color, font, size, background
+          const labelSymbol = {
+            type: "label-3d", // autocasts as new LabelSymbol3D()
+            symbolLayers: {
+              type: "text", // autocasts as new TextSymbol3DLayer()
+              material: { color: "black" },
+              size: 16, // Defined in points
+              background: {
+                color: [236, 232, 221, 0.7]
+              },
+              font: {
+                family: "IM FELL DW Pica",
+                style: "italic",
+                weight: "normal"
+              }
+            }
+          };
+
+          // Define the label: content and placement
+          // Note: You can define several labelingInfos and apply it to different features with a definitionExpression on the where property
+          labels.labelingInfo = [
+            {
+              // autocasts as new LabelClass()
+              symbol: labelSymbol,
+              labelExpressionInfo: {
+                expression: labelExpression
+              },
+              labelPlacement: "above-right",
+              where: "Location_Name = 'Discovery of Antarctic'" // Change the placement of this one label to the right side, so it is better visible
+            },
+            {
+              // autocasts as new LabelClass()
+              symbol: labelSymbol,
+              labelExpressionInfo: {
+                expression: labelExpression
+              },
+              labelPlacement: "above-left" // All other labels should be on the left side
+            }
+          ];
+          labels.labelsVisible = true;
+          view.ui.add("titleDiv", "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="titleDiv">Bellingshausen Antarctic Expedition<br />1819 - 1921</div>
+  </body>
+</html>
+

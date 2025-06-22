@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Highlight areas intersecting borough boundaries | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .esri-legend__layer-caption {
+        display: none;
+      }
+      #titleDiv {
+        width: 260px;
+        padding: 5px;
+        font-size: 16px;
+      }
+    </style>
+
+    <script>
+      require(["esri/views/MapView", "esri/WebMap", "esri/widgets/Legend", "esri/widgets/Expand"], (
+        MapView,
+        WebMap,
+        Legend,
+        Expand
+      ) => {
+        const webmap = new WebMap({
+          portalItem: {
+            id: "9e82b12a5e8d4337ae8a683a4274fb02"
+          }
+        });
+
+        const view = new MapView({
+          map: webmap,
+          container: "viewDiv"
+        });
+
+        webmap.when(() => {
+          // find the layer that shows IMD 2019 deciles in
+          //  Lower layer Super Output Areas of greater London
+          const imdLayer = webmap.layers.items[0];
+          // filter Lower layer Super Output Areas that intersect
+          // boundaries of boroughs in greater London
+          const featureFilter = {
+            where: "BoroughEdge='true'"
+          };
+          imdLayer.featureEffect = {
+            filter: featureFilter,
+            includedEffect: "drop-shadow(3px, 3px, 3px, black)",
+            excludedEffect: "blur(1px) brightness(65%)"
+          };
+
+          const legendExpand = new Expand({
+            expandIcon: "legend",
+            expandTooltip: "Expand Legend",
+            view: view,
+            content: new Legend({
+              view: view,
+              layerInfos: [
+                {
+                  layer: imdLayer
+                }
+              ]
+            })
+          });
+          view.ui.add(legendExpand, "top-left");
+          view.ui.add("titleDiv", "top-right");
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="titleDiv" class="esri-widget esri-widget__heading">Index of multiple deprivation along the borough boundaries of Greater London</div>
+  </body>
+</html>
+

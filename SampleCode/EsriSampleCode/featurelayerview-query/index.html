@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query features from a FeatureLayerView | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/core/reactiveUtils"], (
+        Map,
+        MapView,
+        FeatureLayer,
+        reactiveUtils
+      ) => {
+        (async () => {
+          const map = new Map({
+            basemap: "dark-gray-vector"
+          });
+
+          const view = new MapView({
+            container: "sceneDiv",
+            map: map,
+            center: [-73.95, 40.702],
+            zoom: 12,
+            padding: {
+              right: 300
+            }
+          });
+
+          const listNode = document.getElementById("nyc_graphics");
+
+          // create the PopupTemplate
+          const popupTemplate = {
+            // autocasts as new PopupTemplate()
+            title: "{NAME} in {COUNTY}",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "B12001_calc_pctMarriedE",
+                    label: "% Married",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "B12001_calc_numMarriedE",
+                    label: "Total Married",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "B12001_calc_numNeverE",
+                    label: "Never Married",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "B12001_calc_numDivorcedE",
+                    label: "Total Divorced",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  }
+                ]
+              }
+            ]
+          };
+
+          // create the FeatureLayer using the popupTemplate
+          const featureLayer = new FeatureLayer({
+            url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/ACS_Marital_Status_Boundaries/FeatureServer/2",
+            outFields: ["NAME", "GEOID"], // used by queryFeatures
+            popupTemplate: popupTemplate
+          });
+          map.add(featureLayer);
+
+          let graphics;
+
+          const layerView = await view.whenLayerView(featureLayer);
+
+          reactiveUtils.when(
+            () => !layerView.dataUpdating,
+            async () => {
+                // query all the features available for drawing.
+                try {
+                  const featureSet = await layerView.queryFeatures({
+                    geometry: view.extent,
+                    returnGeometry: true,
+                    orderByFields: ["GEOID"]
+                  });
+
+                  graphics = featureSet.features;
+
+                  const fragment = document.createDocumentFragment();
+
+                  graphics.forEach((result, index) => {
+                    const attributes = result.attributes;
+                    const name = attributes.NAME;
+
+                    // Create a list zip codes in NY
+                    const li = document.createElement("li");
+                    li.classList.add("panel-result");
+                    li.tabIndex = 0;
+                    li.setAttribute("data-result-id", index);
+                    li.textContent = name;
+
+                    fragment.appendChild(li);
+                  });
+                  // Empty the current list
+                  listNode.innerHTML = "";
+                  listNode.appendChild(fragment);
+                } catch (error) {
+                  console.error("query failed: ", error);
+                }
+            }
+          );
+          const onListClickHandler = async (event) => {
+            const target = event.target;
+            const resultId = target.getAttribute("data-result-id");
+
+            // get the graphic corresponding to the clicked zip code
+            const result = resultId && graphics && graphics[parseInt(resultId, 10)];
+
+            if (result) {
+              try {
+                await view.goTo(result.geometry.extent.expand(2));
+
+                view.openPopup({
+                  features: [result],
+                  location: result.geometry.centroid
+                });
+              } catch (error) {
+                if (error.name != "AbortError") {
+                  console.error(error);
+                }
+              }
+            }
+          };
+          // listen to click event on the zip code list
+          listNode.addEventListener("click", onListClickHandler);
+        })();
+      });
+    </script>
+
+    <style>
+      html,
+      body,
+      #sceneDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .panel-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .panel-side {
+        padding: 2px;
+        box-sizing: border-box;
+        width: 300px;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0.6);
+        overflow: auto;
+        z-index: 60;
+      }
+
+      .panel-side h3 {
+        padding: 0 20px;
+        margin: 20px 0;
+      }
+
+      .panel-side ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .panel-side li {
+        list-style: none;
+        padding: 10px 20px;
+      }
+
+      .panel-result {
+        cursor: pointer;
+        margin: 2px 0;
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+
+      .panel-result:hover,
+      .panel-result:focus {
+        color: orange;
+        background-color: rgba(0, 0, 0, 0.75);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="panel-container">
+      <div class="panel-side esri-widget">
+        <h3>Marriage by Census Tract</h3>
+        <ul id="nyc_graphics">
+          <li>Loading&hellip;</li>
+        </ul>
+      </div>
+      <div id="sceneDiv"></div>
+    </div>
+  </body>
+</html>
+

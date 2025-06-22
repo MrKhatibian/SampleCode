@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Filter features by attribute | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #seasons-filter {
+        height: 160px;
+        width: 100%;
+        visibility: hidden;
+      }
+
+      .season-item {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        vertical-align: baseline;
+        cursor: pointer;
+        height: 40px;
+      }
+
+      .season-item:focus {
+        background-color: dimgrey;
+      }
+
+      .season-item:hover {
+        background-color: dimgrey;
+      }
+
+      #titleDiv {
+        padding: 10px;
+      }
+
+      #titleText {
+        font-size: 20pt;
+        font-weight: 60;
+        padding-bottom: 10px;
+      }
+    </style>
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils"
+      ], (MapView, Map, FeatureLayer, Expand, reactiveUtils) => {
+        let floodLayerView;
+
+        // flash flood warnings layer
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "f9e348953b3848ec8b69964d5bceae02"
+          },
+          outFields: ["SEASON"]
+        });
+
+        const map = new Map({
+          basemap: "gray-vector",
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+          center: [-98, 40],
+          zoom: 4
+        });
+
+        const seasonsNodes = document.querySelectorAll(`.season-item`);
+        const seasonsElement = document.getElementById("seasons-filter");
+
+        // click event handler for seasons choices
+        seasonsElement.addEventListener("click", filterBySeason);
+
+        // User clicked on Winter, Spring, Summer or Fall
+        // set an attribute filter on flood warnings layer view
+        // to display the warnings issued in that season
+        function filterBySeason(event) {
+          const selectedSeason = event.target.getAttribute("data-season");
+          floodLayerView.filter = {
+            where: "Season = '" + selectedSeason + "'"
+          };
+        }
+
+        view.whenLayerView(layer).then((layerView) => {
+          // flash flood warnings layer loaded
+          // get a reference to the flood warnings layerview
+          floodLayerView = layerView;
+
+          // set up UI items
+          seasonsElement.style.visibility = "visible";
+          const seasonsExpand = new Expand({
+            view: view,
+            content: seasonsElement,
+            expandIcon: "filter",
+            group: "top-left"
+          });
+          //clear the filters when user closes the expand widget
+          reactiveUtils.when(
+            () => !seasonsExpand.expanded,
+            () => {
+              floodLayerView.filter = null;
+            }
+          );
+          view.ui.add(seasonsExpand, "top-left");
+          view.ui.add("titleDiv", "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="seasons-filter" class="esri-widget">
+      <div class="season-item visible-season" data-season="Winter">Winter</div>
+      <div class="season-item visible-season" data-season="Spring">Spring</div>
+      <div class="season-item visible-season" data-season="Summer">Summer</div>
+      <div class="season-item visible-season" data-season="Fall">Fall</div>
+    </div>
+    <div id="viewDiv"></div>
+    <div id="titleDiv" class="esri-widget">
+      <div id="titleText">Flash Floods by Season</div>
+      <div>Flash Flood Warnings (2002 - 2012)</div>
+    </div>
+  </body>
+</html>
+

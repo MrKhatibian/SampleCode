@@ -1,0 +1,6 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define("exports ../../../enums ../FeatureTechnique ../featureTechniqueUtils ../TechniqueType ./TextShader".split(" "),function(g,h,k,e,l,m){class n extends k.FeatureTechnique{constructor(){super(...arguments);this.type=l.TechniqueType.Text;this.shaders={geometry:new m.TextShader};this.symbologyPlane=h.FeatureSymbologyDrawOrder.TEXT}render(a,c){const {context:p,painter:b}=a,f=e.getSelectionDefines(a);var d=c.instance.getInput();d={shader:this.shaders.geometry,uniforms:{...e.resolveDynamicUniforms(a,
+c.target,d.uniforms),...e.getFeatureUniforms(a,c.target),mosaicInfo:b.textureManager.getMosaicInfo(p,c.textureKey)},defines:{...f,isHaloPass:!1,isBackgroundPass:!0,isLabel:!1},optionalAttributes:d.optionalAttributes,useComputeBuffer:e.isHittest(a)};b.setShader(d);b.setPipelineState(e.getFeaturePipelineState(a));b.submitDraw(a,c);b.setShader({...d,defines:{...f,isHaloPass:!0,isBackgroundPass:!1,isLabel:!1}});b.submitDraw(a,c);b.setShader({...d,defines:{...f,isHaloPass:!1,isBackgroundPass:!1,isLabel:!1}});
+b.submitDraw(a,c)}}g.TextTechnique=n;Object.defineProperty(g,Symbol.toStringTag,{value:"Module"})});

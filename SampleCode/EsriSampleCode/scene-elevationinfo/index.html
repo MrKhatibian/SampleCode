@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Elevation options | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #elevationDiv {
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+      }
+      .right {
+        text-align: right;
+      }
+      select {
+        width: 180px;
+      }
+      select option {
+        width: 180px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/layers/FeatureLayer", "esri/widgets/LayerList"], (
+        WebScene,
+        SceneView,
+        FeatureLayer,
+        LayerList
+      ) => {
+        // Load Webscene from portal item
+        const webscene = new WebScene({
+          portalItem: {
+            id: "82b1268e2dda4c0bb04d2f48e38652b8"
+          }
+        });
+
+        // Create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene
+        });
+        view.ui.add("elevationDiv", "top-right");
+
+        // Check when webscene finished loading all the resources
+        view.when(() => {
+          // Retrieve FeatureLayer from webscene
+          const balloonLayer = webscene.layers.find((layer) => {
+            return layer.title === "Balloon layer";
+          });
+
+          // Define elevationInfo and set it on the layer
+          const currentElevationInfo = {
+            mode: "relative-to-ground",
+            offset: 0,
+            featureExpressionInfo: {
+              expression: "Geometry($feature).z * 10"
+            },
+            unit: "meters"
+          };
+
+          balloonLayer.elevationInfo = currentElevationInfo;
+
+          // Register events to the controls
+          const offsetInput = document.getElementById("offset");
+          const featureExpressionInput = document.getElementById("featureExpressionInfo");
+          const unitSelect = document.getElementById("unit");
+          const modeSelect = document.getElementById("modeSelect");
+          modeSelect.addEventListener("change", updateElevationMode);
+          const inputElements = document.getElementsByTagName("input");
+          for (let i = 0; i < inputElements.length; i++) {
+            inputElements[i].addEventListener("blur", updateElevationSettings);
+            inputElements[i].addEventListener("keypress", onKeypress);
+          }
+          unitSelect.addEventListener("change", updateElevationSettings);
+
+          // Create events' callback functions
+          function updateElevationMode(event) {
+            const select = event.target;
+            const mode = select.options[select.selectedIndex].value;
+
+            if (mode === "on-the-ground") {
+              setInputStatus(false);
+            }
+
+            if (currentElevationInfo.mode === "on-the-ground") {
+              setInputStatus(true);
+            }
+
+            currentElevationInfo.mode = mode;
+            balloonLayer.elevationInfo = currentElevationInfo;
+          }
+
+          function setInputStatus(status) {
+            if (status) {
+              offsetInput.removeAttribute("disabled");
+              featureExpressionInput.removeAttribute("disabled");
+              unitSelect.removeAttribute("disabled");
+            } else {
+              offsetInput.setAttribute("disabled", "true");
+              featureExpressionInput.setAttribute("disabled", "true");
+              unitSelect.setAttribute("disabled", "true");
+            }
+          }
+
+          function updateElevationSettings(event) {
+            if (event.target.id === "featureExpressionInfo") {
+              const expression = event.target.value !== "" ? event.target.value : 0;
+              currentElevationInfo.featureExpressionInfo.expression = expression;
+            } else {
+              currentElevationInfo[event.target.id] = event.target.value;
+            }
+
+            balloonLayer.elevationInfo = currentElevationInfo;
+          }
+
+          function onKeypress(event) {
+            if (event.which === 13) {
+              updateElevationSettings(event);
+            }
+          }
+
+          // Add the possibility to turn buildings on/off by adding a LayerList with the Buildings layer
+          const buildingsLayer = webscene.layers.find((layer) => {
+            return layer.title === "Buildings";
+          });
+
+          view.ui.add(
+            new LayerList({
+              view: view
+            }),
+            "bottom-left"
+          );
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="elevationDiv" class="esri-widget">
+      <table>
+        <tr>
+          <td class="right">mode</td>
+          <td>
+            <select id="modeSelect">
+              <option value="on-the-ground">on-the-ground</option>
+              <option value="relative-to-ground" selected>relative-to-ground</option>
+              <option value="relative-to-scene">relative-to-scene</option>
+              <option value="absolute-height">absolute-height</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="right">offset</td>
+          <td><input id="offset" type="text" size="23" value="0" /></td>
+        </tr>
+        <tr>
+          <td class="right">expression</td>
+          <td>
+            <input id="featureExpressionInfo" type="text" size="23" value="Geometry($feature).z * 10" />
+          </td>
+        </tr>
+        <tr>
+          <td class="right">unit</td>
+          <td>
+            <select id="unit">
+              <option value="feet">feet</option>
+              <option value="kilometers">kilometers</option>
+              <option value="meters" selected>meters</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

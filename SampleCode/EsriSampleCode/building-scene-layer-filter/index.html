@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Filter BuildingSceneLayer with BuildingExplorer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/widgets/BuildingExplorer"
+      ], (WebScene, SceneView, BuildingExplorer) => {
+        // Load webscene and display it in a SceneView
+        const webscene = new WebScene({
+          portalItem: {
+            id: "f477c289e93347aba6a0c052bfe0e0a4"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene
+        });
+
+        view
+          .when(() => {
+            // get the BuildingSceneLayer from the webscene
+            webscene.allLayers.forEach((layer) => {
+              if (layer.title === "Esri Building E Demo") {
+
+                // explore components in the layer using the BuildingExplorer widget
+                const buildingExplorer = new BuildingExplorer({
+                  view: view,
+                  layers: [layer]
+                });
+                view.ui.add(buildingExplorer, "top-right");
+              }
+            });
+          });
+      });
+    </script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="viewDiv" class="esri-widget"></div>
+  </body>
+</html>
+

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>CIMSymbol lines and polygons | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #symbolControls {
+      background-color: white;
+      padding: 10px;
+      min-width: 250px;
+    }
+
+    .esri-slider {
+      padding: 10px;
+    }
+
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script>
+    require([
+      "esri/views/MapView",
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/layers/VectorTileLayer",
+      "esri/widgets/Expand",
+      "esri/widgets/Slider",
+      "esri/widgets/Home",
+      "esri/symbols/support/cimSymbolUtils"
+    ], (MapView, Map, FeatureLayer, VectorTileLayer, Expand, Slider, Home, cimSymbolUtils) => {
+      // Tahoe Rim Trail feature layer
+      const rimTrail = new FeatureLayer({
+        portalItem: {
+          id: "9a61ba12e9904388a0d17c48ce6a5662"
+        },
+        renderer: {
+          type: "simple",
+          symbol: {
+            type: "cim",
+            // CIM Line Symbol
+            data: {
+              type: "CIMSymbolReference",
+              symbol:{
+                type: "CIMLineSymbol",
+                symbolLayers: [{
+                    // white dashed layer at center of the line
+                    type: "CIMSolidStroke",
+                    effects: [{
+                      type: "CIMGeometricEffectDashes",
+                      dashTemplate: [2, 2, 2, 2], // width of dashes and spacing between the dashes
+                      lineDashEnding: "NoConstraint",
+                      controlPointEnding: "NoConstraint"
+                    }],
+                    enable: true, // must be set to true in order for the symbol layer to be visible
+                    capStyle: "Butt",
+                    joinStyle: "Round",
+                    width: 1,
+                    color: [
+                      255,
+                      255,
+                      255,
+                      255
+                    ]
+                  },
+                  {
+                    // lighter green line layer that surrounds the dashes
+                    type: "CIMSolidStroke",
+                    enable: true,
+                    capStyle: "Butt",
+                    joinStyle: "Round",
+                    width: 3,
+                    color: [
+                      56,
+                      168,
+                      0,
+                      255
+                    ]
+                  },
+                  {
+                    // darker green outline around the line symbol
+                    type: "CIMSolidStroke",
+                    enable: true,
+                    capStyle: "Butt",
+                    joinStyle: "Round",
+                    width: 6,
+                    color: [
+                      0,
+                      115,
+                      76,
+                      255
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      });
+      // Lake Tahoe feature layer
+      const lakeLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Lake_Tahoe/FeatureServer",
+        renderer: {
+          type: "simple",
+          symbol: {
+            type: "cim",
+            data: {
+              type: "CIMSymbolReference",
+              symbol: {
+                // CIM polygon symbol
+                type: "CIMPolygonSymbol",
+                symbolLayers: [{
+                  // light blue outline around the polygon
+                    type: "CIMSolidStroke",
+                    enable: true,
+                    width: 0.4,
+                    color: [
+                      0,
+                      92,
+                      230,
+                      255
+                    ]
+                  },
+                  {
+                    // light blue hatch fill
+                    type: "CIMHatchFill",
+                    enable: true,
+                    lineSymbol: {
+                      type: "CIMLineSymbol", // CIM line symbol that makes up the line inside the hatch fill
+                      symbolLayers: [{
+                        type: "CIMSolidStroke",
+                        effects: [{
+                          type: "CIMGeometricEffectDashes",
+                          dashTemplate: [1, 2],
+                          lineDashEnding: "FullPattern",
+                        }],
+                        enable: true,
+                        width: 1,
+                        color: [
+                          0,
+                          92,
+                          230,
+                          255
+                        ]
+                      }]
+                    },
+                    rotation: 45, // rotation of the lines
+                    separation: 4 // distance between lines in hatch fill
+                  },
+                  {
+                    // solid blue fill background
+                    type: "CIMSolidFill",
+                    enable: true,
+                    color: [
+                      151,
+                      219,
+                      242,
+                      150
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      });
+      // add trailheads feature layer as webstyle symbol
+      const trailheads = new FeatureLayer({
+        url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/TahoeTrailheads/FeatureServer",
+        renderer: {
+          type: "simple",
+          symbol: {
+            type: "web-style",
+            name: "trail",
+            styleName: "Esri2DPointSymbolsStyle"
+          }
+        }
+      });
+
+      // convert webstyle symbol to CIMSymbol
+      trailheads.renderer.symbol.fetchCIMSymbol().then((cimSymbol) => {
+        trailheads.renderer.symbol = cimSymbol;
+      });
+
+      // set up the map and view
+      const map = new Map({
+        basemap: { // using a custom basemap from ArcGIS Online
+          baseLayers: new VectorTileLayer({
+            portalItem: {
+              id: "b5676525747f499687f12746441101ef"
+            }
+          }),
+          referenceLayers: new VectorTileLayer({
+            portalItem: {
+              id: "94329802cbfa44a18f423e6f1a0b875c"
+            }
+          })
+        },
+        layers: [rimTrail, lakeLayer, trailheads] // add layers to the map
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-120, 39.05], // centered at Lake Tahoe
+        zoom: 9
+      });
+
+      const sizeSlider = new Slider({
+        container: "sizeSlider",
+        precision: 2,
+        min: 0,
+        max: 50,
+        values: [15.75] // starting size of the CIMPointSymbol
+      });
+
+      sizeSlider.on(["thumb-drag", "thumb-change"], (event) => {
+        const value = event.value;
+        document.getElementById("size").innerHTML = value;
+        const newSymbol = trailheads.renderer.symbol.clone(); // clone the current symbol
+        cimSymbolUtils.scaleCIMSymbolTo(newSymbol, value); // use CIM util function to scale the symbol to a new size
+        // update the renderer to the new symbol
+        trailheads.renderer = {
+          type: "simple",
+          symbol: newSymbol
+        };
+      });
+
+      const rotationSlider = new Slider({
+        container: "rotationSlider",
+        precision: 0,
+        min: 0,
+        max: 360,
+        values: [0] // starting rotation of the CIMPointSymbol
+      });
+
+      rotationSlider.on(["thumb-drag", "thumb-change"], (event) => {
+        const value = event.value;
+        document.getElementById("rotation").innerHTML = value;
+        const newSymbol = trailheads.renderer.symbol.clone(); // clone the current symbol
+        cimSymbolUtils.applyCIMSymbolRotation(newSymbol, value); // use CIM util function to change the rotation of the symbol
+        // update the renderer to the new symbol
+        trailheads.renderer = {
+          type: "simple",
+          symbol: newSymbol
+        };
+      });
+
+      // create and add the Expand widget for the CIMSymbol controls
+      const edits = new Expand({
+        view: view,
+        content: document.getElementById("symbolControls"),
+        expandIcon: "pencil",
+        expandTooltip: "Edit the CIMPointSymbol"
+      });
+      view.ui.add(edits, "top-right");
+
+      // create and add Home widget to the view
+      const home = new Home({
+        view: view
+      });
+      view.ui.add(home, "top-left");
+    });
+
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="symbolControls">
+    <h3>Edit Symbols</h3>
+    <div id="sizeSliderContainer">
+      <div>Size value: <span id="size">15.75</span></div>
+      <div id="sizeSlider"></div>
+    </div>
+    <div id="rotationSliderContainer">
+      <div>Rotation value: <span id="rotation">0</span></div>
+      <div id="rotationSlider"></div>
+    </div>
+  </div>
+</body>
+
+</html>
+

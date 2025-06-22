@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Overlay af lag</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Overlay af lag"></h2>
+        <hr/>
+    <p>Overlay af lag kombinerer to eller flere lag til et lag. Man kan betragte overlay som at se gennem en stak kort og oprette et enkelt kort, der indeholder alle de oplysninger, der er i stakken af kort. Overlay er mere end fletning af linjearbejde. Alle attributter for objekterne i overlay'et kommer med i det endelige produkt. Overlay benyttes til at besvare et af de mest grundl&aelig;ggende sp&oslash;rgsm&aring;l inden for geografien: Hvad ligger oven p&aring; hvad? 
+    </p>
+    <p>F&oslash;lgende er eksempler:
+        <ul>
+            <li>Hvilke parceller ligger inden for den 100-&aring;rige flodslette? (Inden for er en anden m&aring;de at sige p&aring;)
+                  
+            </li>
+            <li>Hvilken slags jordbrug ligger p&aring; hvilken slags jord?
+                 
+            </li>
+            <li>Hvilke br&oslash;nde ligger p&aring; forladte milit&aelig;rbaser?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Hvis feltet  <b>Brug aktuel kortudstr&aelig;kning</b> er markeret, er det kun objekterne i det input- og overlay-lag, der er synlige inden for den aktuelle kortudstr&aelig;kning, der bliver lagt ovenp&aring;. Hvis feltet ikke er markeret, l&aelig;gges alle objekter i b&aring;de input- og overlay-laget p&aring;, ogs&aring; selvom de befinder sig uden for den aktuelle kortudstr&aelig;kning.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Vælg inputlag</h2></div>
+        <hr/>
+        <div>
+            <p>Det punkt-, linje eller omr&aring;delag, der skal l&aelig;gges ovenp&aring;.
+            </p>
+            <p>Ud over at v&aelig;lge et lag fra dit kort kan du v&aelig;lge  <b>V&aelig;lg analyselag</b> nederst p&aring; rullelisten. Denne indstilling &aring;bner et galleri, hvor du kan gennemse og v&aelig;lge datas&aelig;t fra forskellige kilder, som du kan bruge i din analyse. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Vælg overlay-lag</h2></div>
+        <hr/>
+        <div>
+            <p>Det lag, der skal l&aelig;gges oven p&aring; inputlaget.  
+            </p>
+            <p>Udover at du kan v&aelig;lge et lag i dit kort, kan du v&aelig;lge  <b>V&aelig;lg analyselag</b> nederst p&aring; rullelisten for at g&aring; til dit indhold til et big data-fildelingsdatas&aelig;t eller -vektorlag. Du kan ogs&aring; anvende et filter p&aring; dit input-lag eller anvende en markering p&aring; hostede lag, der er tilf&oslash;jet p&aring; dit kort. Filtre og markeringer anvendes kun til analyse. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Vælg overlay-metode</h2></div>
+        <hr/>
+        <div>
+            <p>Angiver den overlay-metode, der kombinerer inputlaget og overlay-laget.  
+
+                <ul>
+                    <li> <b>Gennemsk&aelig;r</b> &ndash; Kun de objekter eller dele af objekter i overlay-laget, der overlapper med objekter i inputlaget, kombineres.
+                    </li>
+                    <li> <b>Slet</b> &ndash; Objekter eller dele af objekter i overlay-laget, der ikke overlapper med omr&aring;der i inputlaget, kombineres.
+                    </li>
+                    <li> <b>Sammenl&aelig;g</b> &ndash; Alle objekter fra begge lag kombineres, s&aring; der dannes en geometrisk sammenl&aelig;gning af inputlaget og overlay-laget. Alle objekter og deres attributter skrives til laget.
+                    </li>
+                    <li> <b>Identitet</b> &ndash; Objekter eller dele af objekter i inputlaget og overlay-laget kombineres. Objekter eller dele af objekter, der overlapper i b&aring;de input- og overlay-laget p&aring;, skrives til outputlaget.
+                    </li>
+                    <li> <b>Symmetrisk forskel</b> &ndash; Objekter eller dele af objekter i inputlaget og overlay-laget, der ikke overlapper, kombineres.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Navn på resultatlag</h2></div>
+        <hr/>
+        <div>
+            <p>Navnet p&aring; det lag, som oprettes under  <b>Mit indhold</b> og f&oslash;jes til kortet. Det vil indeholde samme objekttype (omr&aring;der, linjer eller punkter) som input- og overlay-lagene. Standardnavnet er baseret p&aring; overlay-metoden og navnet p&aring; inputlaget. Hvis laget allerede findes, vil du blive bedt om at angive et andet navn.
+            </p>
+            <p>Ved hj&aelig;lp af rullelisten  <b>Gem resultat i</b> kan du angive navnet p&aring; en mappe i <b>Mit indhold</b>, hvor resultatet skal gemmes.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

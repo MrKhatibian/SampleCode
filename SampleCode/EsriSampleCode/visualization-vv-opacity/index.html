@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Data-driven opacity | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        Map,
+        MapView,
+        FeatureLayer,
+        Legend
+      ) => {
+        const edLayer = new FeatureLayer({
+          url:
+            "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Puget_Sound_BG_demographics/FeatureServer/0",
+          popupTemplate: {
+            // autocasts as new PopupTemplate()
+            content: "In this block group, the median household income is ${MEDHINC_CY}.",
+            fieldInfos: [
+              {
+                fieldName: "MEDHINC_CY",
+                format: {
+                  places: 0,
+                  digitSeparator: true
+                }
+              }
+            ]
+          },
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: "#238443",
+              outline: null
+            },
+            // use opacity to visualize median household income
+            visualVariables: [
+              {
+                type: "opacity",
+                field: "MEDHINC_CY",
+                stops: [
+                  { value: 10000, opacity: 0.2, label: "$10,000" },
+                  { value: 100000, opacity: 0.85, label: "$100,000" }
+                ]
+              }
+            ]
+          }
+        });
+
+        // Add the layer to the map
+        const map = new Map({
+          basemap: "gray-vector",
+          layers: [edLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-122.3487846, 47.58907],
+          zoom: 11
+        });
+
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "top-right"
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

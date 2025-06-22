@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Execute Arcade for a custom chart | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      #viewDiv {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 40%;
+        height: 60%;
+      }
+      #panel {
+        position: absolute;
+        right: 0;
+        left: 0;
+        height: 40%;
+        width: 100%;
+        top: 60%;
+        bottom: 0;
+        overflow: hidden;
+        display: flex;
+      }
+      #chartDiv {
+        position: relative;
+        width: 50%;
+      }
+      #legendColorDiv {
+        width: 25%;
+      }
+      #legendSizeDiv {
+        width: 25%;
+      }
+      #diversityChart {
+        position: absolute;
+      }
+      .panel-item {
+        border-width: 2px;
+        border-color: #10a195;
+        border-style: solid;
+      }
+      #update-chart {
+        --calcite-color-brand: #10a195;
+        --calcite-color-brand-hover: #67d3ca;
+        --calcite-color-brand-press: #f0f1a9;
+      }
+    </style>
+
+    <!-- Load the Chart.js library -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"
+      integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <!-- Calcite components -->
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <!-- ArcGIS JS API -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/symbols/support/symbolUtils",
+        "esri/core/reactiveUtils",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/Bookmarks",
+        "esri/arcade",
+        "esri/layers/support/arcadeUtils"
+      ], (MapView, WebMap, symbolUtils, reactiveUtils, Legend, Expand, Bookmarks, arcade, arcadeUtils) => {
+        (async () => {
+          const webmap = new WebMap({
+            portalItem: {
+              // autocasts as new PortalItem()
+              id: "a7fb72d99a9b4e15b811ee60c04fdfc1"
+            }
+          });
+
+          const view = new MapView({
+            map: webmap,
+            container: "viewDiv",
+            popup: {
+              dockEnabled: true,
+              dockOptions: {
+                breakpoint: false,
+                position: "top-right"
+              }
+            }
+          });
+          view.ui.add(
+            new Expand({
+              view,
+              content: new Bookmarks({ view })
+            }),
+            "top-left"
+          );
+
+          await view.when();
+
+          const diversityLayer = view.map.layers.find((layer) => layer.title === "Language Diversity Index");
+          const spanishSpeakersLayer = view.map.layers.find(
+            (layer) => layer.title === "Language diversity in Spanish speaking populations"
+          );
+
+          new Legend({
+            view,
+            container: "legendColorDiv",
+            respectLayerVisibility: false,
+            layerInfos: [
+              {
+                layer: diversityLayer
+              }
+            ]
+          });
+          new Legend({
+            view,
+            container: "legendSizeDiv"
+          });
+
+          // Arcade expression used by color visual variable
+          const colorVariableExpressionInfo = arcadeUtils
+            .getExpressionsFromLayer(spanishSpeakersLayer)
+            .filter((expressionInfo) => expressionInfo.profileInfo.context === "color-variable")[0];
+
+          const diversityArcadeScript = colorVariableExpressionInfo.expression;
+          const diversityArcadeTitle = colorVariableExpressionInfo.title;
+
+          // Define the visualization profile variables
+          // Spec documented here:
+          // https://developers.arcgis.com/arcade/profiles/visualization/
+          const visualizationProfile = arcade.createArcadeProfile("visualization");
+
+          // Compile the color variable expression and create an executor
+          const diversityArcadeExecutor = await arcade.createArcadeExecutor(
+            diversityArcadeScript,
+            visualizationProfile
+          );
+
+          // Ensure the input to $feature has all the
+          // data required by the expression.
+          // The additional field listed below is required by the y axis of
+          // the chart, but not used in the Arcade expression.
+          spanishSpeakersLayer.outFields = [...diversityArcadeExecutor.fieldsUsed, "B16007_calc_pctSpanE"];
+
+          const spanishSpeakersLayerView = await view.whenLayerView(spanishSpeakersLayer);
+
+          async function queryData() {
+            const { features } = await spanishSpeakersLayerView.queryFeatures();
+
+            const chartPoints = features.map(async (feature) => {
+              // Execute the Arcade expression for each feature in the layer view
+              const diversityIndex = await diversityArcadeExecutor.executeAsync({
+                $feature: feature,
+                $view: view
+              });
+
+              const backgroundColor = await symbolUtils.getDisplayedColor(feature);
+
+              if (!diversityIndex) {
+                return {
+                  data: {
+                    x: -10,
+                    y: -10
+                  },
+                  backgroundColor: "rgba(0,0,0,0)"
+                };
+              }
+
+              // Return the chart data along with the color used to represent
+              // the diversity index value in the color variable
+              return {
+                data: {
+                  x: diversityIndex,
+                  y: feature.attributes.B16007_calc_pctSpanE
+                },
+                backgroundColor
+              };
+            });
+            return await Promise.all(chartPoints);
+          }
+
+          let diversityScatterPlot;
+          function updateChart(data, backgroundColor) {
+            const config = {
+              type: "scatter",
+              data: {
+                datasets: [
+                  {
+                    data,
+                    backgroundColor
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      // Title returned from color variable
+                      text: diversityArcadeTitle
+                    },
+                    type: "linear",
+                    position: "bottom",
+                    min: 0,
+                    // maximum diversity for 5 categories
+                    max: 80
+                  },
+                  y: {
+                    min: 0,
+                    max: 100,
+                    title: {
+                      display: true,
+                      text: "% Population that speaks Spanish"
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: false
+                  },
+                  tooltip: {
+                    enabled: false
+                  }
+                }
+              }
+            };
+
+            if (!diversityScatterPlot) {
+              const canvas = document.getElementById("diversityChart");
+              canvas.style.width = "100%";
+              canvas.style.height = "100%";
+              canvas.width = canvas.offsetWidth;
+              canvas.height = canvas.offsetHeight;
+
+              const ctx = canvas.getContext("2d");
+              diversityScatterPlot = new Chart(ctx, config);
+            } else {
+              // Update the chart with new data when button is clicked
+              diversityScatterPlot.data.datasets[0].data = data;
+              diversityScatterPlot.data.datasets[0].backgroundColor = backgroundColor;
+              diversityScatterPlot.update();
+            }
+          }
+
+          async function createChart() {
+            const chartPoints = await queryData();
+            const data = [];
+            const backgroundColor = [];
+
+            for (let i in chartPoints) {
+              data[i] = chartPoints[i].data;
+              backgroundColor[i] = chartPoints[i].backgroundColor;
+            }
+            updateChart(data, backgroundColor);
+          }
+
+          await reactiveUtils.whenOnce(() => !spanishSpeakersLayerView.updating);
+          await createChart();
+
+          const updateChartBtn = document.getElementById("update-chart");
+          updateChartBtn.onclick = createChart;
+          view.ui.add(updateChartBtn, "bottom-left");
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-button id="update-chart">Update chart with data in current view</calcite-button>
+    <div id="panel">
+      <div id="chartDiv" class="panel-item">
+        <canvas id="diversityChart" width="100%" height="55%"></canvas>
+      </div>
+      <div id="legendColorDiv" class="panel-item"></div>
+      <div id="legendSizeDiv" class="panel-item"></div>
+    </div>
+  </body>
+</html>
+

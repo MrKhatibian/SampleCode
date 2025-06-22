@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Katmanları Çakıştır</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Katmanları &Ccedil;akıştır"></h2>
+        <hr/>
+    <p>Katmanları &Ccedil;akıştır bir veya daha fazla katmanı tek bir katmanda birleştirir. Bir &ccedil;akıştırmayı bir dizi haritanın &uuml;st &uuml;ste getirilerek istifteki t&uuml;m bilgileri i&ccedil;eren tek bir harita oluşturulması olarak d&uuml;ş&uuml;nebilirsiniz. &Ccedil;akıştırma bir &ccedil;izgi birleştirme &ccedil;alışmasının daha fazlasıdır; &ouml;rt&uuml;şmedeki detayların t&uuml;m &ouml;znitelikleri son &uuml;r&uuml;ne dahil edilir. &Ccedil;akıştırma, coğrafyanın en temel sorularından birine cevap vermek i&ccedil;in kullanılır: Neyin &uuml;st&uuml;nde ne var? 
+    </p>
+    <p>Aşağıda &ouml;rnekleri verilmiştir:
+        <ul>
+            <li>Hangi parseller 100 yıllık taşkın yatağı d&uuml;zlemi i&ccedil;indedir? (&quot;İ&ccedil;inde&quot;, &quot;&uuml;st&uuml;nde&quot; demenin bir diğer yoludur.)
+                  
+            </li>
+            <li>Hangi arazi kullanımı hangi toprak t&uuml;r&uuml; &uuml;zerinde?
+                 
+            </li>
+            <li>Hangi kuyular terk edilmiş askeri &uuml;slerin i&ccedil;inde?
+            </li>
+        </ul>
+        
+    </p>
+    <p> <b>Ge&ccedil;erli harita yayılımını kullan</b> işaretli ise, yalnızca ge&ccedil;erli harita yayılımında g&ouml;r&uuml;n&uuml;r olan girdi ve &ccedil;akıştırma katmanlarındaki detaylar yerleştirilir. 
+ İşaretli değilse, hem girdi katmanı hem de &ccedil;akıştırma katmanındaki t&uuml;m detaylar, ge&ccedil;erli harita yayılımının dışında olsa bile yerleştirilir.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Girdi katmanını seç</h2></div>
+        <hr/>
+        <div>
+            <p>&Ccedil;akıştırma yapılacak olan nokta, &ccedil;izgi ya da alan katmanıdır.
+            </p>
+            <p>Haritanızdan bir katman se&ccedil;meye ek olarak, a&ccedil;ılır listenin alt kısmında bulunan  <b>Analiz Katmanı Se&ccedil;</b> se&ccedil;eneğini de se&ccedil;ebilirsiniz. Bu se&ccedil;enek, analizinizde kullanmak &uuml;zere &ccedil;eşitli kaynaklardan gelen veri k&uuml;melerine g&ouml;z atabileceğiniz ve se&ccedil;ebileceğiniz bir galeri a&ccedil;ar. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Çakıştırma katmanı seç</h2></div>
+        <hr/>
+        <div>
+            <p>Girdi katmanında &ccedil;akıştırılacak katman.  
+            </p>
+            <p>Haritanızdan bir katman se&ccedil;ebileceğiniz gibi, a&ccedil;ılan listenin en altından  <b>Analiz Katmanını Se&ccedil;</b> &ouml;gesini belirleyerek b&uuml;y&uuml;k veri dosya paylaşımı veri k&uuml;mesi veya detay katmanı i&ccedil;eriğinize g&ouml;z atabilirsiniz. İsteğe bağlı olarak girdi katmanınıza bir filtre uygulayabilir veya haritanıza eklenen barındırılan katmanlara bir se&ccedil;im uygulayabilirsiniz. Filtreler ve se&ccedil;imler sadece analiz i&ccedil;in uygulanır. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Çakıştırma yöntemi seç</h2></div>
+        <hr/>
+        <div>
+            <p>Girdi katmanı ve &ccedil;akıştırma katmanını birleştirecek &ccedil;akıştırma y&ouml;ntemini belirtir.  
+
+                <ul>
+                    <li> <b>Kesişim</b>&mdash;Sadece &ccedil;akıştırma katmanında yer alan ve girdi katmanındaki detaylara &ccedil;akıştırılan detaylar ya da detay kısımları birleştirilir.
+                    </li>
+                    <li> <b>Sil</b>&mdash;&Ccedil;akıştırma katmanında yer alan ve girdi katmanındaki detaylarla &ccedil;akışmayan detaylar ya da detay kısımları birleştirilir.
+                    </li>
+                    <li> <b>Birleşim</b>&mdash;Her iki katmandaki t&uuml;m detaylar, girdi katmanı ve &ccedil;akıştırma katmanının geometrik bir birleşimini oluşturacak şekilde birleştirilir. T&uuml;m detaylar ve &ouml;znitelikleri katmana yazılır.
+                    </li>
+                    <li> <b>Kimlik</b>&mdash;Girdi katmanı ve &ccedil;akıştırma katmanındaki detaylar veya detay kısımları birleştirilir. Girdi katmanı ve &ccedil;akıştırma katmanında &ccedil;akışan detaylar veya detay kısımları &ccedil;ıktı detay katmanına yazılır.
+                    </li>
+                    <li> <b>Simetrik Fark</b>&mdash;Girdi katmanı ve &ccedil;akıştırma katmanında &ccedil;akışmayan detaylar veya detay kısımları birleştirilir.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Sonuç katmanı adı</h2></div>
+        <hr/>
+        <div>
+            <p> <b>İ&ccedil;eriğim</b>'de oluşturulacak ve haritaya eklenecek katmanın adı. Girdi ve &ccedil;akıştırma katmanları ile aynı detay t&uuml;r&uuml;ne (alanlar, &ccedil;izgiler veya noktalar) sahip olacaktır. Varsayılan ad, &ccedil;akıştırma y&ouml;ntemine ve girdi katmanı adına g&ouml;redir. Katman zaten mevcutsa, başka bir ad sağlamanız istenir.
+            </p>
+            <p> <b>Sonu&ccedil;ları kaydet</b> a&ccedil;ılır kutusunu kullanarak <b>İ&ccedil;eriğim</b> alanında sonucun kaydedileceği klas&ouml;r adını belirleyebilirsiniz.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

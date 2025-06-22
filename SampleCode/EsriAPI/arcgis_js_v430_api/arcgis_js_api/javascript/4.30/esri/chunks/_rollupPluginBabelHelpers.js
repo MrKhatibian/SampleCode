@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports"],function(d){d._assertClassBrand=function(b,a,c){if("function"==typeof b?b===a:b.has(a))return 3>arguments.length?a:c;throw new TypeError("Private element is not present on this object");};d._classPrivateMethodInitSpec=function(b,a){if(a.has(b))throw new TypeError("Cannot initialize the same private elements twice on an object");a.add(b)};d._defineProperty=function(b,a,c){a:if("object"==typeof a&&a){var e=a[Symbol.toPrimitive];if(void 0!==e){a=e.call(a,"string");if("object"!=typeof a)break a;
+throw new TypeError("@@toPrimitive must return a primitive value.");}a=String(a)}a="symbol"==typeof a?a:a+"";a in b?Object.defineProperty(b,a,{value:c,enumerable:!0,configurable:!0,writable:!0}):b[a]=c;return b}});

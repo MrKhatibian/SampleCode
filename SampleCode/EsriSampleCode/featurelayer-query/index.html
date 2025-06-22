@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query top features from a FeatureLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #infoDiv {
+        padding: 6px;
+        width: 370px;
+        height: 97%;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        --calcite-color-brand: #71c96e;
+        --calcite-color-brand-hover: #67b564;
+      }
+
+      #resultsDiv {
+        overflow: auto;
+        display: none;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/symbols/WebStyleSymbol",
+        "esri/Basemap",
+        "esri/rest/support/TopFeaturesQuery",
+        "esri/rest/support/TopFilter"
+      ], (Map, MapView, FeatureLayer, WebStyleSymbol, Basemap, TopFeaturesQuery, TopFilter) =>
+        (async () => {
+          // dark human geography basemap
+          const basemap = new Basemap({
+            portalItem: {
+              id: "4f2e99ba65e34bb8af49733d9778fb8e"
+            }
+          });
+
+          // national parks layer
+          const layer = new FeatureLayer({
+            url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/US_National_Parks_Annual_Visitation/FeatureServer/0",
+            outFields: ["*"],
+            renderer: await setRenderer(),
+            popupTemplate: createPopupTemplate()
+          });
+
+          const map = new Map({
+            basemap,
+            layers: [layer]
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-97.75188, 37.23308],
+            zoom: 3,
+            padding: {
+              right: 380
+            }
+          });
+          const layerView = await view.whenLayerView(layer);
+
+          // get UI components involved in top features query
+          const orderDirectionSelection = document.getElementById("orderDirectionSelection");
+          const orderByFieldSelection = document.getElementById("orderByFieldSelect");
+          const clearQueryButton = document.getElementById("clear-query");
+          const queryParksButton = document.getElementById("query-parks");
+
+          // *********************************************************
+          // This function runs when user clicks on query parks button
+          // *********************************************************
+          document.getElementById("query-parks").addEventListener("click", async () => {
+            clearQueryButton.appearance = "outline";
+            queryParksButton.appearance = "solid";
+
+            // check if the user wants to select the most or least visited parks
+            // in each state
+            const queryOrder = orderDirectionSelection.selectedItem.value;
+            const orderByField = [`${orderByFieldSelection.selectedOption.value} ${queryOrder}`];
+
+
+            // TopFeatureQuery parameter for the queryTopFeatures method
+            // collect user inputs to query either the most or the least
+            // visited national parks in each state
+            query = new TopFeaturesQuery({
+              topFilter: new TopFilter({
+                topCount: parseInt(topCountSelect.selectedOption.value),
+                groupByFields: ["State"],
+                orderByFields: orderByField
+              }),
+              orderByFields: orderByField,
+              outFields: ["State, TOTAL, F2018, F2019, F2020, Park"],
+              returnGeometry: true,
+              cacheHint: false
+            });
+            const results = await layer.queryTopFeatures(query);
+
+
+            document.getElementById("resultsDiv").style.display = "block";
+            document.getElementById("resultsHeading").innerHTML = `Results: ${results.features.length} parks`;
+            document.getElementById("results").innerHTML = "";
+
+
+            graphics = results.features;
+            graphics.forEach((result, index) => {
+              const attributes = result.attributes;
+              const item = document.createElement("calcite-pick-list-item");
+              item.setAttribute("label", attributes.Park);
+              item.setAttribute("value", index);
+
+              const visitorTotal = orderByFieldSelection.selectedOption.value;
+              const total = `Total visitors: ${attributes[visitorTotal]}`;
+              const state = `State: ${attributes.State}`;
+              const description = total + "\n" + state;
+              item.setAttribute("description", description);
+              item.addEventListener("click", parkResultClickHandler);
+              document.getElementById("results").appendChild(item);
+            });
+
+
+
+            // set query for the queryTopObjectIds.
+            query.orderByFields = [""];
+            const objectIds = await layer.queryTopObjectIds(query);
+            layerView.filter = {
+              objectIds
+            };
+
+          });
+
+          // ***************************************************
+          // this function runs when user clicks on the park
+          // in the list shown on the right side of the app
+          // ***************************************************
+          function parkResultClickHandler(event) {
+            const target = event.target;
+            const resultId = target.getAttribute("value");
+
+            // get the graphic corresponding to the clicked zip code
+            const result = resultId && graphics && graphics[parseInt(resultId, 10)];
+
+            if (result) {
+              view.openPopup({
+                features: [result],
+                location: result.geometry
+              });
+            }
+          }
+
+          clearQueryButton.addEventListener("click", () => {
+            clearQueryButton.appearance = "solid";
+            queryParksButton.appearance = "outline";
+            layerView.filter = null;
+            view.closePopup();
+            document.getElementById("resultsHeading").innerHTML = `Results`;
+            document.getElementById("results").innerHTML = "";
+          });
+
+          async function setRenderer() {
+            const symbol = new WebStyleSymbol({
+              name: "park",
+              styleName: "Esri2DPointSymbolsStyle"
+            });
+
+            const cimSymbol = await symbol.fetchCIMSymbol();
+            const symbolLayer = cimSymbol.data.symbol.symbolLayers[0];
+            symbolLayer.size = 16;
+            cimSymbol.data.symbol.symbolLayers = [symbolLayer];
+
+            return {
+              type: "simple",
+              symbol: cimSymbol
+            };
+          }
+
+          function createPopupTemplate() {
+            return {
+              title: "{Park}",
+              content: [
+                {
+                  type: "fields",
+                  fieldInfos: [
+                    {
+                      fieldName: "TOTAL",
+                      label: "Total visits",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    },
+                    {
+                      fieldName: "F2018",
+                      label: "2018",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    },
+                    {
+                      fieldName: "F2019",
+                      label: "2019",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    },
+                    {
+                      fieldName: "F2020",
+                      label: "2020",
+                      format: {
+                        places: 0,
+                        digitSeparator: true
+                      }
+                    }
+                  ]
+                }
+              ]
+            };
+          }
+        })());
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv" class="calcite-mode-dark">
+      <h3 class="heading" slot="header-content">Most or least visited parks by states</h3>
+      <div id="content" style="padding: 5px">
+        <calcite-segmented-control id="orderDirectionSelection" layout="horizontal">
+          <calcite-segmented-control-item value="DESC" checked> Most visited </calcite-segmented-control-item>
+          <calcite-segmented-control-item value="ASC"> Least visited </calcite-segmented-control-item>
+        </calcite-segmented-control>
+        <br /><br />
+        <label>
+          Number of parks to be returned from each state:
+          <calcite-select id="topCountSelect" scale="s" width="auto">
+            <calcite-option label="1" value="1"></calcite-option>
+            <calcite-option label="2" value="2"></calcite-option>
+            <calcite-option label="3" value="3"></calcite-option>
+          </calcite-select> </label
+        ><br />
+        <label>
+          Year:
+          <calcite-select id="orderByFieldSelect" scale="s" width="auto">
+            <calcite-option label="Total of all time" value="TOTAL"></calcite-option>
+            <calcite-option label="2018" value="F2018"></calcite-option>
+            <calcite-option label="2019" value="F2019"></calcite-option>
+            <calcite-option label="2020" value="F2020"></calcite-option>
+          </calcite-select> </label
+        ><br />
+        <div style="width: 360px; max-width: 100%; display: flex; flex-direction: row">
+          <calcite-button id="query-parks" width="half" appearance="solid" alignment="center" scale="s">
+            Query parks
+          </calcite-button>
+          <calcite-button id="clear-query" width="half" appearance="outline" alignment="center" scale="s">
+            Clear query
+          </calcite-button>
+        </div>
+        <br />
+      </div>
+      <calcite-panel id="resultsDiv">
+        <h3 class="heading" id="resultsHeading" slot="header-content">Results</h3>
+        <div id="results"></div>
+      </calcite-panel>
+    </calcite-panel>
+  </body>
+</html>
+

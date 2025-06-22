@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MapImageLayer - raster data source | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    
+      #viewDiv {
+        position: absolute;
+        right: 0;
+        left: 0;
+        top: 0;
+        bottom: 100px;
+      }
+    
+      #footer {
+        position: absolute;
+        bottom: 0;
+        height: 100px;
+        width: 100%;
+        text-align: center;
+        padding: 0 50px 0 50px;
+      }
+    
+      #slider {
+        width: 100%;
+        padding: 0;
+        height: 35px;
+      }
+    </style>
+    
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/MapImageLayer",
+        "esri/widgets/Slider"
+      ], (Map, MapView, MapImageLayer, Slider) => {
+        /*****************************************************************
+         * Create a MapImageLayer instance with two sublayers. Both are
+         * rasters. The first comes from a registered database and the second
+         * is a map service layer.
+         *****************************************************************/
+
+        const layer = new MapImageLayer({
+          url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Elevation/GlacierBay/MapServer",
+          minScale: 2000000,
+          sublayers: [
+            {
+              id: 1,
+              title: "hillshade",
+              source: {
+                // indicates the source of the sublayer is a dynamic data layer
+                type: "data-layer",
+                // this object defines the data source of the layer
+                // in this case it's a raster located in a registered workspace
+                dataSource: {
+                  type: "raster",
+                  workspaceId: "GlacierBayID",
+                  dataSourceName: "gb_hillshade"
+                }
+              }
+            },
+            {
+              id: 0,
+              title: "dem"
+            }
+          ]
+        });
+
+        /*****************************************************************
+         * Add the layer to a map
+         *****************************************************************/
+
+        const map = new Map({
+          basemap: "hybrid",
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-136.89746, 58.496968],
+          zoom: 13
+        });
+
+        // Change the layer's opacity value based on the value
+        // of the slider
+        layer.when(() => {
+
+          const slider = new Slider({
+            container: "slider",
+            min: 0,
+            max: 1,
+            values: [1],
+            visibleElements: {
+              labels: true
+            },
+          });
+
+          function onOpacitySliderChange() {
+            layer.opacity = slider.values[0];
+          }
+
+          slider.on("thumb-drag", onOpacitySliderChange);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="footer" class="esri-widget">
+      <h3>Digital Elevation Model (DEM) opacity</h3>
+      <div id="slider"></div>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Extrude building footprints based on real world heights | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        WebScene,
+        SceneView,
+        FeatureLayer,
+        Legend
+      ) => {
+        /*****************************************************************
+         * Create a function that generates symbols for extruded polygons.
+         *****************************************************************/
+
+        function getSymbol(color) {
+          return {
+            type: "polygon-3d", // autocasts as new PolygonSymbol3D()
+            symbolLayers: [
+              {
+                type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
+                material: {
+                  color: color
+                },
+                edges: {
+                  type: "solid",
+                  color: "#999",
+                  size: 0.5
+                }
+              }
+            ]
+          };
+        }
+
+        /*****************************************************************
+         * Set each unique value directly in the renderer's constructor.
+         * At least one field must be used (in this case the "DESCLU" field).
+         * The label property of each unique value will be used to indicate
+         * the field value and symbol in the legend.
+         *
+         * The size visual variable sets the height of each building as it
+         * exists in the real world according to the "ELEVATION" field.
+         *****************************************************************/
+
+        const renderer = {
+          type: "unique-value", // autocasts as new UniqueValueRenderer()
+          defaultSymbol: getSymbol("#FFFFFF"),
+          defaultLabel: "Other",
+          field: "TYPE",
+          uniqueValueInfos: [
+            {
+              value: "Residential",
+              symbol: getSymbol("#A7C636"),
+              label: "Residential"
+            },
+            {
+              value: "Commercial",
+              symbol: getSymbol("#FC921F"),
+              label: "Commercial"
+            },
+            {
+              value: "Hotel/Motel",
+              symbol: getSymbol("#ED5151"),
+              label: "Hotel/Motel"
+            },
+            {
+              value: "Apartment Rentals",
+              symbol: getSymbol("#149ECE"),
+              label: "Apartment Rentals"
+            }
+          ],
+          visualVariables: [
+            {
+              type: "size",
+              field: "HEIGHT"
+            }
+          ]
+        };
+
+        // Set the renderer on the layer
+        const buildingsLayer = new FeatureLayer({
+          url:
+            "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/building_footprints_height/FeatureServer",
+          renderer: renderer,
+          elevationInfo: {
+            mode: "on-the-ground"
+          },
+          title: "Extruded building footprints",
+          popupTemplate: {
+            // autocasts as new PopupTemplate()
+            title: "{TYPE}",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "TYPE",
+                    label: "Type"
+                  },
+                  {
+                    fieldName: "HEIGHT",
+                    label: "Height"
+                  }
+                ]
+              }
+            ]
+          },
+          outFields: ["TYPE", "HEIGHT"]
+        });
+
+        const map = new WebScene({
+          portalItem: {
+            id: "397c462348464d069a7a63b97644086e"
+          }
+        });
+
+        map.add(buildingsLayer);
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            position: [-75.09519011, 38.32524201, 682.98652],
+            heading: 53.86,
+            tilt: 48.52
+          }
+        });
+
+        const legend = new Legend({
+          view: view
+        });
+
+        view.ui.add(legend, "bottom-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

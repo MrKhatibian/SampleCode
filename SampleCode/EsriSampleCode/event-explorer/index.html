@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Event explorer / watch properties | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/core/reactiveUtils"], (Map, SceneView, reactiveUtils) => {
+        const map = new Map({
+          basemap: "topo-vector",
+          ground: "world-elevation"
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          qualityMode: "high",
+          camera: {
+            position: [-101.17, 20.76793656, 12908164.47184],
+            heading: 0.0,
+            tilt: 0.5
+          }
+        });
+
+        const events = [
+          "pointer-enter",
+          "pointer-leave",
+          "pointer-move",
+          "pointer-down",
+          "pointer-up",
+          "immediate-click",
+          "click",
+          "immediate-double-click",
+          "double-click",
+          "mouse-wheel",
+          "drag",
+          "hold",
+          "key-down",
+          "key-up",
+          "focus",
+          "blur",
+          "resize"
+        ];
+        // for the purpose of the sample, this is only a selection of properties,
+        // but any properties on the View can be watched for
+        const properties = [
+          "focused",
+          "interacting",
+          "updating",
+          "resolution",
+          "scale",
+          "zoom",
+          "stationary",
+          "camera.position.z",
+          "camera.tilt",
+          "camera.heading"
+        ];
+
+        // dynamically create the table of events and properties from the defined array
+        const createTables = () => {
+          const eventsTable = document.getElementById("events");
+          let content = eventsTable.innerHTML;
+          for (let i = 0; i < events.length; i++) {
+            content += '<div class="event" id="' + events[i] + '">' + events[i];
+            content += "</div>";
+          }
+          eventsTable.innerHTML = content;
+          const propertiesTable = document.getElementById("properties");
+          content = propertiesTable.innerHTML;
+          for (let i = 0; i < properties.length; i++) {
+            content += '<div class="property" id="' + properties[i] + '">' + properties[i] + " = </div>";
+          }
+          propertiesTable.innerHTML = content;
+        };
+
+        const setupEventListener = (view, name) => {
+          const eventRow = document.getElementById(name);
+          view.on(name, (value) => {
+            eventRow.className = "event active";
+            if (eventRow.highlightTimeout) {
+              clearTimeout(eventRow.highlightTimeout);
+            }
+            eventRow.highlightTimeout = setTimeout(() => {
+              // after a timeout of one second disable the highlight
+              eventRow.className = "event inactive";
+            }, 1000);
+          });
+        };
+
+        const updatePropertiesRow = (value, propertiesRow) => {
+          propertiesRow.className = "property active";
+          propertiesRow.innerHTML = propertiesRow.innerHTML.substring(0, propertiesRow.innerHTML.indexOf(" = "));
+          // set the text to the received value
+          const formattedValue = typeof value === "number" ? value.toFixed(4) : value;
+          propertiesRow.innerHTML += " = " + formattedValue.toString();
+          if (propertiesRow.highlightTimeout) {
+            clearTimeout(propertiesRow.highlightTimeout);
+          }
+          propertiesRow.highlightTimeout = setTimeout(() => {
+            // after a timeout of one second disable the highlight
+            propertiesRow.className = "property inactive";
+          }, 1000);
+        };
+
+        const setupPropertiesListener = (view, name) => {
+          const propertiesRow = document.getElementById(name);
+          const nameParts = name.split(".");
+
+          nameParts.length === 1 &&
+            reactiveUtils.watch(
+              () => view[nameParts[0]],
+              (value) => updatePropertiesRow(value, propertiesRow)
+            );
+
+          nameParts.length === 2 &&
+            reactiveUtils.watch(
+              () => view[nameParts[0]][nameParts[1]],
+              (value) => updatePropertiesRow(value, propertiesRow)
+            );
+
+          nameParts.length === 3 &&
+            reactiveUtils.watch(
+              () => view[nameParts[0]][nameParts[1]][nameParts[2]],
+              (value) => updatePropertiesRow(value, propertiesRow)
+            );
+        };
+
+        // create the tables for the events and properties
+        createTables();
+
+        // setup all view events defined in the array
+        for (let i = 0; i < events.length; i++) {
+          setupEventListener(view, events[i]);
+        }
+        // setup all watch properties defined in the array
+        for (let i = 0; i < properties.length; i++) {
+          setupPropertiesListener(view, properties[i]);
+        }
+      });
+    </script>
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #viewDiv {
+        position: absolute;
+        left: 0;
+        right: 250px;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+      }
+
+      #panel {
+        background-color: #f5f5f5;
+        position: absolute;
+        right: 0;
+        height: 100%;
+        width: 250px;
+        font-size: 12px;
+      }
+
+      .title {
+        font-weight: bold;
+        color: #0079c1;
+      }
+
+      .container {
+        background-color: white;
+        color: #323232;
+        margin: 10px;
+        padding: 5px;
+        border-bottom: 1px solid rgba(50, 50, 50, 0.25);
+      }
+
+      .event,
+      .property {
+        transition: background-color 0.5s ease-out;
+        padding-bottom: 2px;
+        opacity: 0.2;
+      }
+
+      .active {
+        opacity: 1;
+        background-color: #99ccff;
+      }
+
+      .inactive {
+        opacity: 1;
+        background-color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="main">
+      <div id="viewDiv"></div>
+      <div id="panel" class="esri-widget">
+        <div id="events" class="container">
+          <a
+            class="title"
+            href="https://developers.arcgis.com/javascript/latest/api-reference/esri-views-View.html#events-summary"
+            target="_blank"
+            >Class View Events:</a
+          >
+        </div>
+        <div id="properties" class="container">
+          <a
+            class="title"
+            href="https://developers.arcgis.com/javascript/latest/api-reference/esri-views-View.html#properties-summary"
+            target="_blank"
+            >Class View Properties:</a
+          >
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>OpenStreetMapLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/layers/OpenStreetMapLayer", "esri/Map", "esri/views/SceneView"], (
+        OpenStreetMapLayer,
+        Map,
+        SceneView
+      ) => {
+        const map = new Map({
+          ground: "world-elevation"
+        });
+
+        const view = new SceneView({
+          map: map,
+          container: "viewDiv"
+        });
+
+        const osmLayer = new OpenStreetMapLayer();
+        map.add(osmLayer);
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

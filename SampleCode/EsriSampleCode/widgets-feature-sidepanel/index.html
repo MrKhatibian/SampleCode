@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>Feature widget in a side panel | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #viewDiv {
+        float: left;
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 65%;
+      }
+
+      #feature-node {
+        float: left;
+        width: 35%;
+        height: 100%;
+        padding: 1em;
+        overflow: scroll;
+        max-height: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/widgets/Feature",
+        "esri/core/promiseUtils"
+      ], (WebMap, FeatureLayer, MapView, Feature, promiseUtils) => {
+        const fLayer = new FeatureLayer({
+          portalItem: {
+            id: "f430d25bf03744edbb1579e18c4bf6b8"
+          },
+          layerId: 2,
+          outFields: ["*"]
+        });
+
+        const map = new WebMap({
+          portalItem: {
+            // autocasts as new PortalItem
+            id: "372b7caa8fe340b0a6300df93ef18a7e"
+          },
+          layers: [fLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-74, 41.5],
+          zoom: 10,
+          popupEnabled: false
+        });
+
+        view.when().then(() => {
+          // Create a default graphic for when the application starts
+          const graphic = {
+            popupTemplate: {
+              content: "Mouse over features to show details..."
+            }
+          };
+
+
+          // Provide graphic to a new instance of a Feature widget
+          const feature = new Feature({
+            container: "feature-node",
+            graphic: graphic,
+            map: view.map,
+            spatialReference: view.spatialReference
+          });
+
+          view.whenLayerView(fLayer).then((layerView) => {
+            let highlight;
+            let objectId;
+
+            const debouncedUpdate = promiseUtils.debounce(async (event) => {
+              // Perform a hitTest on the View
+              const hitTest = await view.hitTest(event, { include: fLayer });
+              // Make sure graphic has a popupTemplate
+              const results = hitTest.results.filter((result) => {
+                return result.graphic.layer.popupTemplate;
+              });
+
+              const result = results[0];
+              const newObjectId = result && result.graphic.attributes[fLayer.objectIdField];
+
+              if (!newObjectId) {
+                highlight?.remove();
+                objectId = feature.graphic = null;
+              } else if (objectId !== newObjectId) {
+                highlight?.remove();
+                objectId = newObjectId;
+                feature.graphic = result.graphic;
+                highlight = layerView.highlight(result.graphic);
+              }
+            });
+            // Listen for the pointer-move event on the View
+            view.on("pointer-move", (event) => {
+              debouncedUpdate(event).catch((err) => {
+                if (!promiseUtils.isAbortError(err)) {
+                  throw err;
+                }
+              });
+            });
+
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="feature-node" class="esri-widget"></div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

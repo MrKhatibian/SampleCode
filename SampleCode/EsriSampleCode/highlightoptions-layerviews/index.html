@@ -1,0 +1,123 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Highlight options for layer views | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/LayerList",
+        "esri/widgets/Expand"
+      ], (Map, FeatureLayer, MapView, Legend, LayerList, Expand) =>
+        (async () => {
+
+          const hexBinLayer = new FeatureLayer({
+            portalItem: {
+              id: "7ad239125d214b8faf53eca5d28cf8cd"
+            }
+          });
+
+          const adminLayer = new FeatureLayer({
+            portalItem: {
+              id: "c1fb3c06d43649a4b6159af8e74b5437"
+            }
+          });
+
+          const countryLayer = new FeatureLayer({
+            portalItem: {
+              id: "a5210df5ce0f4f4fbda203ac4c291f1a"
+            }
+          });
+
+          const map = new Map({
+            basemap: "dark-gray-vector",
+            layers: [countryLayer, adminLayer, hexBinLayer]
+          });
+
+          // Create the MapView.
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            zoom: 7,
+            center: [19.865, 48.683],
+            popup: {
+              dockEnabled: true,
+              dockOptions: {
+                breakpoint: false,
+                position: "top-right"
+              }
+            }
+          });
+
+
+          // assign different highlightColors to all features layers
+          // highlightOptions will be used by the layers' popupTemplates
+          const hexBinLayerView = await view.whenLayerView(hexBinLayer);
+          hexBinLayerView.highlightOptions = {
+            color: "#ffe700",
+            haloOpacity: 0.9,
+            fillOpacity: 0.2
+          };
+
+          const adminLayerView = await view.whenLayerView(adminLayer);
+          adminLayerView.highlightOptions = {
+            haloOpacity: 0.9,
+            fillOpacity: 0
+          };
+
+          const countryLayerView = await view.whenLayerView(countryLayer);
+          countryLayerView.highlightOptions = {
+            color: "#39ff14",
+            haloOpacity: 0.9,
+            fillOpacity: 0
+          };
+
+
+          // Add the expand widget that contains the legend.
+          view.ui.add(
+            new Expand({
+              content: new Legend({ view: view }),
+              view: view,
+              expandTooltip: "Expand Legend"
+            }),
+            "top-left"
+          );
+
+          // Add the expand widget that contains the layer list.
+          view.ui.add(
+            new Expand({
+              content: new LayerList({ view: view }),
+              view: view,
+              expandTooltip: "Expand LayerList"
+            }),
+            "top-left"
+          );
+        })());
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>

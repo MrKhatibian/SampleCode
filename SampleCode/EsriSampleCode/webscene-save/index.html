@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Save a web scene | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #sidebarDiv {
+        width: 240px;
+        padding: 10px;
+        height: 200px;
+      }
+
+      #overlayDiv {
+        z-index: 1;
+        position: absolute;
+        margin: auto auto;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 280px;
+        height: 180px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid grey;
+        visibility: hidden;
+      }
+
+      input[type="text"] {
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/Expand"
+      ], (SceneView, WebScene, BasemapGallery, Expand) => {
+
+
+        /************************************************************
+         * Creates a new WebScene instance. A WebScene can reference
+         * a PortalItem ID that represents a WebScene saved to
+         * arcgis.com or an on-premise portal.
+         *
+         * To load a WebScene from an on-premise portal, set the portal
+         * url with esriConfig.portalUrl (see above).
+         ************************************************************/
+        const scene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "90e3c30bdbbe4886a94f75c2cdd7edce"
+          }
+        });
+
+        /************************************************************
+         * Set the WebScene instance to the map property in a
+         * SceneView.
+         ************************************************************/
+        const view = new SceneView({
+          map: scene,
+          container: "viewDiv"
+        });
+
+
+        // add basemapGallery widgets
+        view.ui.add(
+          [
+            new Expand({
+              content: new BasemapGallery({
+                view: view
+              }),
+              view: view
+            })
+          ],
+          "top-left"
+        );
+
+        view.when(() => {
+          // When the webscene and view resolve, display the webscene's
+          // new title in the Div
+          const title = document.getElementById("webSceneTitle");
+          const save = document.getElementById("saveWebScene");
+          save.disabled = false;
+          save.addEventListener("click", () => {
+            document.getElementById("saveWebScene").disabled = true;
+            document.getElementById("saveWebScene").classList.add("esri-button--secondary");
+
+            // item automatically casts to a PortalItem instance by saveAs
+            const item = {
+              title: title.value
+            };
+
+
+            // Update properties of the WebScene related to the view.
+            // This should be called just before saving a webscene.
+            scene.updateFrom(view).then(() => {
+              scene
+                .saveAs(item)
+                // Saved successfully
+                .then((item) => {
+                  // link to the newly-created web scene item
+                  const itemPageUrl = item.portal.url + "/home/item.html?id=" + item.id;
+                  const link = '<a target="_blank" href="' + itemPageUrl + '">' + title.value + "</a>";
+
+                  statusMessage("Save WebScene", "<br> Successfully saved as <i>" + link + "</i>");
+                })
+                // Save didn't work correctly
+                .catch((error) => {
+                  statusMessage("Save WebScene", "<br> Error " + error);
+                });
+            });
+
+          });
+
+          const overlay = document.getElementById("overlayDiv");
+          const ok = overlay.getElementsByTagName("input")[0];
+
+          function statusMessage(head, info) {
+            document.getElementById("saveWebScene").classList.remove("esri-button--secondary");
+            document.getElementById("saveWebScene").disabled = false;
+            document.getElementById("head").innerHTML = head;
+            document.getElementById("info").innerHTML = info;
+            overlay.style.visibility = "visible";
+          }
+
+          ok.addEventListener("click", () => {
+            overlay.style.visibility = "hidden";
+          });
+
+          view.ui.add("sidebarDiv", "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="sidebarDiv" class="esri-widget">
+      <h4 class="esri-heading">Save WebScene</h4>
+      <label class="esri-feature-form__label">Title</label>
+      <input id="webSceneTitle" type="text" class="esri-input" value="WebScene Saving Sample" /><br /><br />
+      <input id="saveWebScene" type="button" value="Save" disabled class="esri-button" />
+    </div>
+    <div id="overlayDiv" class="esri-widget">
+      <h4 class="esri-heading" id="head"></h4>
+      <label id="info"></label><br /><br />
+      <input type="button" value="OK" class="esri-button" />
+    </div>
+  </body>
+</html>
+

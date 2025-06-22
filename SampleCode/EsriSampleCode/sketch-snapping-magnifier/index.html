@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Snapping with Sketch widget and Magnifier | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    #configPanel {
+      padding: 1em;
+      padding-top: 0em;
+      padding-bottom: 0em;
+    }
+    calcite-label {
+      background-color: #ffffff;
+    }
+    #toggleLabel {
+      padding-top: 0.3em; 
+    }
+  </style>
+  <script>
+    require([
+      "esri/widgets/Sketch",
+      "esri/Map",
+      "esri/layers/GraphicsLayer",
+      "esri/views/MapView",
+      "esri/widgets/Expand"
+    ], (Sketch, Map, GraphicsLayer, MapView, Expand) => {
+      const graphicsLayer = new GraphicsLayer({ title: "graphicsLayer" });
+
+      const map = new Map({
+        basemap: "streets-navigation-vector",
+        layers: [graphicsLayer]
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        zoom: 6,
+        center: [38.33081, 0.36532]
+      });
+
+      // setup the Sketch widget with all snapping enabled by default
+      const sketch = new Sketch({
+        layer: graphicsLayer,
+        view: view,
+        // graphic will be selected as soon as it is created
+        creationMode: "update",
+        snappingOptions: {  // autocasts as SnappingOptions()
+          enabled: true,
+          // enable snapping on the graphicslayer by default
+          featureSources: [{ layer: graphicsLayer, enabled: true }]
+        },
+        visibleElements: {  // hide/show sketch elements
+          createTools: {
+            "circle": false  // hide the circle tool
+          },
+          selectionTools: {
+            "lasso-selection": false  // hide the lasso-selection tool
+          }
+        }
+      });
+
+      const configurationExpand = new Expand({
+        expandIcon: "magnifying-glass",
+        expandTooltip: "Show magnifier configuration",
+        expanded: true,
+        view: view,
+        content: document.getElementById("configPanel")
+      });
+
+      // add the UI components to the view
+      view.ui.add(sketch, "top-right");
+      view.ui.add(configurationExpand, "top-left");
+
+      view.when(() => {
+        // enable the Magnifier
+        view.magnifier.visible = false;
+        view.magnifier.factor = 1.7; // magnification factor
+        view.magnifier.size = 150; // magnifier image size
+        view.magnifier.offset = { x: 75, y: 75 }; // x and y offset values
+
+        // uses the mouse cursor location to position the Magnifier
+        view.on("pointer-move", (evt) => {
+          view.magnifier.position = { x: evt.x, y: evt.y };
+        });
+
+        // setup UI to use the default config values
+        setMagnifierConfig(view.magnifier);
+      });
+
+      function setMagnifierConfig(magnifier) {
+        const toggleSwitch = document.getElementById("toggleSwitch");
+        const factorInput = document.getElementById("factorInput");
+        const xoffsetInput = document.getElementById("xoffsetInput");
+        const yoffsetInput = document.getElementById("yoffsetInput");
+        const sizeInput = document.getElementById("sizeInput");
+
+        // set default input values
+        toggleSwitch.checked = magnifier.visible;
+        factorInput.value = magnifier.factor;
+        xoffsetInput.value = magnifier.offset.x;
+        yoffsetInput.value = magnifier.offset.y;
+        sizeInput.value = magnifier.size;
+
+        // add calcite event listeners
+        toggleSwitch.addEventListener("calciteSwitchChange", (evt) => {
+          magnifier.visible = evt.target.checked;
+        });
+        factorInput.addEventListener("calciteInputInput", (evt) => {
+          magnifier.factor = parseFloat(evt.target.value);
+        });
+        xoffsetInput.addEventListener("calciteInputInput", (evt) => {
+          magnifier.offset.x = parseInt(evt.target.value);
+        });
+        yoffsetInput.addEventListener("calciteInputInput", (evt) => {
+          magnifier.offset.y = parseInt(evt.target.value);
+        });
+        sizeInput.addEventListener("calciteInputInput", (evt) => {
+          magnifier.size = parseInt(evt.target.value);
+        });
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <calcite-panel id="configPanel" heading="Magnifier Configuration">
+    <calcite-label id="toggleLabel">Magnifier
+      <calcite-switch scale="l" id="toggleSwitch"></calcite-switch>
+    </calcite-label>
+    <calcite-label>factor
+      <calcite-input id="factorInput" type="number" scale="s" min="0">
+      </calcite-input>
+    </calcite-label>
+    <calcite-label>xoffset
+      <calcite-input id="xoffsetInput" type="number" scale="s">
+      </calcite-input>
+    </calcite-label>
+    <calcite-label>yoffset
+      <calcite-input id="yoffsetInput" type="number" scale="s">
+      </calcite-input>
+    </calcite-label>
+    <calcite-label>size
+      <calcite-input id="sizeInput" type="number" scale="s" min="0">
+      </calcite-input>
+    </calcite-label>
+  </calcite-panel>
+</body>
+</html>

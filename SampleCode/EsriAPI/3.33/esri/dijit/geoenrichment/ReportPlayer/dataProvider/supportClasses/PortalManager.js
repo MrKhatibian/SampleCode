@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/dataProvider/supportClasses/PortalManager",["esri/dijit/geoenrichment/when","esri/arcgis/Portal","../../../utils/requests/UniversalClient","../commands/mapToImage/MapToURLUtil","../../../utils/ProjectionUtil"],function(d,e,f,g,h){var b={_cache:{},getPortalInfo:function(a){if(!b._cache[a]){var c=new e.Portal(a);b._cache[a]=d(c.signIn(),function(a){return{user:a,portal:c}})}return b._cache[a]},tryConfigureServicesFromAGOLPublic:function(){return f.requestPublicFirst("https://www.arcgis.com/sharing/rest/portals/self",
+{},{retryOnAnyError:!1}).then(function(a){if(a=a&&a.helperServices)a.geometry&&h.setGeometryServiceUrl(a.geometry.url),a.printTask&&g.setPrintMapTaskUrl(a.printTask.url)}).otherwise(function(a){console.log(a)})}};return b});

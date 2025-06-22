@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to layer blending | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/VectorTileLayer",
+        "esri/layers/TileLayer"
+      ], (Map, MapView, VectorTileLayer, TileLayer) => {
+
+        // Multiply blend mode emphasizes the darkest parts of overlapping layers
+        // by multiplying colors of the top layer and the background layer.
+        // This blend mode is useful to have the hillshades to show through the top layer.
+        const map = new Map({
+          basemap: {
+            baseLayers:[
+              new TileLayer({
+                portalItem: {
+                  id: "1b243539f4514b6ba35e7d995890db1d" // world hillshade
+                }
+              }),
+              new VectorTileLayer({
+                portalItem: {
+                  id: "273bf8d5c8ac400183fc24e109d20bcf" // community style vector tiles
+                },
+                blendMode: "multiply"
+              })
+            ]
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 5,
+          center: [81.938, 26.733]
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

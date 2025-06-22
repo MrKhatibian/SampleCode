@@ -1,0 +1,399 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom RenderNode - Depth of field | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #renderNodeUI {
+        background-color: white;
+        position: absolute;
+        bottom: 20px;
+        width: 80%;
+        max-width: 1000px;
+        min-width: 300px;
+        margin: auto;
+        left: 0;
+        right: 0;
+      }
+
+      calcite-slider {
+        width: 90%;
+      }
+
+      calcite-label {
+        width: 45%;
+        display: inline-flex;
+        white-space: nowrap;
+        margin-right: 10px;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/layers/IntegratedMeshLayer",
+        "esri/views/3d/webgl/RenderNode",
+        "esri/views/3d/webgl",
+
+        "esri/geometry/SpatialReference"
+      ], function (Map, SceneView, IntegratedMeshLayer, RenderNode, webgl, SpatialReference) {
+        // setting up view and map
+        const meshLayer = new IntegratedMeshLayer({
+          url: "https://tiles-eu1.arcgis.com/7cCya5lpv5CmFJHv/arcgis/rest/services/Munich_3D_Mesh_City_Mapper_2_SURE_43/SceneServer"
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          camera: {
+            position: {
+              latitude: 48.13498888794968,
+              longitude: 11.568034615845615,
+              z: 769
+            },
+            heading: 45.7,
+            tilt: 68.4
+          },
+          environment: {
+            lighting: {
+              date: 1718459700000,
+              directShadowsEnabled: true
+            },
+            weather: {
+              type: "cloudy"
+            }
+          },
+          popupEnabled: false,
+
+          map: new Map({
+            basemap: "satellite",
+            ground: "world-elevation",
+            layers: [meshLayer]
+          })
+        });
+
+        // user-controllable parameters
+        let focus = 570;
+        let aperture = 2.2;
+
+        function createShader(gl, src, type) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, src);
+          gl.compileShader(shader);
+          return shader;
+        }
+
+        function createProgram(gl, vsSource, fsSource) {
+          const program = gl.createProgram();
+          if (!program) {
+            console.error("Failed to create program");
+          }
+          const vertexShader = createShader(gl, vsSource, gl.VERTEX_SHADER);
+          const fragmentShader = createShader(gl, fsSource, gl.FRAGMENT_SHADER);
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+          if (!success) {
+            console.error(`Failed to link program:
+          error ${gl.getError()},
+          info log: ${gl.getProgramInfoLog(program)},
+          vertex: ${gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)},
+          fragment: ${gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)}
+          vertex info log: ${gl.getShaderInfoLog(vertexShader)},
+          fragment info log: ${gl.getShaderInfoLog(fragmentShader)}`);
+          }
+          return program;
+        }
+
+        // Create a new custom render node class by subclassing from RenderNode
+        const DepthOfFieldRenderNode = RenderNode.createSubclass({
+          constructor: function () {
+            // consumes and produces define the location of the the render node in the render pipeline
+            this.consumes = { required: ["composite-color"] };
+            this.produces = "composite-color";
+          },
+
+          render(inputs) {
+            const input = inputs.find(({ name }) => name === "composite-color");
+
+            // Get color and depth texture of current target
+            const color = input.getTexture();
+            const depth = input.getTexture(this.gl.DEPTH_STENCIL_ATTACHMENT);
+
+            const output = this.acquireOutputFramebuffer();
+
+            const gl = this.gl;
+            gl.clearColor(0, 0, 0, 1);
+            gl.colorMask(true, true, true, true);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            this.ensureShader(this.gl);
+            this.ensureScreenSpacePass(gl);
+
+            gl.useProgram(this.program);
+
+            // Bind color and depth textures for access in shader programs
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, color.glName);
+            gl.uniform1i(this.textureUniformLocation, 0);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, depth.glName);
+            gl.uniform1i(this.depthTextureUniformLocation, 1);
+            gl.activeTexture(gl.TEXTURE0);
+
+            // Set up gl uniforms for access in shader programs
+            gl.uniform1f(this.focusUniformLocation, focus);
+            gl.uniform1f(this.apertureUniformLocation, aperture * 0.00001);
+            gl.uniform2fv(this.nearFarUniformLocation, [this.camera.near, this.camera.far]);
+
+            gl.bindVertexArray(this.vao);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+            // use depth from input on output framebuffer
+            output.attachDepth(input.getAttachment(gl.DEPTH_STENCIL_ATTACHMENT));
+            return output;
+          },
+
+          program: null,
+          textureUniformLocation: null,
+          depthTextureUniformLocation: null,
+          focusUniformLocation: null,
+          apertureUniformLocation: null,
+          nearFarUniformLocation: null,
+
+          positionLocation: null,
+          vao: null,
+          positionBuffer: null,
+
+          ensureScreenSpacePass(gl) {
+            if (this.vao) {
+              return;
+            }
+
+            this.vao = gl.createVertexArray();
+            gl.bindVertexArray(this.vao);
+            this.positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+            const vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(this.positionLocation);
+
+            gl.bindVertexArray(null);
+          },
+
+          ensureShader(gl) {
+            if (this.program != null) {
+              return;
+            }
+
+            // Vertex shader program
+            const vshader = `#version 300 es
+
+          in vec2 position;
+          out vec2 uv;
+
+          void main() {
+              gl_Position = vec4(position, 0.0, 1.0);
+              uv = position * 0.5 + vec2(0.5);
+          }`;
+
+            // Fragment shader program
+            const fshader = `#version 300 es
+
+          precision highp float;
+          out lowp vec4 fragColor;
+          in vec2 uv;
+
+          uniform sampler2D colorTex;
+          uniform sampler2D depthTex;
+
+          uniform float focus;
+          uniform float aperture;
+          uniform vec2 nearFar;
+
+          const float maxBlur = 0.015;
+
+          // sample points that we use for image blurring
+          const vec2 samplePoints[41] = vec2[41](
+              vec2(0.0, 0.0),
+              vec2(0.0,   0.4),
+              vec2(0.15,  0.37),
+              vec2(0.29,  0.29),
+              vec2(-0.37,  0.15),
+              vec2(0.40,  0.0),
+              vec2(0.37, -0.15),
+              vec2(0.29, -0.29),
+              vec2(-0.15, -0.37),
+              vec2(0.0,  -0.4),
+              vec2(-0.15,  0.37),
+              vec2(-0.29,  0.29),
+              vec2(0.37,  0.15),
+              vec2(-0.4,   0.0),
+              vec2(-0.37, -0.15),
+              vec2(-0.29, -0.29),
+              vec2(0.15, -0.37),
+              vec2(0.135, 0.333),
+              vec2(-0.333, 0.135),
+              vec2(0.333, -0.135),
+              vec2(-0.135, -0.333),
+              vec2(-0.135,  0.333),
+              vec2(0.333,  0.135),
+              vec2(-0.333, -0.135),
+              vec2(0.135, -0.333),
+              vec2(0.2,  0.2),
+              vec2( 0.28,  0.0),
+              vec2( 0.2, -0.2),
+              vec2( 0.0,  -0.28),
+              vec2(-0.2,  0.2),
+              vec2(-0.28,   0.0),
+              vec2(-0.2, -0.2),
+              vec2( 0.0,   0.28),
+              vec2(0.11,  0.11),
+              vec2( 0.16,  0.0),
+              vec2( 0.11, -0.11),
+              vec2( 0.0,  -0.16),
+              vec2(-0.11,  0.11),
+              vec2(-0.16,   0.0),
+              vec2(-0.11, -0.11),
+              vec2( 0.0,   0.16)
+          );
+
+          // noise function used to smooth the edges of the blur
+          vec2 noise() {
+            float x = (fract(sin(dot(gl_FragCoord.xy ,vec2(12.9898,78.233) * 0.143)) * 43758.5453) - 0.5) / 2.0;
+            float y = (fract(sin(dot(gl_FragCoord.xy ,vec2(12.9898,78.233) * 0.219)) * 43758.5453) - 0.5) / 2.0;
+            return vec2(x, y) * 0.4;
+          }
+
+          // convert depth value [0, 1] to [near, far] values
+          float linearizeDepth(float depth) {
+            float depthNdc = depth * 2.0 - 1.0;
+            return (2.0 * nearFar[0] * nearFar[1]) / (depthNdc * (nearFar[1] - nearFar[0]) - (nearFar[1] + nearFar[0]));
+          }
+
+          // read depth texture and calculate depth value
+          float linearDepth(vec2 uv) {
+            ivec2 iuv = ivec2(uv * vec2(textureSize(depthTex, 0)));
+            float depth = texelFetch(depthTex, iuv, 0).r;
+            return linearizeDepth(depth);
+          }
+
+          void main() {
+            vec2 size = vec2(textureSize(colorTex, 0));
+            vec2 aspectCorrection = vec2(1.0, size.x / size.y);
+
+            vec4 color = vec4(0.0);
+            float viewZ = linearDepth(uv);
+            float factor = (focus + viewZ); // viewZ is <= 0, so this is a difference equation
+
+            vec2 noise = noise();
+            vec2 blur = vec2(clamp(factor * aperture, -maxBlur, maxBlur));
+            for (int i = 0; i < 41; i++) {
+              color += pow(texture(colorTex, uv.xy + ((samplePoints[i] + noise) * aspectCorrection) * blur), vec4(2.2));
+            };
+            fragColor = pow(color / 41.0, vec4(1./2.2));
+            fragColor.a = 1.0;
+          }`;
+
+            this.program = createProgram(gl, vshader, fshader);
+            this.textureUniformLocation = gl.getUniformLocation(this.program, "colorTex");
+            this.depthTextureUniformLocation = gl.getUniformLocation(this.program, "depthTex");
+            this.positionLocation = gl.getAttribLocation(this.program, "position");
+            this.focusUniformLocation = gl.getUniformLocation(this.program, "focus");
+            this.apertureUniformLocation = gl.getUniformLocation(this.program, "aperture");
+            this.nearFarUniformLocation = gl.getUniformLocation(this.program, "nearFar");
+          }
+        });
+
+        // Initializes the new custom render node and connects to SceneView
+        const dofRenderNode = new DepthOfFieldRenderNode({ view });
+
+        // Calculates distance from map point to camera in render coordinates
+        function distanceInRenderCoordinates(mapPoint, cameraPosition) {
+          let p = new Array(6);
+          webgl.toRenderCoordinates(
+            view,
+            [
+              mapPoint.longitude,
+              mapPoint.latitude,
+              mapPoint.z,
+              cameraPosition.longitude,
+              cameraPosition.latitude,
+              cameraPosition.z
+            ],
+            0,
+            SpatialReference.WGS84,
+            p,
+            0,
+            2
+          );
+          return Math.sqrt((p[0] - p[3]) ** 2 + (p[1] - p[4]) ** 2 + (p[2] - p[5]) ** 2);
+        }
+
+        // Click handler to get distance from camera to clicked point.
+        // distance is then used in dofRenderNode to render with the selected focal point
+        view.on("click", function (event) {
+          const mapPoint = view.toMap(event, {
+            include: [view.map.allLayers, view.map.ground]
+          });
+          if (mapPoint) {
+            // Map point and camera position are in map coordinates.
+            // Need to be converted to render coordinates to be used in shader
+            focus = distanceInRenderCoordinates(mapPoint, view.camera.position);
+            focusSlider.value = Math.round(focus);
+            dofRenderNode.requestRender();
+          }
+        });
+
+        // Sliders to control DoF parameters
+        const focusSlider = document.getElementById("focus-distance");
+        focusSlider.value = focus;
+        focusSlider.addEventListener("calciteSliderInput", (event) => {
+          focus = parseFloat(event.target.value);
+          dofRenderNode.requestRender();
+        });
+
+        const apertureSlider = document.getElementById("aperture");
+        apertureSlider.value = aperture;
+        apertureSlider.addEventListener("calciteSliderInput", (event) => {
+          aperture = parseFloat(event.target.value);
+          dofRenderNode.requestRender();
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+
+    <calcite-block open="" id="renderNodeUI">
+      <div><em>Click in scene to set focus distance</em></div>
+      <calcite-label layout="inline">
+        Focus distance
+        <calcite-slider id="focus-distance" min="0" max="5000" label-handles=""> </calcite-slider>
+      </calcite-label>
+      <calcite-label layout="inline">
+        Aperture
+        <calcite-slider id="aperture" min="0" max="5" step="0.1" label-handles=""> </calcite-slider>
+      </calcite-label>
+    </calcite-block>
+  </body>
+</html>
+

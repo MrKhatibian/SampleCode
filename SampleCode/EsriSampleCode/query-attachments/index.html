@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>Query Attachments | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #attachmentsDiv {
+        height: 100%;
+        width: 30%;
+        float: left;
+        padding: 20px;
+        overflow: auto;
+        min-width: 240px;
+      }
+      #viewDiv {
+        height: 100%;
+        max-width: 70%;
+      }
+      .queryImg {
+        width: 175px;
+        padding-right: 5px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer"], function (Map, MapView, FeatureLayer) {
+        // get layer from online portal
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "d532e04739cd45e4964291a2a8875ef6"
+          },
+          outFields: ["*"]
+        });
+        // setup the map
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          layers: [layer]
+        });
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-118.41, 34.08],
+          zoom: 13,
+          popupEnabled: false
+        });
+        let highlight;
+
+        view.on("click", function (event) {
+          clearMap();
+          queryFeatures(event);
+        });
+
+        function queryFeatures(screenPoint) {
+          const point = view.toMap(screenPoint);
+
+          // Query the for the object ids within 800m from where the user clicked
+          layer
+            .queryObjectIds({
+              geometry: point,
+              spatialRelationship: "intersects",
+              distance: 800,
+              units: "meters",
+              returnGeometry: false,
+              outFields: ["*"]
+            })
+            .then(function (objectIds) {
+              if (!objectIds.length) {
+                showMessage();
+                return;
+              }
+              // Highlight the query-area on the map
+              view.whenLayerView(layer).then(function (layerView) {
+                if (highlight) {
+                  highlight.remove();
+                }
+                highlight = layerView.highlight(objectIds);
+              });
+              // Query the for the attachments from the object ids found
+              return layer.queryAttachments({
+                attachmentTypes: ["image/jpeg"],
+                objectIds: objectIds
+              });
+            })
+            .then(function (attachmentsByFeatureId) {
+              if (!attachmentsByFeatureId) {
+                return;
+              }
+              if (Object.keys(attachmentsByFeatureId).length === 0) {
+                const infoP = document.createElement("p");
+                infoP.innerHTML = "<b>There are no tree image/jpeg attachments located in your query area.</b>";
+                document.getElementById("queryResults").appendChild(infoP);
+              }
+              // Display the attachments
+              Object.keys(attachmentsByFeatureId).forEach(function (objectId) {
+                const attachments = attachmentsByFeatureId[objectId];
+                attachments.forEach(function (attachment) {
+                  const image = document.createElement("img");
+                  image.src = attachment.url;
+                  image.className = "queryImg";
+                  document.getElementById("queryResults").appendChild(image);
+                });
+              });
+            })
+            .catch(function (error) {
+              showMessage();
+            });
+        }
+
+        function showMessage() {
+          clearMap();
+          const infoP = document.createElement("p");
+          infoP.innerHTML =
+            "<b>There are no tree image/jpeg attachments located in your query area. Please click within the feature layer to get results.</b>";
+          document.getElementById("queryResults").appendChild(infoP);
+        }
+
+        // Clear attachments from div
+        function clearMap() {
+          if (highlight) {
+            highlight.remove();
+          }
+          const att = document.getElementById("queryResults");
+          while (att.firstChild) {
+            att.removeChild(att.firstChild);
+          }
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="attachmentsDiv" class="esri-widget">
+      <h2>Trees Returned from Query</h2>
+      <p>
+        Click somewhere in the map to query for images of trees located on a block within 800m of your desired location.
+      </p>
+      <div id="queryResults"></div>
+    </div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

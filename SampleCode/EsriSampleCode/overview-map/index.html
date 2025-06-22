@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Overview map | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        z-index: -1;
+      }
+
+      #overviewDiv {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 300px;
+        height: 200px;
+        border: 1px solid black;
+        z-index: 1;
+        overflow: hidden;
+      }
+
+      #extentDiv {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        z-index: 2;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/views/MapView", "esri/Graphic", "esri/core/reactiveUtils", "esri/core/promiseUtils"], (
+        Map,
+        SceneView,
+        MapView,
+        Graphic,
+        reactiveUtils,
+        promiseUtils
+      ) => {
+        // Create a Map with a basemap, to be used with in the main view
+        const mainMap = new Map({
+          basemap: "hybrid",
+          ground: "world-elevation"
+        });
+
+        // Create another Map, to be used in the overview "view"
+        const overviewMap = new Map({
+          basemap: "topo-vector"
+        });
+
+        // Create the SceneView
+        const mainView = new SceneView({
+          container: "viewDiv",
+          map: mainMap,
+          camera: {
+            position: {
+              spatialReference: {
+                latestWkid: 3857,
+                wkid: 102100
+              },
+              x: 925151,
+              y: 5956309,
+              z: 3871
+            },
+            heading: 203,
+            tilt: 72
+          }
+        });
+
+        // Create the MapView for overview map
+        const mapView = new MapView({
+          container: "overviewDiv",
+          map: overviewMap,
+          constraints: {
+            rotationEnabled: false
+          }
+        });
+
+        // Remove the default widgets
+        mapView.ui.components = [];
+
+        mapView.when(() => {
+          mainView.when(() => {
+            setup();
+          });
+        });
+
+        const extentDebouncer = promiseUtils.debounce(async () => {
+          if (mainView.stationary) {
+            await mapView.goTo({
+              center: mainView.center,
+              scale:
+                mainView.scale *
+                2 *
+                Math.max(
+                  mainView.width / mapView.width,
+                  mainView.height / mapView.height
+                )
+            });
+          }
+        });
+
+        function setup() {
+          const extent3Dgraphic = new Graphic({
+            geometry: null,
+            symbol: {
+              type: "simple-fill",
+              color: [0, 0, 0, 0.5],
+              outline: null
+            }
+          });
+          mapView.graphics.add(extent3Dgraphic);
+
+          reactiveUtils.watch(
+            () => mainView.extent,
+            (extent) => {
+              // Sync the overview map location
+              // whenever the 3d view is stationary
+              extentDebouncer().then(() => {
+                extent3Dgraphic.geometry = extent;
+              });
+            },
+            {
+              initial: true
+            }
+          );
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="overviewDiv"><div id="extentDiv"></div></div>
+  </body>
+</html>
+

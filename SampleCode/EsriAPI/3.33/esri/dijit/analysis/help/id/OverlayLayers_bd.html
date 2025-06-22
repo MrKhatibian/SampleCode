@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Layer Overlay</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Layer Overlay"></h2>
+        <hr/>
+    <p>Layer Overlay menggabungkan dua layer atau lebih menjadi satu layer.  Anda dapat membayangkan overlay seperti melihat tumpukan peta sebagai peta tunggal yang berisi semua informasi yang ditemukan dalam tumpukan tersebut.    Overlay lebih dari sekadar menggabungkan garis-garis; semua atribut fitur dalam overlay termasuk dalam produk akhir. Overlay digunakan untuk menjawab salah satu dari pertanyaan paling mendasar dalam geografi: Apa berada di atas apa? 
+    </p>
+    <p>Berikut ini adalah contohnya:
+        <ul>
+            <li>Persil mana yang berada di dalam dataran banjir berusia 100 tahun? (Yang berada di dalam merupakan kata pengganti untuk di atas.)
+                  
+            </li>
+            <li>Penggunaan lahan seperti apa di atas jenis tanah apa?
+                 
+            </li>
+            <li>Sumur apa yang berada di pangkalan militer kosong?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Jika  <b>Gunakan jangkauan peta saat ini</b> dicentang, hanya fitur dalam layer input dan layer overlay yang terlihat dalam jangkauan peta saat ini yang akan dioverlay.  Jika tidak dicentang, semua fitur di layer input dan layer overlay akan dioverlay, meskipun fitur tersebut berada di luar jangkauan peta saat ini.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Pilih layer input</h2></div>
+        <hr/>
+        <div>
+            <p>Layer titik, garis, atau area yang akan dioverlay.
+            </p>
+            <p>Selain memilih sebuah layer dari peta, Anda dapat memilih  <b>Pilih Layer Analisis</b> yang terdapat di bagian paling bawah daftar drop-down. Opsi ini membuka galeri di mana Anda dapat menelusuri dan memilih set data dari berbagai sumber untuk digunakan dalam analisis Anda. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Pilih layer overlay</h2></div>
+        <hr/>
+        <div>
+            <p>Layer yang akan dioverlay pada layer input.  
+            </p>
+            <p>Selain memilih layer dari peta, Anda dapat memilih  <b>Pilih Layer Analisis</b> di bawah daftar tarik-turun untuk menelusuri konten Anda untuk set data atau feature layer berbagi file big data. Anda dapat secara opsional menerapkan filter pada layer input Anda atau menerapkan pilihan pada layer yang di-host yang ditambahkan ke peta Anda. Filter dan pilihan hanya diterapakan untuk analisis. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Pilih metode overlay</h2></div>
+        <hr/>
+        <div>
+            <p>Menentukan metode overlay yang akan menggabungkan layer input dan layer overlay.  
+
+                <ul>
+                    <li> <b>Berpotongan</b>&mdash;Hanya fitur atau bagian fitur di layer overlay yang tumpang tindih dengan fitur di layer input yang akan digabungkan.
+                    </li>
+                    <li> <b>Hapus</b>&mdash;Fitur atau bagian fitur di layer overlay yang tidak tumpang tindih dengan area di layer input yang akan digabungkan.
+                    </li>
+                    <li> <b>Persatuan</b>&mdash;Semua fitur dari kedua layer akan digabungkan, membuat geometrik gabungan dari layer input dan layer overlay.  Semua fitur dan atributnya akan ditulis ke layer.
+                    </li>
+                    <li> <b>Identitas</b>&mdash;Fitur atau bagian fitur di layer input dan layer overlay yang akan digabungkan. Fitur atau bagian fitur yang tumpang tindih di kedua layer input dan layer overlay akan ditulis ke layer output.
+                    </li>
+                    <li> <b>Perbedaan Simetris</b>&mdash;Fitur atau bagian fitur dari layer input dan layer overlay yang tidak tumpang tindih akan digabungkan.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Nama layer hasil</h2></div>
+        <hr/>
+        <div>
+            <p>Nama layer yang akan dibuat di  <b>Konten Saya</b> dan ditambahkan ke peta. Layer ini akan memiliki tipe fitur yang sama (area, garis, atau titik) sebagai layer input dan layer overlay.  Nama default berdasarkan pada metode overlay dan nama layer input. Jika layer tersebut sudah ada, Anda akan diminta untuk memberi nama lain.
+            </p>
+            <p>Dengan menggunakan kotak drop-down  <b>Simpan hasil di</b>, Anda dapat menentukan nama folder di <b>Konten Saya</b> sebagai tempat penyimpanan hasil.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

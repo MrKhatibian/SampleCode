@@ -1,0 +1,6 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(function(){class g{constructor(a=[],b=[],d=!1){this.lengths=a??[];this.coords=b??[];this.hasIndeterminateRingOrder=d}static fromJSON(a){return new g(a.lengths,a.coords,a.hasIndeterminateRingOrder)}static fromRect(a){const [b,d,c,f]=a;a=c-b;const e=f-d;return new g([5],[b,d,a,0,0,e,-a,0,0,-e])}get isPoint(){return 0===this.lengths.length}get maxLength(){return Math.max(...this.lengths)}get size(){return this.lengths.reduce((a,b)=>a+b)}forEachVertex(a){let b=0;this.lengths.length||a(this.coords[0],
+this.coords[1]);for(let d=0;d<this.lengths.length;d++){const c=this.lengths[d];for(let f=0;f<c;f++)a(this.coords[2*(f+b)],this.coords[2*(f+b)+1]);b+=c}}deltaDecode(){const a=this.clone(),{coords:b,lengths:d}=a;let c=0;for(const f of d){for(let e=1;e<f;e++)b[2*(c+e)]+=b[2*(c+e)-2],b[2*(c+e)+1]+=b[2*(c+e)-1];c+=f}return a}clone(a){if(0===this.lengths.length)return new g([],[this.coords[0],this.coords[1]]);var b=2*(0===this.lengths.length?1:this.lengths.reduce((d,c)=>d+c));b=this.coords.slice(0,b);return a?
+(a.set(b),new g(this.lengths,a,this.hasIndeterminateRingOrder)):new g(Array.from(this.lengths),Array.from(b),this.hasIndeterminateRingOrder)}}return g});

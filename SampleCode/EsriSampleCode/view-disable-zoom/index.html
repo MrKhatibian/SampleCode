@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <title>Disable mouse-wheel and single-touch navigation | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html, body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .panel {
+        height: 200px;
+        width: 100%;
+        display: flex;
+        padding: 10px;
+      }
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+      }
+      #warning {
+        background-color: #242424;
+        opacity: 0;
+        width: 100%;
+        text-align: center;
+        transition: opacity 250ms ease-in-out;
+        transition-delay: 125ms;
+      }
+      #warning .message {
+        font-family: "Avenir Next W00","Helvetica Neue",Helvetica,Arial,sans-serif;
+        font-size: 14px;
+        padding: 15px;
+        background-color: #000;
+        color: #f4f4f4;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+  require([
+    "esri/Map",
+    "esri/views/MapView"
+  ], 
+  (
+    EsriMap,
+    MapView
+  ) => {
+
+    const view = new MapView({
+      container: "viewDiv",
+      map: new EsriMap({
+        basemap: "hybrid"
+      }),
+      center: [174.062376, -39.355675],
+      zoom: 11,
+      // Disable mouse-wheel and single-touch map navigation.
+      navigation: {
+        mouseWheelZoomEnabled: false,
+        browserTouchPanEnabled: false
+      }
+    });
+
+    // Listen to events that have been disallowed for the view navigation.
+    view.on("mouse-wheel", () => {
+      warnUser("To zoom in please double-click the map or use zoom in/out buttons.");
+    });
+
+    // Trap attempted single touch panning.
+    const pointers = new Map(); // javascript map
+    view.on("pointer-down", (event) => {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+      pointers.set(event.pointerId, { x: event.x, y: event.y});
+    });
+
+    view.on(["pointer-up", "pointer-leave"], (event) => {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+      pointers.delete(event.pointerId);
+    });
+
+    view.on("pointer-move", (event) => {
+      if (event.pointerType !== "touch") {
+        return;
+      }
+      if (pointers.size !== 1) {
+        return;
+      }
+      const distance = Math.sqrt(
+        Math.pow(event.x - pointers.get(event.pointerId).x, 2) +
+        Math.pow(event.y - pointers.get(event.pointerId).y, 2)
+      );
+      if (distance < 20) { return; }
+      warnUser("Please use two fingers to pan the map.");
+    });
+
+    // Display a warning.
+    let timeout;
+    function warnUser(warning) {
+      const warningDiv = document.getElementById("warning");
+      warningDiv.innerHTML = '<div class="message">' + warning + '</div>';
+      warningDiv.style.opacity = 1;
+      if (timeout) {
+        window.clearTimeout(timeout);
+      }
+      timeout = window.setTimeout(() => {
+        warningDiv.style.opacity = 0;
+        warningDiv.innerHTML = "";
+      }, 4000);
+    }
+  });
+</script>
+  </head>
+  <body>
+    <div class="panel esri-widget">
+      <div class="esri-feature__size-container">
+        <h4 class="esri-feature__title">Egmont National Park, New Zealand</h4>
+        <p class="esri-feature__text esri-feature__content-element">The primary
+          feature is of the park is Mount
+          Taranaki, a dormant volcano. The park's nearly circular boundary
+          protects forested areas on the mountain's
+          slopes.
+        </p>
+          <p class="esri-feature__text esri-feature__content-element">
+            Scroll down to see a map and learn more about this place.
+          </p>
+        </div>
+      </div>
+      <div id="viewDiv"></div>
+      <div id="warning"></div>
+      <div class="panel esri-widget">
+        <div class="esri-feature__size-container">
+          <h4 class="esri-feature__title">Mount Taranaki</h4>
+          <p class="esri-feature__text esri-feature__content-element">For many
+            centuries the mountain was called Taranaki by Māori. The Māori word
+            tara means mountain peak, and naki is thought to come from ngaki,
+            meaning "shining", a reference to the snow-clad winter nature of the
+            upper slopes. It was also named Pukehaupapa and Pukeonaki by iwi who
+            lived in the region in ancient times.</p>
+        </div>
+      </div>
+    </body>
+  </html>
+

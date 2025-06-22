@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Multidimensional ImageryTileLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #rendererDiv {
+        padding: 10px;
+        width: 200px;
+        min-height: 360px;
+      }
+
+      .slider {
+        height: 160px;
+        width: 100%;
+      }
+      .esri-slider__content{
+        padding: 5px;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/ImageryTileLayer",
+        "esri/layers/support/DimensionalDefinition",
+        "esri/layers/support/MultidimensionalSubset",
+        "esri/widgets/Slider",
+        "esri/widgets/TimeSlider",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+      ], (Map, MapView, ImageryTileLayer, DimensionalDefinition, MultidimensionalSubset, Slider, TimeSlider, Legend, Expand) => {
+
+        // variable names soilw@dbll for soil moisture and tsoil@dbll for soil temperature
+        let variableName = "soilw@dbll";
+
+
+        // Set the multidimensionalSubset on the layer. Limit the
+        // stdZ dimension from 0 - 1.6m for the soil temperature variable.
+        // Nothing will be displayed at 3 meters when tsoil@dbll variable info
+        // is being displayed
+        const multidimensionalSubset = new MultidimensionalSubset({
+          subsetDefinitions: [
+            {
+              variableName: "soilw@dbll", // soil moisture
+              dimensionName: "StdTime",
+              values: [1445569200000, 1445623200000],
+              isSlice: false
+            },
+            {
+              variableName: "soilw@dbll", // soil moisture
+              dimensionName: "StdZ",
+              values: [0, 3],
+              isSlice: false
+            },
+            {
+              variableName: "tsoil@dbll", // soil temperature
+              dimensionName: "StdTime",
+              values: [1445569200000, 1445623200000],
+              isSlice: false
+            },
+            {
+              variableName: "tsoil@dbll", // soil temperature
+              dimensionName: "StdZ",
+              values: [0, 1.6],
+              isSlice: false
+            }
+          ]
+        });
+
+        const layer = new ImageryTileLayer({
+          portalItem: {
+            id: "b231d6901d474f6584bdb9655ef2be4e"
+          },
+          title: "Soil temp, moisture",
+          multidimensionalSubset
+        });
+
+
+        const map = new Map({
+          basemap: {
+            portalItem: {
+              id: "899dc138d0854c1e8d746159ff761cd6"
+            }
+          },
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 2,
+          center: [-100, 40],
+          constraints: {
+            minScale: 36978595
+          }
+        });
+
+        // add UI controls to the app
+        view.ui.add("rendererDiv", "top-right");
+
+
+        // this function will be called as user adjusts the slider thumb to change the
+        // altitude slider. Layer's stdZ dimension will be updated on the map to show the soil temp
+        // or soil moisture at that altitude.
+        function updateRenderer (dimensionName, sliderData) {
+          if (!sliderData || !layer.loaded) {
+            return;
+          }
+          // set the altitude or StdZ dimension of the layer corresponding to the slider's thumb location
+          const multidimensionalDefinition = layer.multidimensionalDefinition;
+          // find the stdZ dimension definition from the layer's multidimensionalDefinition
+          const depthDef = multidimensionalDefinition.find((def) => def.dimensionName === "StdZ");
+          if (dimensionName === "StdZ") {
+            // set the slider thumb to the first altitude found in the StdZ altitude
+            if (depthDef.values[0] === sliderData.value) {
+              return;
+            }
+            depthDef.values[0] = sliderData.value;
+          }
+          layer.multidimensionalDefinition = multidimensionalDefinition;
+        };
+
+
+        // listen to variable dropdown change event and update layer's multidimensionalDefinition
+        // and renderer properties to reflect the variable selected.
+        const variableNameSelect = document.getElementById("variableName");
+        variableNameSelect.addEventListener("change", () => {
+          if (!layer.loaded) {
+            return;
+          }
+          variableName = variableNameSelect.value;
+          changeVariableName(variableName);
+        });
+
+
+        // Change the layer's variable name corresponding the selected variable in the drop down
+        // variable names in this case represent soil moisture or soil temperature
+        function changeVariableName(variableName) {
+          const multidimensionalDefinition = layer.multidimensionalDefinition;
+
+          // filter the data by the variable that user selected set the layer's
+          // multidimensionalDefinition by changing the dimensional definition variable name.
+          multidimensionalDefinition.forEach((def) => (def.variableName = variableName));
+          layer.multidimensionalDefinition = multidimensionalDefinition;
+
+          // update statistics for the layer's stretch renderer to match
+          // statistics associated with the chosen variable
+          // layer.rasterInfo.multidimensionalInfo - returns multidimensional info from the service
+          const renderer = layer.renderer.clone();
+          const dimensions = layer.rasterInfo.multidimensionalInfo;
+          const variable = dimensions.variables.find((variable) => variable.name === variableName);
+          renderer.statistics = variable.statistics;
+          layer.renderer = renderer;
+        }
+
+
+        const altitudeSlider = new Slider({
+          container: "altitude-slider",
+          min: 0,
+          max: 3,
+          values: [0],
+          steps: [0, 0.01, 0.04, 0.1, 0.3, 0.6, 1, 1.6, 3],
+          layout: "vertical",
+          snapOnClickEnabled: true,
+          labelFormatFunction: (value, type) => {
+            if (type === "value") {
+              return value + "m";
+            }
+            return (type === "min") ? "0 m" : "3 m"
+          },
+          visibleElements: {
+            labels: true,
+            rangeLabels: true
+          }
+        });
+        // listen to altitude slider's thumb change and drag events
+        altitudeSlider.on(["thumb-change", "thumb-drag"], (delta) => updateRenderer("StdZ", delta));
+
+        view.whenLayerView(layer).then(() => {
+          const epochDates =
+            layer.rasterInfo.multidimensionalInfo.variables[0].dimensions[0]
+              .values;
+          const dates = epochDates.map((item) => new Date(item));
+
+          // time slider widget initialization
+          // users can visualize daily wind information
+          // for the month of Oct 2011 using time slider
+          const timeSlider = new TimeSlider({
+            mode: "instant",
+            view: view,
+            timeVisible: true,
+            fullTimeExtent: {
+              start: new Date(dates[0]), // Oct 22, 2015 8 pm
+              end: new Date(dates[dates.length - 1]) // Oct 23, 2015 11am
+            },
+            stops: {
+              dates: dates
+            }
+          });
+          view.ui.add(timeSlider, "bottom-left");
+        });
+
+        // add a legend for the wind direction and speed layer
+        const legendExpand = new Expand({
+          expandIcon: "legend",
+          expandTooltip: "Legend",
+          view,
+          content: new Legend({
+            view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "top-left");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="rendererDiv" class="esri-widget">
+      <h3 class="esri-widget__heading">Multidimensional data filter</h3>
+      <label style="text-align:center; font-size: 10px;" class="esri-feature-form__label">Showing soil temp and moisture from <br>10/22/15 8pm - 10/23/15 11am</label>
+      <label class="esri-feature-form__label">Select a variable:</label>
+      <select id="variableName" class="esri-input esri-select">
+        <option value="soilw@dbll" selected>Soil moisture</option>
+        <option value="tsoil@dbll">Soil temperature</option>
+      </select>
+      <br/>
+      <div>
+        <label id="altitudeLabel" class="esri-feature-form__label">Altitude:</label>
+        <div id="altitude-slider" class="slider"></div>
+      </div>
+    </div>
+  </body>
+  </html>

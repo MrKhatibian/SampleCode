@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Intro to map components - Create a 2D map | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <style>
+    html,
+    body {
+      background-color: var(--calcite-ui-foreground-2);
+      padding: 0;
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+
+  <!-- Load the ArcGIS Maps SDK for JavaScript -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+    <!-- Load Map components from CDN-->
+  <script type="module"
+    src="https://js.arcgis.com/map-components/4.30/arcgis-map-components.esm.js"></script>
+
+  </head>
+  
+  <body>
+    <arcgis-map zoom="4" center="15, 65"></arcgis-map>
+    <script>
+      // Get a reference to the map component
+      const arcgisMap = document.querySelector("arcgis-map");
+
+      // Listen for when the component is ready
+      arcgisMap.addEventListener("arcgisViewReadyChange", (event) => {
+        console.log('Map component is ready', event);
+      });
+    </script>
+  </body>
+</html>

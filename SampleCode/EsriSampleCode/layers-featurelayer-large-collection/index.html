@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Working with large feature collections | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+     require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/Graphic",
+      "esri/geometry/Point",
+      "esri/renderers/SimpleRenderer",
+      "esri/core/reactiveUtils"
+    ], (Map, MapView, FeatureLayer, Graphic, Point, SimpleRenderer, reactiveUtils) => {
+      // create an empty client-side feature layer
+      // it is populated with 100,000 points wh+en user clicks stream 100,000 features button.
+      const layer = new FeatureLayer({
+        objectIdField: "OBJECTID",
+        geometryType: "point",
+        source: [],
+        spatialReference: { wkid: 4326 },
+        renderer: new SimpleRenderer({
+          symbol: {
+            type: "simple-marker",
+            size: 2,
+            color: "purple",
+            outline: null
+          }
+        })
+      });
+
+      const view = new MapView({
+        map: new Map({
+          basemap: "gray-vector",
+          layers: [layer]
+        }),
+        container: "viewDiv"
+      });
+
+
+      /**
+       * Function that upload as many features as possible to a
+       * client-side FeatureLayer without blocking the UI thread.
+       *
+       * @param layer - The layer to upload the features to
+       * @param iterator - The iterator to consume features
+       * @param batchTime - The amount of time during which the iterator can be consumed. By default 4ms
+       */
+      async function uploadFeatures(layer, iterator, batchTime = 4) {
+        const start = performance.now();
+        let result = iterator.next();
+
+        while (!result.done) {
+          const start = performance.now();
+          const features = [];
+
+          // consume for batchTime milliseconds.
+          while (performance.now() - start < batchTime && !result.done) {
+            features.push(result.value);
+            result = iterator.next();
+          }
+
+          if (features.length) {
+            console.log(`uploading ${features.length} features`);
+            await layer.applyEdits({
+              addFeatures: features
+            });
+          }
+        }
+      }
+
+
+      /**
+       * An iterator that generates `numFeatures` amount of random features
+       */
+      function* graphicsIterator(numFeatures) {
+        for (let i = 0; i < numFeatures; i++) {
+          yield new Graphic({
+            geometry: new Point({
+              longitude: Math.random() * 360 - 180,
+              latitude: Math.random() * 170 - 85
+            })
+          });
+        }
+      }
+
+      view.ui.add("addFeaturesDiv", "top-right");
+      const addFeatureButton = document.getElementById("addFeatureButton");
+      addFeatureButton.addEventListener("click", async ()=>{
+        addFeatureButton.loading = true;
+        // upload 100,000 features
+        await uploadFeatures(layer, graphicsIterator(100_000));
+        // wait for the view to catch up
+        await reactiveUtils.whenOnce(() => !view.updating);
+        addFeatureButton.loading = false;
+        addFeatureButton.disabled = true;
+      });
+    });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="addFeaturesDiv">
+      <calcite-button id="addFeatureButton" iconStart="upload-to">Stream 100,000 features</calcite-button>
+    </div>
+  </body>
+</html>
+

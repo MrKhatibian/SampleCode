@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Urban visualizations with polygon patterns | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        WebScene,
+        SceneView,
+        FeatureLayer,
+        Legend
+      ) => {
+        // Load webscene and display it in a SceneView
+        const webscene = new WebScene({
+          portalItem: {
+            id: "b7ede4ddceb44073b06081de80cfd150"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene
+        });
+
+        const overlayColor = "#cf385b";
+
+        const overlay = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/SouthBostonDotAve_Scenario2ProposedZoneChange/FeatureServer/4",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "polygon-3d",
+              symbolLayers: [
+                {
+                  type: "fill",
+                  material: { color: overlayColor },
+                  outline: { color: overlayColor },
+                  pattern: {
+                    type: "style",
+                    style: "cross"
+                  }
+                }
+              ]
+            }
+          },
+          title: "Urban Renewal Area Overlay"
+        });
+        webscene.when(() => {
+          webscene.layers.push(overlay);
+        });
+
+        view.ui.empty("top-left");
+        view.ui.add("selection-widget", "top-left");
+
+        const legend = new Legend({
+          view: view
+        });
+        view.ui.add(legend, "top-right");
+
+        document.getElementById("patterns").addEventListener("change", (event) => {
+          const renderer = overlay.renderer.clone();
+          renderer.symbol.symbolLayers.getItemAt(0).pattern = {
+            type: "style",
+            style: event.target.value
+          };
+          overlay.renderer = renderer;
+        });
+      });
+    </script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .esri-legend__layer-caption {
+        display: none;
+      }
+
+      #selection-widget {
+        padding: 12px 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="selection-widget" class="esri-widget">
+        <p>Select pattern for urban renewal area</p>
+        <select id="patterns">
+          <option value="none">None</option>
+          <option value="backward-diagonal">backward-diagonal</option>
+          <option value="cross" selected>cross</option>
+          <option value="diagonal-cross">diagonal-cross</option>
+          <option value="forward-diagonal">forward-diagonal</option>
+          <option value="horizontal">horizontal</option>
+          <option value="vertical">vertical</option>
+        </select>
+      </div>
+    </div>
+  </body>
+</html>
+

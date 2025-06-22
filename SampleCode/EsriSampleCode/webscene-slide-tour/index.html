@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Web scene - slide tour | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link href="https://js.arcgis.com/4.30/esri/themes/light/main.css" rel="stylesheet" type="text/css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #infoDiv {
+        width: 80%;
+        padding: 20px;
+        background-color: white;
+      }
+
+      button {
+        display: block;
+        margin: 10px auto;
+        border: 1px solid #0079c1;
+        background-color: #005e95;
+        color: #fff;
+        font-size: 15px;
+        padding: 4px 8px;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/views/SceneView", "esri/WebScene"], (SceneView, WebScene) => {
+        /*****************************************************************************
+         * This sample shows how to load a webscene and create a tour by animating
+         * the slides in the webscene. Animating a webscene to one of its slides
+         * can be achieved by using the applyTo() method. As applyTo returns a promise
+         * several such methods can be chained, to create a such a tour.
+         *****************************************************************************/
+
+        // Load a webscene containing buildings of New York.
+        const scene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "a594109d36464cd2a92a01325b4f6f42"
+          }
+        });
+
+        // Reference the WebScene in a SceneView instance.
+        const view = new SceneView({
+          map: scene,
+          container: "viewDiv"
+        });
+
+        view.ui.add("infoDiv", "bottom-left");
+
+        // When animating from one slide to the other, text will be displayed.
+        // Descriptive text is stored in the title property of each slide.
+        // If you create the slides with the JavaScript API then you can alternatively
+        // add long text to the description property of the slide.
+        // The SceneViewer currently doesn't support editing slide descriptions, only titles.
+
+        // Check that the view is ready
+        view.when(() => {
+          // Get the slides from the WebScene
+          const slides = scene.presentation.slides;
+
+          // The information text will always be displayed in the infoDiv
+          const infoDiv = document.getElementById("content");
+          infoDiv.innerHTML = slides.getItemAt(0).title.text;
+
+          const button = document.getElementById("start-btn");
+          button.addEventListener("click", () => {
+            // Start the tour on button click, by calling  the goToSlide function.
+            goToSlide(1);
+          });
+
+          // This recursive function will call the applyTo method on the view and then wait
+          // for 8 seconds before the next slide animation begins.
+
+          function goToSlide(i) {
+            const slide = slides.getItemAt(i);
+
+            // When animating from one slide to the other, text will be displayed.
+            // Descriptive text is stored in the title property of each slide.
+            // If you create the slides with the JavaScript API then you can alternatively
+            // add long text to the description property of the slide.
+            // The SceneViewer currently doesn't support editing slide descriptions,
+            // so we use the title in this app.
+
+            if (i < slides.length) {
+              // disable button when tour starts
+              enableButton(false);
+              infoDiv.innerHTML = slide.title.text;
+
+              slide
+                .applyTo(view, {
+                  duration: 3000
+                })
+                .then(() => {
+                  window.setTimeout(() => {
+                    goToSlide(i + 1);
+                  }, 8000);
+                });
+            } else {
+              // enable button when tour ends
+              enableButton(true);
+            }
+          }
+
+          // Enables/disables button that starts the tour
+
+          function enableButton(enabled) {
+            button.disabled = !enabled;
+            button.style.opacity = enabled ? 1 : 0.5;
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv" class="esri-widget"></div>
+    <div id="infoDiv">
+      <div id="content"></div>
+      <button id="start-btn">Start tour</button>
+    </div>
+  </body>
+</html>
+

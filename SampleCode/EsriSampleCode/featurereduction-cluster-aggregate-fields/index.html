@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="initial-scale=1,maximum-scale=1,user-scalable=no"
+  />
+
+    <title>Clustering with aggregate fields | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #infoDiv {
+        padding: 10px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/layers/GeoJSONLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/widgets/Home",
+        "esri/layers/support/AggregateField"
+      ], (Map, FeatureLayer, GeoJSONLayer, MapView, Legend, Expand, Home, AggregateField) => {
+
+        const includedColor = "#de2c30";
+        const excludedColor = "#ffdaa6";
+
+
+        const clusterConfig = {
+          type: "cluster",
+
+          fields: [
+            new AggregateField({
+              name: "aggregateCount",
+              statisticType: "count"
+            }),
+            new AggregateField({
+              name: "SUM_PERSONS_INJURED",
+              onStatisticField: "NUMBER_OF_PERSONS_INJURED",
+              statisticType: "sum"
+            }),
+            new AggregateField({
+              name: "SUM_PEDESTRIANS_INJURED",
+              onStatisticField: "NUMBER_OF_PEDESTRIANS_INJURED",
+              statisticType: "sum"
+            }),
+            new AggregateField({
+              name: "SUM_CYCLIST_INJURED",
+              onStatisticField: "NUMBER_OF_CYCLIST_INJURED",
+              statisticType: "sum"
+            }),
+            new AggregateField({
+              name: "SUM_MOTORIST_INJURED",
+              onStatisticField: "NUMBER_OF_MOTORIST_INJURED",
+              statisticType: "sum"
+            }),
+            new AggregateField({
+              name: "AVG_MOTORIST_INJURED",
+              onStatisticField: "NUMBER_OF_MOTORIST_INJURED",
+              statisticType: "avg"
+            }),
+            new AggregateField({
+              name: "SUM_KILLED",
+              onStatisticField: "NUMBER_OF_PERSONS_KILLED",
+              statisticType: "sum"
+            })
+
+          ],
+          renderer: {
+            type: "class-breaks",
+            field: "SUM_KILLED",
+            legendOptions: {
+              title: "Car crashes"
+            },
+            classBreakInfos: [
+              {
+                minValue: 0,
+                maxValue: 0,
+                label: "No fatalities",
+                symbol: {
+                  type: "simple-marker",
+                  color: excludedColor,
+                  outline: null,
+                  outline: {
+                    color: "rgba(153, 31, 23, 0.3)",
+                    width: 0.3
+                  }
+                }
+              }, {
+                minValue: 1,
+                maxValue: 99999999999,
+                label: "Includes fatalities",
+                symbol: {
+                  type: "simple-marker",
+                  color: includedColor,
+                  outline: {
+                    color: "rgba(153, 31, 23, 0.3)",
+                    width: 0.3
+                  }
+                }
+              }
+            ]
+          },
+          clusterRadius: "100px",
+          popupTemplate: {
+            title: "Crash summary",
+            content: [
+              {
+                type: "text",
+                text: "{aggregateCount} car crashes occurred in this area, including {SUM_KILLED} fatalities."
+              },
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "aggregateCount",
+                    label: "Total crashes",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "SUM_PERSONS_INJURED",
+                    label: "Total injured",
+                    format: {
+                      places: 0,
+                      digitSeparator: true
+                    }
+                  },
+                  {
+                    fieldName: "SUM_PEDESTRIANS_INJURED",
+                    label: "Pedestrians injured"
+                  },
+                  {
+                    fieldName: "SUM_CYCLIST_INJURED",
+                    label: "Cyclists injured"
+                  },
+                  {
+                    fieldName: "SUM_MOTORIST_INJURED",
+                    label: "Motorists injured"
+                  },
+                  {
+                    fieldName: "SUM_KILLED",
+                    label: "Total killed"
+                  }
+                ]
+              }
+            ]
+          },
+          clusterMinSize: "24px",
+          clusterMaxSize: "60px",
+          labelingInfo: [
+            {
+              deconflictionStrategy: "none",
+              labelExpressionInfo: {
+                expression: `
+                  var label = Text($feature.aggregateCount, '#,###');
+                  var fatalities = $feature.SUM_KILLED;
+                  if(fatalities > 0){
+                    label += \`\n(\${fatalities})\`
+                  }
+                  return label;
+                `
+              },
+              symbol: {
+                type: "text",
+                color: "white",
+                font: {
+                  weight: "bold",
+                  family: "Noto Sans",
+                  size: "12px"
+                },
+                haloColor: includedColor,
+                haloSize: 1
+              },
+              labelPlacement: "center-center"
+            }
+          ]
+        };
+
+
+        const year = 2020;
+
+        const layer = new FeatureLayer({
+          title: "Motor vehicle crashes (2020)",
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/NYC_motor_crashes/FeatureServer/0",
+          featureReduction: clusterConfig,
+          popupTemplate: {
+            title: "Crash location",
+            content: [
+              {
+                type: "fields",
+                fieldInfos: [
+                  {
+                    fieldName: "CRASH_DATE",
+                    label: "Date",
+                    dateFormat: "day-short-month-year-long-time"
+                  },
+                  {
+                    fieldName: "NUMBER_OF_PERSONS_KILLED",
+                    label: "Fatalities"
+                  },
+                  {
+                    fieldName: "NUMBER_OF_PERSONS_INJURED",
+                    label: "Injuries"
+                  }
+                ]
+              }
+            ]
+          },
+          definitionExpression: `CRASH_DATE > Date '12-31-${
+            year - 1
+          }' AND CRASH_DATE < Date '01-01-${year + 1}'`,
+          renderer: {
+            type: "class-breaks",
+            labelingInfo: {
+              title: "Crash location"
+            },
+            field: "NUMBER_OF_PERSONS_KILLED",
+            classBreakInfos: [
+              {
+                minValue: 0,
+                maxValue: 0,
+                label: "No fatalities",
+                symbol: {
+                  type: "simple-marker",
+                  color: excludedColor,
+                  size: 5,
+                  outline: {
+                    color: "rgba(153, 31, 23, 0.3)",
+                    width: 0.3
+                  }
+                }
+              },
+              {
+                minValue: 1,
+                maxValue: 99999999999,
+                label: "Includes fatalities",
+                symbol: {
+                  type: "simple-marker",
+                  color: includedColor,
+                  size: 5,
+                  outline: {
+                    color: "rgba(153, 31, 23, 0.3)",
+                    width: 0.3
+                  }
+                }
+              }
+            ],
+          },
+          orderBy: [{
+            field: "NUMBER_OF_PERSONS_KILLED",
+            order: "descending"
+          }]
+        });
+
+        const map = new Map({
+          layers: [layer],
+          basemap: "gray-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          center: [-73.94226, 40.7163],
+          scale: 288895,
+          map
+        });
+
+        view.ui.add(
+          new Home({
+            view: view
+          }),
+          "top-left"
+        );
+
+        const legend = new Legend({
+          view: view,
+          container: "legendDiv"
+        });
+
+        const infoDiv = document.getElementById("infoDiv");
+        view.ui.add(
+          new Expand({
+            view: view,
+            content: infoDiv,
+            expandIcon: "list-bullet",
+            expanded: false
+          }),
+          "top-left"
+        );
+
+        const toggleButton = document.getElementById("cluster");
+
+        // To turn off clustering on a layer, set the
+        // featureReduction property to null
+        toggleButton.addEventListener("click", () => {
+          let fr = layer.featureReduction;
+          layer.featureReduction =
+            fr && fr.type === "cluster" ? null : clusterConfig;
+          toggleButton.innerText =
+            toggleButton.innerText === "Enable Clustering"
+              ? "Disable Clustering"
+              : "Enable Clustering";
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="infoDiv" class="esri-widget">
+      <button id="cluster" class="esri-button">Disable Clustering</button>
+      <div id="legendDiv"></div>
+    </div>
+  </body>
+</html>
+

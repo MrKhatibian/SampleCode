@@ -1,0 +1,6 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports","../../../engine/webgl/DisplayId"],function(c,d){class e{constructor(b){this.data=b;this._referenceCount=0}increment(){this._referenceCount+=1}decrement(){--this._referenceCount}empty(){return 0===this._referenceCount}}class f{constructor(){this._freeIdsGenerationA=[];this._freeIdsGenerationB=[];this._idCounter=1;this._freeIds=this._freeIdsGenerationA;this._objectIdToDisplayId=new Map}createIdForObjectId(b){let a=this._objectIdToDisplayId.get(b);a?a.increment():(a=new e(d.createDisplayId(this._getFreeId(),
+!1)),a.increment(),this._objectIdToDisplayId.set(b,a));return a.data}releaseIdForObjectId(b){const a=this._objectIdToDisplayId.get(b);a&&(a.decrement(),a.empty()&&(this._objectIdToDisplayId.delete(b),this._freeIds.push(a.data)))}releaseAll(){for(const b of this._objectIdToDisplayId.values())this._freeIds.push(b.data);this._objectIdToDisplayId.clear()}incrementGeneration(){this._freeIds=this._freeIds===this._freeIdsGenerationA?this._freeIdsGenerationB:this._freeIdsGenerationA}_getFreeId(){return this._freeIds.length?
+this._freeIds.pop():this._idCounter++}}c.DisplayIdGenerator=f;Object.defineProperty(c,Symbol.toStringTag,{value:"Module"})});

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>GraphicsLayer with visibilityTimeExtent | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #timeSlider {
+        width: 400px;
+      }
+
+      #infoDiv {
+        padding: 10px;
+      }
+    </style>
+  <script>
+    require([
+        "esri/Map",
+        "esri/Basemap",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/TileLayer",
+        "esri/layers/GraphicsLayer",
+        "esri/renderers/SimpleRenderer",
+        "esri/symbols/SimpleFillSymbol",
+        "esri/layers/support/FeatureFilter",
+        "esri/widgets/TimeSlider",
+        "esri/TimeExtent",
+        "esri/core/reactiveUtils",
+        "esri/Graphic",
+        "esri/symbols/TextSymbol"
+      ], (Map, Basemap, MapView, FeatureLayer, TileLayer, GraphicsLayer, SimpleRenderer, SimpleFillSymbol,
+      FeatureFilter, TimeSlider, TimeExtent, reactiveUtils, Graphic, TextSymbol) =>
+      (async () => {
+
+      // Firefly Imagery Hybrid
+      const basemap = new Basemap({
+        baseLayers: [new TileLayer({url: "https://fly.maptiles.arcgis.com/arcgis/rest/services/World_Imagery_Firefly/MapServer"})]
+      });
+
+      const map = new Map({
+        basemap
+      });
+
+      // center around Sonoma county and lock the map extent and scale
+      const view = new MapView({
+        container: "viewDiv",
+        map,
+        center: [-122.7798, 38.6837],
+        zoom: 11,
+        constraints: {
+          minZoom: 11,
+          maxZoom: 11,
+          geometry: {
+            type: "extent",
+            xmax: -13633120.623372689,
+            xmin: -13702449.008027252,
+            ymax: 4708568.6044162195,
+            ymin: 4644361.5006567575,
+            spatialReference: {
+              wkid: 102100
+            }
+          }
+        }
+      });
+      view.ui.remove("zoom");
+
+      // kincade fire perimeters feature layer
+      const featureLayer = new FeatureLayer({
+        portalItem: {
+          id: "39a2d42542f74e858cb92bb81adee4dc"
+        },
+        outFields: ["*"],
+        renderer: new SimpleRenderer({
+          symbol: new SimpleFillSymbol({
+            color: "#FAD0C6",
+            outline: {
+              color: "#520B02",
+              width: "2px"
+            }
+          })
+        }),
+        effect: "brightness(600%)",
+        blendMode: "overlay",
+      });
+      map.add(featureLayer);
+
+      const layerView = await view.whenLayerView(featureLayer);
+
+
+      // dates array will hold all the unique dates from the query result made to kincade fire perimeters
+      let dates = new Array;
+
+      // create a query object that honors layers settings and order the query results by recordedDate
+      const query = featureLayer.createQuery();
+      query.orderByFields = ["recordedDate"];
+
+      const queryResult = await featureLayer.queryFeatures(query);
+
+      // loop through the query result and add dates to dates array
+      // create a new GraphicsLayer for each date and set its visibilityTimeExtent to the date
+      // create a graphic with text symbol containing the notes attribute from the query result
+      // add the graphic to the GraphicsLayer and set the time slider stops to dates array
+      queryResult.features.forEach((feature, i) => {
+        const date = new Date(feature.attributes.recordedDate);
+        const notes = feature.attributes.Notes;
+
+        // create a new graphic with text symbol and set text property
+        // to notes attribute of the query result
+        const graphic = new Graphic({
+          geometry: {
+            type: "point",
+            x: feature.geometry.centroid.x,
+            y: feature.geometry.centroid.y,
+            spatialReference: {
+              wkid: 102100
+            }
+          },
+          attributes: {
+            acres: feature.attributes.gisacres,
+            start: new Date(feature.attributes.recordedData),
+          },
+          symbol: new TextSymbol({
+            text: notes,
+            color: "black",
+            xoffset: 50,
+            yoffset: 10,
+            lineWidth: 200,
+            horizontalAlignment: "left",
+            backgroundColor: "white",
+            font: {
+              size: 12,
+              family: "sans-serif"
+            }
+          })
+        });
+
+        // create a new GraphicsLayer for each date and set its visibilityTimeExtent to the date
+        const glayer = createGraphicsLayer(date, new Date(feature.attributes.recordedDate), i);
+        glayer.add(graphic);
+        map.add(glayer);
+
+        // add the date to dates array
+        if (!dates.some(d => d.getTime() === date.getTime())) {
+          dates.push(date);
+        }
+      });
+
+
+
+      // add a new time slider and set its stops to dates array
+      const timeSlider = new TimeSlider({
+        container: "timeSlider",
+        mode: "instant",
+        timeVisible: true,
+        playRate: 2000,
+        stops: {dates},
+        loop: true,
+        fullTimeExtent: new TimeExtent({
+          start: dates[0],
+          end: dates[dates.length-1]
+        }),
+        view: view
+      });
+      view.ui.add(timeSlider, "bottom-left");
+
+
+      // watch for time slider timeExtent change and update the fire perimeter layerView's featureEffect
+      reactiveUtils.watch(() => timeSlider.timeExtent, () => {
+
+        // start is epoch value. convert it to date string
+        const start = timeSlider.timeExtent.start.toISOString().replace("T"," ").substring(0, 19);
+        const end = timeSlider.timeExtent.end.toISOString().replace("T"," ").substring(0, 19);
+
+        // set an attribute filter on the layerView to only show the fire perimeters
+        // that were recorded on the selected date
+        const where = `recordedDate = TIMESTAMP '${start}'`;
+        layerView.featureEffect = {
+          filter: new FeatureFilter({
+            where
+          }),
+          includedEffect: "drop-shadow(3px, 3px, 4px) hue-rotate(270deg)",
+          excludedEffect: "grayscale(80%) opacity(0%)"
+        };
+      });
+
+
+      // create a new GraphicsLayer for each date and set its visibilityTimeExtent to the date
+      // this function is called from the forEach loop above
+      function createGraphicsLayer(startDate, endDate, index) {
+        const graphicsLayer = new GraphicsLayer();
+        graphicsLayer.id = `graphicsLayer${index}`;
+
+        graphicsLayer.visibilityTimeExtent = {
+          start: startDate,
+          end: startDate
+        };
+        return graphicsLayer;
+      }
+
+
+      view.ui.add("infoDiv", "top-right");
+    })());
+  </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="timeSlider"></div>
+    <div id="infoDiv" class="esri-widget">
+      <h2>Kincade fire perimeters</h2>
+    </div>
+  </body>
+
+</html>
+

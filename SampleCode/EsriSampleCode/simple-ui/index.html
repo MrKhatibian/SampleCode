@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Using the view's UI | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+      }
+      #logoDiv {
+        padding: 12px;
+        background-color: black;
+        color: pink;
+        text-align: center;
+        width: 100px;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/widgets/Search"], (Map, SceneView, Search) => {
+        const map = new Map({
+          basemap: "dark-gray-vector"
+        });
+
+        const view = new SceneView({
+          map: map,
+          container: "viewDiv",
+          center: [-106.4508651185194, 31.763963987428166],
+          zoom: 16
+        });
+
+        const search = new Search({
+          view: view
+        });
+
+        // places the logo div in the bottom right corner of the view
+        view.ui.add("logoDiv", "bottom-right");
+        // places the search widget in the top right corner of the view
+        view.ui.add(search, "top-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="logoDiv" class="esri-widget">Logo</div>
+  </body>
+</html>
+

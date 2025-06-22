@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Browse related records in a popup - 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script type="text/plain" id="address-format-arcade">
+      // Returns a formatted address if the address attribute exists
+      var addressEmpty = IsEmpty(Trim($feature.ADDRESS));
+      var value = IIf(addressEmpty, 'N/A', $feature.ADDRESS + "\n" + $feature.CITY + ", "+ $feature.ZIP);
+      return Trim(value);
+    </script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils"
+      ], (Map, FeatureLayer, MapView, Legend, Expand, reactiveUtils) => {
+        // Create the map.
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+
+        // Create the MapView.
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          popup: {
+            // Dock the popup in the top right corner.
+            dockEnabled: true,
+            dockOptions: {
+              breakpoint: false,
+              position: "top-right"
+            }
+          }
+        });
+
+        const unitLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_Wildfires_with_Nonspatial_Table/FeatureServer/3",
+          title: "CALFIRE Administrative Unit Boundaries",
+          outFields: ["*"],
+          popupTemplate: {
+            title: "{UNIT}",
+            outFields: ["*"],
+            returnGeometry: true,
+            fieldInfos: [
+              {
+                fieldName: "UNITCODE",
+                label: "Unit Code"
+              },
+              {
+                fieldName: "REGION",
+                label: "Region"
+              }
+            ],
+            content: [
+              // Add FieldContent to popup template.
+              {
+                type: "fields"
+              },
+              // Create RelationshipContent with the relationship between
+              // the units and fires.
+              {
+                type: "relationship",
+                // The numeric ID value for the defined relationship on the service.
+                // This can be found on the service.
+                relationshipId: 2,
+                description: "Fires that {UNIT} responded to from 2017-2021 ordered by most to least acreage burned.",
+                // Display two related fire features in the list of related features.
+                displayCount: 2,
+                title: "Fires",
+                // Order the related features by the 'GIS_ACRES' in descending order.
+                orderByFields: {
+                  field: "GIS_ACRES",
+                  order: "desc"
+                }
+              },
+              // Create RelationshipContent with the relationship between
+              // the units and wildfire protection facility statistics table.
+              {
+                type: "relationship",
+                relationshipId: 3,
+                description: "Statistics on the facilities for wildland fire protection that reside within {UNIT}.",
+                // Display only the one unit
+                displayCount: 1,
+                title: "Unit Facility Statistics",
+                // Order list of related records by the 'NAME' field in ascending order.
+                orderByFields: {
+                  field: "UNIT",
+                  order: "asc"
+                }
+              },
+              // Create RelationshipContent with the relationship between
+              // the counties and wildfire protection facilities.
+              {
+                type: "relationship",
+                relationshipId: 1,
+                description: "All facilities for wild land fire protection that reside in {UNIT}.",
+                // Display only two related cities.
+                displayCount: 2,
+                title: "Facilities for Wildland Fire Protection",
+                // Order list of related records by the 'NAME' field in ascending order.
+                orderByFields: {
+                  field: "NAME",
+                  order: "asc"
+                }
+              }
+            ]
+          },
+          // Create a simple renderer with no fill and lighter outline.
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: null,
+              outline: {
+                width: 0.5,
+                color: "rgba(128,128,128,0.4)"
+              }
+            }
+          }
+        });
+
+        const citiesLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_Wildfires_with_Nonspatial_Table/FeatureServer/2",
+          title: "Incorporated City Boundaries",
+          popupTemplate: {
+            title: "{CITY}, California",
+            outFields: ["*"],
+            returnGeometry: true,
+            fieldInfos: [
+              {
+                fieldName: "COUNTY",
+                label: "County"
+              }
+            ],
+            content: [
+              // Add FieldContent to popup template.
+              {
+                type: "fields"
+              },
+              // Create RelationshipContent with the relationship between the
+              // cities and the facilities.
+              {
+                type: "relationship",
+                relationshipId: 0,
+                description: "Facilities for Wildland Fire Protection that reside the city of {City}.",
+                // Display two related facilities in the list of related features.
+                displayCount: 2,
+                title: "Facilities for Wildland Fire Protection",
+                // Order the related features by the 'Name' of the facility in ascending order.
+                orderByFields: {
+                  field: "NAME",
+                  order: "asc"
+                }
+              }
+            ]
+          }
+        });
+
+        const commonProps = {
+          type: "simple-fill",
+          outline: null
+        };
+        const fireLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_Wildfires_with_Nonspatial_Table/FeatureServer/1",
+          title: "Wildfire Burn Areas",
+          orderby: {
+            field: "YEAR_",
+            order: "descending"
+          },
+          // Create a UniqueValueRenderer to visualize the fires by year.
+          renderer: {
+            type: "unique-value",
+            field: "YEAR_",
+            defaultSymbol: null,
+            uniqueValueInfos: [
+              {
+                value: "2017",
+                symbol: {
+                  ...commonProps,
+                  color: "#ffffb2"
+                }
+              },
+              {
+                value: "2018",
+                symbol: {
+                  ...commonProps,
+                  color: "#fecc5c"
+                }
+              },
+              {
+                value: "2019",
+                symbol: {
+                  ...commonProps,
+                  color: "#fd8d3c"
+                }
+              },
+              {
+                value: "2020",
+                symbol: {
+                  ...commonProps,
+                  color: "#f03b20"
+                }
+              },
+              {
+                value: "2021",
+                symbol: {
+                  ...commonProps,
+                  color: "#bd0026"
+                }
+              }
+            ]
+          },
+          popupTemplate: {
+            title: "{FIRE_NAME} Fire",
+            outfields: ["*"],
+            fieldInfos: [
+              {
+                fieldName: "YEAR_",
+                label: "Year"
+              },
+              {
+                fieldName: "GIS_ACRES",
+                label: "Acreage Burned",
+                format: {
+                  digitSeparator: true,
+                  places: 0
+                }
+              },
+              {
+                fieldName: "expression/burn-time"
+              },
+              {
+                fieldName: "UNIT_NAME",
+                label: "Responding Unit"
+              },
+              {
+                fieldName: "CAUSE",
+                label: "Cause of fire"
+              },
+              {
+                fieldName: "C_METHOD",
+                label: "Perimeter collection method"
+              },
+              {
+                fieldName: "OBJECTIVE",
+                label: "Objective"
+              }
+            ],
+            // Create Arcade expressions to represent fields in the fieldInfo.
+            expressionInfos: [
+              {
+                name: "burn-time",
+                title: "Duration of burn in days",
+                expression: "Round(DateDiff($feature.CONT_DATE, $feature.ALARM_DATE, 'days'))"
+              }
+            ],
+            content: [
+              // Add FieldContent to popup template.
+              {
+                type: "fields"
+              },
+              // Create RelationshipContent with the relationship between
+              // the units and fires.
+              {
+                type: "relationship",
+                // The numeric ID value for the defined relationship on the service.
+                // This can be found on the service.
+                relationshipId: 2,
+                description: "Unit that responded to {FIRE_NAME} fire",
+                // Display the related unit features in the list of related features.
+                displayCount: 1,
+                title: "Unit",
+                // Order the related features by the 'Region' in decending order.
+                orderByFields: {
+                  field: "Region",
+                  order: "desc"
+                }
+              }
+            ]
+          }
+        });
+
+        const facilityLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_Wildfires_with_Nonspatial_Table/FeatureServer/0",
+          title: "Facilities for Wildland Fire Protection",
+          featureReduction: {
+            // Add FeatureReduction to the facilities layer to cluster the features
+            // and configure the cluster's PopupTemplate.
+            type: "cluster",
+            clusterRadius: 40,
+            clusterMaxSize: 24,
+            popupTemplate: {
+              content: "This cluster represents <b>{cluster_count}</b> facilities for wild land fire protection.",
+              fieldInfos: [
+                {
+                  fieldName: "cluster_count",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                }
+              ]
+            }
+          },
+          popupTemplate: {
+            title: "{NAME} {AKA}",
+            outFields: ["*"],
+            returnGeometry: true,
+            fieldInfos: [
+              {
+                fieldName: "NAME",
+                label: "Name"
+              },
+              {
+                fieldName: "COUNTY",
+                label: "County"
+              },
+              {
+                fieldName: "OWNER",
+                label: "Owned By"
+              },
+              {
+                fieldName: "TYPE",
+                label: "Station Type"
+              },
+              {
+                fieldName: "FUNDING",
+                label: "Funding"
+              },
+              {
+                fieldName: "STAFFING",
+                label: "Type of Staffing"
+              },
+              {
+                fieldName: "expression/address",
+                label: "Address"
+              },
+              {
+                fieldName: "expression/phone",
+                label: "Phone number"
+              }
+            ],
+            // Create Arcade expressions to represent fields in the fieldInfo
+            expressionInfos: [
+              {
+                name: "address",
+                title: "Address",
+                expression: document.getElementById("address-format-arcade").text
+              },
+              {
+                name: "phone",
+                title: "Phone number",
+                expression: "DefaultValue(Trim($feature.PHONE_NUM), 'N/A')"
+              }
+            ],
+            content: [
+              // Add FieldContent to popup template.
+              {
+                type: "fields"
+              },
+              // Create RelationshipContent with the relationship between the
+              // facilities and units.
+              {
+                type: "relationship",
+                relationshipId: 1,
+                description: "Unit that Wildfire Protection facility {NAME} facility reports to.",
+                // Display two related units in the list of related features.
+                displayCount: 2,
+                title: "Units",
+                // Order list of related records by the 'UNIT' field in ascending order.
+                orderByFields: {
+                  field: "UNIT",
+                  order: "asc"
+                }
+              },
+              // Create RelationshipContent with the relationship between the
+              // facilities and cites.
+              {
+                type: "relationship",
+                relationshipId: 0,
+                description: "Incorporated city that Wildfire Protection facility {NAME} resides in.",
+                // Display two related cities in the list of related features.
+                displayCount: 2,
+                title: "Incorporated Cities",
+                // Order list of related records by the 'CITY' field in ascending order.
+                orderByFields: {
+                  field: "CITY",
+                  order: "asc"
+                }
+              }
+            ]
+          }
+        });
+
+        // Create the non-spatial related table
+        const facilityStatsTable = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/California_Wildfires_with_Nonspatial_Table/FeatureServer/4",
+          title: "Facility Statistics by Unit",
+          popupTemplate: {
+            // Set up table's field information
+            fieldInfos: [
+              {
+                fieldName: "relationships/3/UNIT",
+                label: "Unit"
+              },
+              {
+                fieldName: "FREQUENCY",
+                label: "Number of facilities"
+              },
+              {
+                fieldName: "MAX_FUNDING",
+                label: "Most Common Funding"
+              },
+              {
+                fieldName: "MAX_STAFFING",
+                label: "Most Common Staffing Type"
+              },
+              {
+                fieldName: "MAX_OWNER",
+                label: "Most Common Owner"
+              }
+            ],
+            title: "Facility Statistics",
+            content: [
+              {
+                type: "fields"
+              }
+            ]
+          }
+        });
+        // Load the non-spatial table and add to the map.
+        facilityStatsTable.load().then(() => {
+          map.tables.add(facilityStatsTable);
+        });
+
+        // Add all the layers to map since they all have relationships.
+        map.addMany([unitLayer, citiesLayer, fireLayer, facilityLayer]);
+
+        // Once the units layer loads, set the view extent to the layer's extent
+        // and display a popup on initial load of the application.
+        unitLayer.when(() => {
+          view.extent = unitLayer.fullExtent;
+          view.whenLayerView(unitLayer).then((unitLayerView) => {
+            // Use reactiveUtils to watch when the layerview is done updating once.
+            reactiveUtils
+              .whenOnce(() => !unitLayerView?.updating)
+              .then(() => {
+                // Create a query from the layerview.
+                let query = unitLayerView.createQuery();
+                query.where = "UNIT = 'Sonoma-Lake-Napa Unit'";
+                query.outFields = unitLayerView.availableFields;
+                // Query for the Sonoma-Lake-Napa Unit and open it's popup.
+                unitLayerView.queryFeatures(query).then((results) => {
+                  view.openPopup({
+                    features: results.features[0],
+                    location: results.features[0].geometry.centroid,
+                    fetchFeatures: true
+                  });
+                });
+              });
+          });
+        });
+
+        // Add the expand widget that contains the legend.
+        view.ui.add(
+          new Expand({
+            content: new Legend({ view: view }),
+            view: view,
+            expandTooltip: "Expand Legend"
+          }),
+          "bottom-left"
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

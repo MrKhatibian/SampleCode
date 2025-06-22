@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Explore data in CatalogLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #rightPanel {
+        max-height: 98%;
+      }
+
+      calcite-shell-panel {
+        --calcite-shell-panel-min-width: 400px;
+        --calcite-shell-panel-width: 400px;
+        --calcite-shell-panel-max-width: 80%;
+      }
+
+      calcite-chip[selected] {
+        --calcite-color-border-1: var(--calcite-color-brand);
+      }
+
+      .canvas {
+        margin: 0 auto 1rem;
+      }
+
+      calcite-chip-group {
+        margin: 1rem auto 0.5rem;
+      }
+
+      .esri-time-slider__layout--compact .esri-time-slider__row:nth-child(2) {
+        height: 48px !important;
+      }
+
+      .esri-time-slider__slider .esri-slider {
+        margin-top: 0px !important;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/layers/CatalogLayer",
+        "esri/layers/GroupLayer",
+        "esri/views/MapView",
+        "esri/Map",
+        "esri/layers/catalog/catalogUtils",
+        "esri/widgets/LayerList",
+        "esri/widgets/TimeSlider",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils",
+        "esri/widgets/Legend",
+        "esri/TimeExtent",
+        "esri/portal/PortalItem"
+      ],
+      (
+        CatalogLayer,
+        GroupLayer,
+        MapView,
+        Map,
+        catalogUtils,
+        LayerList,
+        TimeSlider,
+        Expand,
+        reactiveUtils,
+        Legend,
+        TimeExtent,
+        PortalItem
+      ) => (async () => {
+
+        let highlight;
+
+
+        // Create a new CatalogLayer instance from a portal item
+        const layer = new CatalogLayer({
+          portalItem: {
+            id: "d457418d6d374bd08b899dccf4289bfd"
+          },
+          outFields: ["*"],
+          useViewTime: false
+        });
+
+
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          ground: "world-elevation",
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+        });
+
+        const layerView = await view.whenLayerView(layer);
+        view.goTo(layer.fullExtent);
+
+        const dates = [];
+        const query = layer.createQuery();
+        query.orderByFields = ["PublishedDate"];
+
+        // query all features from the foot print layer and loop through PublishedDate field and
+        // add dates to dates array and set the time slider stops to dates array
+        const queryResult = await layer.queryFeatures(query);
+        queryResult.features.forEach((feature) => {
+          const date = new Date(feature.attributes.PublishedDate);
+          if (!dates.some(d => d.getYear() === date.getYear())) {
+            dates.push(date);
+          }
+        });
+
+        // create a new time slider widget to interact with the time aware catalog layer
+        const timeSlider = new TimeSlider({
+          container: "timeSlider",
+          playRate: 800,
+          stops: {dates},
+          loop: true,
+          fullTimeExtent: new TimeExtent({
+            start: dates[0],
+            end: dates[dates.length-1]
+          }),
+          view,
+          disabled: true,
+          tickConfigs: [],
+          labelFormatFunction: (value, type, element) => {
+            if (type === "min" || type === "max") {
+              element.innerText = value.getFullYear();
+            } else if (type === "extent") {
+              const startYear = timeSlider.timeExtent.start.getFullYear();
+              const endYear = timeSlider.timeExtent.end.getFullYear();
+              element.innerText = `${startYear} - ${endYear}`; // Use template literals
+            }
+          }
+        });
+
+
+        // enable or disable the time slider based on the time button state
+        const timeButton = document.getElementById("time-button");
+        timeButton.addEventListener("calciteSwitchChange", () => {
+          const isChecked = timeButton.checked;
+          layer.useViewTime = isChecked;
+          timeSlider.disabled = !isChecked;
+        });
+
+
+        await reactiveUtils.whenOnce(() => !layerView.updating);
+
+        // create a layer list widget and add catalog options
+        const layerList = new LayerList({
+          catalogOptions: {
+            selectionMode: "single"
+          },
+          listItemCreatedFunction: (event) => {
+            const { layer } = event.item;
+            if (layer.type === "catalog") {
+              event.item.open = true;
+            }
+            if (catalogUtils.isLayerFromCatalog(layer)) {
+              event.item.actionsSections = [[
+                {
+                  title: "Add layer to map",
+                  icon: "add-layer",
+                  id: "add-layer"
+                }
+              ]];
+            }
+          },
+          view,
+          visibilityAppearance: "checkbox"
+        });
+        view.ui.add(layerList, "top-left");
+
+        reactiveUtils.watch(() => layerList.catalogLayerList?.selectedItems.at(0)?.layer,
+          (layer) => {
+            layer && handleLayerSelection(layer);
+          }
+        );
+
+        // add the selected layer to the map when user click add layer button in layer list
+        reactiveUtils.on(() => layerList.catalogLayerList, "trigger-action", async (event) => {
+          if (event.action.id === "add-layer") {
+            const layerFromFootprint = await createLayerFromDynamicLayer(event.item.layer);
+            map.add(layerFromFootprint);
+          }
+        });
+
+        // highlight the footprint of the clicked layer in the layer list
+        async function handleLayerSelection(layer) {
+          if (catalogUtils.isLayerFromCatalog(layer)) {
+            const parentCatalogLayer = catalogUtils.getCatalogLayerForLayer(layer);
+            const footprint = parentCatalogLayer.createFootprintFromLayer(layer);
+
+            highlight?.remove();
+            highlight = layerView.footprintLayerView.highlight(footprint);
+          }
+        }
+
+        // remove the highlight when the catalog layer list collapses
+        reactiveUtils.watch(() => layerList.catalogLayerList, () => highlight && highlight.remove());
+
+        // create a new layer from the dynamic layer
+        async function createLayerFromDynamicLayer(layer) {
+          // get the parent catalog layer
+          const parentCatalogLayer = catalogUtils.getCatalogLayerForLayer(layer);
+          // create a footprint from the selected layer
+          const footprint = parentCatalogLayer.createFootprintFromLayer(layer);
+          // create a new layer from the footprint
+          const subLayer = await parentCatalogLayer.createLayerFromFootprint(footprint);
+          return subLayer;
+        }
+
+        let where = "1=1";
+        const cityChips = document.getElementById("city-chips");
+
+        // filter the layer by selected city
+        cityChips.addEventListener("calciteChipGroupSelect", async (event) => {
+          const items = event.target.selectedItems;
+
+          if (items.length === 3) {
+            layerView.footprintLayerView.filter = undefined;
+            view.goTo(layer.fullExtent);
+            return;
+          } else if( items.length === 0) {
+            layerView.footprintLayerView.filter = {
+              where: "1=0"
+            };
+            view.goTo(layer.fullExtent);
+            return;
+          }
+          const where = items.map(item => `Area = '${item.value}'`).join(" OR ");
+
+          layerView.footprintLayerView.filter = {
+            where
+          };
+        });
+
+
+        // filter the layers in catalog layer based on selected item type
+        const itemTypeChip = document.getElementById("item-type-chips");
+        itemTypeChip.addEventListener("calciteChipGroupSelect", async (event) => {
+          await view.goTo(layer.fullExtent);
+          const itemType = event.target.selectedItems[0].value
+
+
+          // set the feature effect to show only the selected item type
+          layer.footprintLayer.featureEffect = itemType === "Show all" ? undefined : {
+            filter: {
+              where: `cd_itemType = '${itemType}'`
+            },
+            excludedEffect: "grayscale(70%) opacity(50%)"
+          };
+        });
+
+
+
+        const groupLayerTitleInput = document.getElementById("grouplayer-title-input");
+        document.getElementById("save-grouplayer-button").addEventListener("click", async () => {
+          try {
+            // get all visible layers from the dynamicGroupLayer
+            const layers = await Promise.all(
+              layer.dynamicGroupLayer.layers.map((layer) => createLayerFromDynamicLayer(layer))
+            );
+
+            // create a new group layer and add the visible sub layers of the dynamicGroupLayer
+            const groupLayer = new GroupLayer({
+              title: groupLayerTitleInput.value,
+              layers
+            });
+
+            await groupLayer.loadAll();
+
+            // save the group layer as a portal item
+            const portalItem = new PortalItem({
+              title: groupLayerTitleInput.value
+            });
+              const savedItem = await groupLayer.saveAs(portalItem);
+              // open the portal item page in a new tab
+              window.open(savedItem.itemPageUrl, '_blank');
+              // Handle error
+          } catch (error) {
+            if (error.name != "identity-manager:user-aborted"){
+              return;
+            }
+          }
+        });
+
+
+        const legend = new Legend({ view });
+        const legendExpand = new Expand({ content: legend });
+        view.ui.add(legendExpand, "bottom-right");
+      })());
+    </script>
+  </head>
+  <body>
+    <calcite-shell class="calcite-mode-dark" content-behind>
+      <div id="viewDiv"></div>
+      <calcite-shell-panel id="rightPanel" slot="panel-end" display-mode="float">
+        <calcite-panel heading="Catalog Layer - filter and save" id="panel-start">
+          <calcite-action id="action-with-tooltip" text="More info" icon="question" slot="header-actions-end" text-enabled></calcite-action>
+          <calcite-tooltip reference-element="action-with-tooltip">
+              <span>Filter the catalog items by area, item type and/or time. <br> <br> To see the layers in <code>Layers in View</code>  zoom in until you see the layer inside the footprint. <br> <br> Once you find the layers you want, save the layers in a group layer.</span>
+          </calcite-tooltip>
+          <calcite-block open heading="Show data by a city">
+            <calcite-chip-group id="city-chips" selection-mode="multiple">
+              <calcite-chip appearance="outline-fill" selected value="Cleveland">Cleveland</calcite-chip>
+              <calcite-chip appearance="outline-fill" selected value="Pittsburgh">Pittsburgh</calcite-chip>
+              <calcite-chip appearance="outline-fill" selected value="Toronto">Toronto</calcite-chip>
+            </calcite-chip-group>
+          </calcite-block>
+          <calcite-block open heading="Show data by an item type">
+            <calcite-chip-group id="item-type-chips" selection-mode="single-persist">
+              <calcite-chip appearance="outline-fill" selected  value="Show all">Show all</calcite-chip>
+              <calcite-chip appearance="outline-fill"  value="Feature Service">Feature Service</calcite-chip>
+              <calcite-chip appearance="outline-fill" value="Map Service">Map Service</calcite-chip>
+            </calcite-chip-group>
+          </calcite-block>
+          <calcite-block open heading="Filter by time">
+            <calcite-label layout="inline">
+              Disable time
+              <calcite-switch id="time-button"></calcite-switch>
+              Enable time
+            </calcite-label>
+            <div id="timeSlider"></div>
+          </calcite-block>
+          <calcite-block open heading="Save layers in dynamicGroupLayer">
+            <calcite-label>
+              Enter group layer title
+            <calcite-input-text placeholder="Enter group layer title" id="grouplayer-title-input" value="Group layer"></calcite-input-text>
+            </calcite-label>
+            <calcite-button appearance="outline-fill" id="save-grouplayer-button" icon-start="save" width="full">Save visible layers as group layer</calcite-button>
+          </calcite-block>
+        </calcite-panel>
+      </calcite-shell-panel>
+    </calcite-shell>
+  </body>
+</html>
+

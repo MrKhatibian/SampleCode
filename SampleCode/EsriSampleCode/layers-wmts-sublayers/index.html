@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <title>Select WMTSLayer sublayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 95%; /* allow space for sublayer switcher */
+        width: 100%;
+      }
+
+      #selectDiv {
+        background-color: lightgrey;
+        padding: 10px;
+      }
+
+      #theLabel {
+        visibility: hidden; /* hide until populated */
+      }
+
+      .esri-layer-list {
+        width: 310px;
+      }
+    </style>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/Viewpoint",
+        "esri/geometry/Extent",
+        "esri/views/MapView",
+        "esri/layers/WMTSLayer",
+        "esri/widgets/LayerList"
+      ], (Map, Viewpoint, Extent, MapView, WMTSLayer, LayerList) => {
+        const layer = new WMTSLayer({
+          url: "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best",
+          copyright: "<a href='https://earthdata.nasa.gov'>Earthdata</a> by NASA",
+          activeLayer: {
+            id: "SRTM_Color_Index"
+          }
+        });
+
+        const map = new Map({
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [16.463814503649008, 48.13488142774444],
+          scale: 144201449.5083617
+        });
+        view.when(() => {
+          layerList = new LayerList({
+            view: view
+          });
+          view.ui.add(layerList, "bottom-left");
+
+          layer.when(() => {
+            // add all sublayers to the select element
+            layer.sublayers.forEach((sublayer, i) => {
+              selectSublayer.options[selectSublayer.options.length] = new Option(
+                "(" + i + ") " + sublayer.title,
+                sublayer.id
+              );
+            });
+
+            // once populated, show the select element
+            const theDiv = document.getElementById("theLabel");
+            theDiv.style.visibility = "visible";
+          }); // end layer.load function
+        });
+
+        // if sublayer is changed, recreate map, view, and widgets using new activeLayer
+        document.getElementById("selectSublayer").onchange = (event) => {
+          layer.activeLayer = layer.findSublayerById(event.target.value).clone();
+        };
+      });
+    </script>
+  </head>
+  <body>
+    <div id="selectDiv" class="esri-widget">
+      <label id="theLabel">
+        Pick a layer from the WMTS catalog
+        <select id="selectSublayer"></select>
+      </label>
+    </div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>VectorTileLayer - update style | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #topbar {
+        padding: 10px;
+        width: 190px;
+      }
+      .style-button{
+        margin: 3px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/VectorTileLayer"
+      ], (Map, MapView, VectorTileLayer) => {
+        // Create a Map
+        const map = new Map();
+
+        // Make map view and bind it to the map
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [22.441, 48.924],
+          zoom: 4
+        });
+
+        // colored pencil style
+        const layer = new VectorTileLayer({
+          url: "http://www.arcgis.com/sharing/rest/content/items/4cf7e1fb9f254dcda9c8fbadb15cf0f8/resources/styles/root.json"
+        });
+        map.add(layer);
+        view.ui.add("topbar", "top-right");
+
+        // Get the screen point from the view's click event
+        view.on("click", (event) => {
+          // Search for graphics at the clicked location. View events can be used
+          // as screen locations as they expose an x,y coordinate that conforms
+          // to the ScreenPoint definition.
+          view.hitTest(event).then((response) => {
+            if (response.results.length) {
+              // do something with the result graphic
+              console.log(layer.getStyleLayer(response.results[0].graphic.attributes.layerName),
+                response.results[0].graphic.attributes
+              );
+            }
+          });
+        });
+
+        // Switching between highlighting and unselecting country capital symbol layers
+        document.getElementById("capitalButton").addEventListener("click", () => {
+          // highlight
+          const styleLayer = layer.getStyleLayer("City small scale/x large admin0 capital");
+          if (styleLayer){
+            if (styleLayer.paint["text-color"] === "#be1313") {
+              styleLayer.paint["text-color"] = "#E400E0";
+              styleLayer.paint["text-halo-color"] = "#E400E0";
+              // Scales the original size of the icon by the provided factor.
+              // The new pixel size of the image will be
+              // the original pixel size multiplied by icon-size.
+              // 1 is the original size; 3 triples the size of the image.
+              styleLayer.layout["icon-size"] = 1.5;
+              document.getElementById("capitalButton").innerHTML =
+                "Deselect country capitals";
+              // deselect
+            } else {
+              styleLayer.paint["text-color"] = "#be1313";
+              styleLayer.paint["text-halo-color"] = "";
+              styleLayer.layout["icon-size"] = 1;
+              document.getElementById("capitalButton").innerHTML =
+                "Highlight country capitals";
+            }
+            layer.setStyleLayer(styleLayer);
+          }
+        });
+
+        // all water body style layer names
+        const waterStyleLayers = [
+          "Marine area/bathymetry depth 1/2",
+          "Bathymetry/depth 5/1",
+          "Bathymetry/depth 4/1",
+          "Bathymetry/depth 3/1",
+          "Bathymetry/depth 2 (shallow water)/1",
+          "Bathymetry/depth 6/1",
+          "Water area small scale/1"
+        ];
+
+        // change fill-pattern and fill-color paint properties for water body style layers
+        document.getElementById("waterButton").addEventListener("click", () => {
+          waterStyleLayers.forEach((layerName) => {
+            const paintProperties = layer.getPaintProperties(layerName);
+            if (paintProperties){
+              if (paintProperties["fill-pattern"] === "") {
+                paintProperties["fill-pattern"] = "Marine area";
+                document.getElementById("waterButton").innerHTML =
+                  "Change water color";
+              } else {
+                // set the fill-color and remove the fill-pattern
+                paintProperties["fill-pattern"] = "";
+                paintProperties["fill-color"] = "aqua";
+                document.getElementById("waterButton").innerHTML =
+                  "Change water pattern";
+              }
+            }
+            // change the fill-color paint property for the layer.
+            layer.setPaintProperties(layerName, paintProperties);
+          });
+        });
+
+        // delete all non-capital cities symbol layers from the style
+        let deleteLayerNames = [
+          "City small scale/medium other capital",
+          "City small scale/large other capital",
+          "City small scale/x large admin1 capital",
+          "City small scale/medium non capital",
+          "City small scale/x large non capital",
+          "City small scale/large non capital"
+        ];
+        let deletedStyleLayers = [];
+
+        // delete or add small cities style layers
+        document.getElementById("deleteButton").addEventListener("click", () => {
+          // delete the style layers if they exist in the style
+          if (deletedStyleLayers.length === 0) {
+            deleteLayerNames.forEach((layerName) => {
+                const styleLayer = layer.getStyleLayer(layerName);
+                const index = layer.getStyleLayerIndex(layerName);
+                if (index != -1){
+                  deletedStyleLayers.push({
+                    layer: styleLayer,
+                    index: index
+                  });
+                  layer.deleteStyleLayer(layerName);
+                }
+            });
+            document.getElementById("deleteButton").innerHTML =
+              "Add small cities";
+          }
+          // add the layers back to the style at their original index
+          else {
+            deletedStyleLayers.forEach((item) => {
+              layer.setStyleLayer(item.layer, item.index);
+            });
+            deletedStyleLayers = [];
+            document.getElementById("deleteButton").innerHTML =
+              "Delete small cities";
+          }
+        });
+
+        let isVisible = false;
+        let visibleValue = "visible";
+        let toggleLayers = [
+          "Admin0 point/medium",
+          "Admin0 point/x large",
+          "Admin0 point/large",
+          "Admin0 point/small",
+          "Admin0 point/2x large"
+        ];
+
+        // toggle visibility country names symbol layer
+        document.getElementById("toggleVisibility").addEventListener("click", () => {
+          isVisible = !isVisible;
+          visibleValue = isVisible ? "none" : "visible";
+          toggleLayers.forEach((layerName) => {
+            layer.setStyleLayerVisibility(layerName, visibleValue);
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="topbar" class="esri-widget">
+      <button class="esri-button style-button" id="capitalButton" type="button">
+        Highlight country capitals
+      </button>
+      <button class="esri-button style-button" id="waterButton" type="button">
+        Change water color
+      </button>
+      <button class="esri-button style-button" id="toggleVisibility" type="button">
+        Toggle country labels
+      </button>
+      <button class="esri-button style-button" id="deleteButton" type="button">
+        Delete small cities
+      </button>
+    </div>
+  </body>
+</html>
+

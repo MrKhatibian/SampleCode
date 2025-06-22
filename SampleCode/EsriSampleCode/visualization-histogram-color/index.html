@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Customize ColorSlider Histogram | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #containerDiv {
+        background-color: white;
+        padding: 3px;
+        text-align: center;
+        min-width: 260px;
+        width: 280px;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/smartMapping/renderers/color",
+        "esri/smartMapping/symbology/color",
+        "esri/smartMapping/statistics/histogram",
+        "esri/widgets/smartMapping/ColorSlider",
+        "esri/Color",
+        "esri/intl",
+      ], (
+        Map, MapView, FeatureLayer, colorRendererCreator, colorSymbology,
+        histogram, ColorSlider, Color, intl
+      ) => {
+        // Create a map and add it to a MapView
+
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "340a8efc331f4cd59fecbc4ab8e2a311"
+          },
+          definitionExpression: "MEDHINC_CY > 0",
+          visible: false
+        });
+
+        const map = new Map({
+          basemap: {
+            portalItem: {
+              id: "3582b744bba84668b52a16b0b6942544"
+            }
+          },
+          layers: [ layer ]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          scale: 577790,
+          center: [ -117.8099, 34.0441 ]
+        });
+
+        view.ui.add("containerDiv", "top-right");
+
+        // configure parameters for the color renderer generator
+        // the layer must be specified along with a field name
+        // or arcade expression. The basemap and other properties determine
+        // the appropriate default color scheme.
+
+        const redAndGreenScheme = colorSymbology.getSchemeByName({
+          basemap: map.basemap,
+          geometryType: "polygon",
+          theme: "above-and-below",
+          name: "Red and Green 4"
+        });
+
+        // flip the red and green scheme so green is on top
+        const moneyScheme = colorSymbology.flipColors(redAndGreenScheme);
+
+        const colorParams = {
+          layer: layer,
+          field: "MEDHINC_CY",
+          theme: "above-and-below",
+          colorScheme: moneyScheme
+        };
+
+        // create reference to histogram bar elements for updating
+        // their style as the user drags slider thumbs
+        const bars = [];
+        let rendererResult = null;
+        let vv = null;
+
+        colorRendererCreator
+          .createContinuousRenderer(colorParams)
+          .then((response) => {
+            // set the renderer to the layer and add it to the map
+            rendererResult = response;
+            vv = rendererResult.visualVariable;
+            layer.renderer = response.renderer;
+            layer.visible = true;
+
+            return histogram({
+              layer: colorParams.layer,
+              field: colorParams.field,
+              numBins: 60
+            });
+          })
+          .then((histogramResult) => {
+            const slider = ColorSlider.fromRendererResult(rendererResult, histogramResult);
+
+            // format slider labels as currency
+
+            slider.set({
+              container: "slider",
+              primaryHandleEnabled: true,
+              handlesSyncedToPrimary: false,
+              visibleElements: {
+                interactiveTrack: true
+              },
+              syncedSegmentsEnabled: true,
+              labelFormatFunction: (value, type) => {
+                return intl.formatNumber(value, {
+                  style: "currency",
+                  currency: "USD",
+                  currencyDisplay: "symbol",
+                  maximumFractionDigits: 0,
+                  minimumFractionDigits: 0
+                });
+              }
+            });
+
+            // hide default statistic lines from slider histogram
+
+            slider.histogramConfig.average = null;
+            slider.histogramConfig.standardDeviation = null;
+
+            // update the slider bars to match renderer values
+            slider.histogramConfig.barCreatedFunction = (index, element) => {
+              const bin = histogramResult.bins[index];
+              const midValue = (bin.maxValue - bin.minValue) / 2 + bin.minValue;
+              const color = getColorFromValue(vv.stops, midValue);
+              element.setAttribute("fill", color.toHex());
+              bars.push(element);
+            };
+
+            // render meaningful data lines on the slider for
+            // communicating policy issues
+            slider.histogramConfig.dataLines = [{
+              value: 83500,
+              label: "HUD low income"
+            }, {
+              value: 25750,
+              label: "Fed poverty line"
+            }]
+
+            // slider values will only go to 2 decimal places (money)
+            slider.viewModel.precision = 2;
+
+            // Update the renderer for each change made to the slider
+
+            slider.on(["thumb-change", "thumb-drag", "min-change", "max-change", "segment-drag"], () => {
+              const renderer = layer.renderer.clone();
+              const colorVariable = renderer.visualVariables[0].clone();
+              colorVariable.stops = slider.stops;
+              renderer.visualVariables = [ colorVariable ];
+              layer.renderer = renderer;
+
+              // update the color of each histogram bar based on the
+              // values of the slider thumbs
+              bars.forEach((bar, index) => {
+                const bin = slider.histogramConfig.bins[index];
+                const midValue = (bin.maxValue - bin.minValue) / 2 + bin.minValue;
+                const color = getColorFromValue(slider.stops, midValue);
+                bar.setAttribute("fill", color.toHex());
+              });
+            });
+
+          })
+          .catch((error) => {
+            console.log("there was an error: ", error);
+          });
+
+
+        // infers the color for a given value
+        // based on the stops from a ColorVariable
+        function getColorFromValue(stops, value) {
+          let minStop = stops[0];
+          let maxStop = stops[stops.length - 1];
+
+          const minStopValue = minStop.value;
+          const maxStopValue = maxStop.value;
+
+          if (value < minStopValue) {
+            return minStop.color;
+          }
+
+          if (value > maxStopValue) {
+            return maxStop.color;
+          }
+
+          const exactMatches = stops.filter((stop) => {
+            return stop.value === value;
+          });
+
+          if (exactMatches.length > 0) {
+            return exactMatches[0].color;
+          }
+
+          minStop = null;
+          maxStop = null;
+          stops.forEach((stop, i) => {
+            if (!minStop && !maxStop && stop.value >= value) {
+              minStop = stops[i - 1];
+              maxStop = stop;
+            }
+          });
+
+          const weightedPosition = (value - minStop.value) / (maxStop.value - minStop.value);
+
+          return Color.blendColors(minStop.color, maxStop.color, weightedPosition);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="containerDiv" class="esri-widget">
+      <div id="title"><h3>Median Household Income</h3></div>
+      <div id="description">
+        This app allows you to explore median household incomes in the Los Angeles Area.
+        The slider contains two lines that indicate values of interest: the federal poverty level
+        and the low-income threshold for a family of four in Los Angeles.
+      </div>
+      <div id="slider"></div>
+    </div>
+  </body>
+</html>
+

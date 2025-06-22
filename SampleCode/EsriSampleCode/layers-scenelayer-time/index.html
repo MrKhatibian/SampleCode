@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Filter SceneLayer with Time | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #time-slider {
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      bottom: 20px;
+    }
+
+    #temporal-filter,
+    #legend {
+      width: 300px;
+      overflow: auto;
+    }
+  </style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+  <script>
+    require(["require", "esri/widgets/Legend", "esri/views/SceneView", "esri/TimeExtent", "esri/TimeInterval", "esri/widgets/TimeSlider", "esri/WebScene", "esri/core/reactiveUtils"], function (require, Legend, SceneView, TimeExtent, TimeInterval, TimeSlider, WebScene, reactiveUtils) {
+      "use strict";
+
+      const webScene = new WebScene({
+        portalItem: {
+          id: "5e8fbb7e4ad244d5ae60ca09f21aad63"
+        }
+      });
+      const view = new SceneView({
+        container: "viewDiv",
+        map: webScene
+      });
+      view.popup.defaultPopupTemplateEnabled = true;
+      view.when(async () => {
+        const timeSlider = new TimeSlider({
+          container: "time-slider",
+          view,
+          mode: "instant",
+          fullTimeExtent: {
+            start: new Date("2019-01-21"),
+            end: new Date("2031-01-21")
+          },
+          timeExtent: {
+            start: new Date("2028-01-21"),
+            end: new Date("2028-01-21")
+          },
+          stops: {
+            interval: new TimeInterval({
+              value: 1,
+              unit: "years"
+            })
+          }
+        });
+        const legend = new Legend({
+          view: view,
+          container: "legend"
+        });
+        reactiveUtils.watch(() => view.timeExtent, (timeExtent) => {
+          const infoTextElement = document.getElementById("time-period");
+          let activePeriod = "No Time Filtering";
+          if (timeExtent?.start) {
+            activePeriod = "Current/Past Time";
+            if (timeExtent.start >= new Date("2030-01-21")) {
+              activePeriod = "Future Time (Medium Term)";
+            }
+            else if (timeExtent.start >= new Date("2028-01-21")) {
+              activePeriod = "Future Time (Near Term)";
+            }
+          }
+          infoTextElement.innerHTML = activePeriod;
+        }, { initial: true });
+        document
+          .getElementById("temporal-filter-switch")
+          .addEventListener("calciteSwitchChange", updateTimeEnabled);
+        function updateTimeEnabled(event) {
+          console.log(event.target.checked);
+          timeSlider.disabled = !event.target.checked;
+          view.timeExtent = event.target.checked
+            ? new TimeExtent({
+              start: new Date("2028-01-21"),
+              end: new Date("2028-01-21")
+            })
+            : null;
+        }
+        view.ui.add(legend, "top-right");
+        view.ui.add("temporal-filter", "top-right");
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="time-slider"></div>
+  <calcite-card id="temporal-filter">
+    <span id="time-period" slot="description">no time filter</span>
+    <calcite-label slot="heading" layout="inline">
+      <calcite-switch id="temporal-filter-switch" checked></calcite-switch> Temporal filter
+    </calcite-label>
+  </calcite-card>
+  <calcite-label id="legend"></calcite-label>
+</body>
+
+</html>

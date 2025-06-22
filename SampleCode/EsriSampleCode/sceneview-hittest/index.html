@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>SceneView - hitTest | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #hitInfo {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/WebScene", "esri/views/SceneView", "esri/Graphic"], (WebScene, SceneView, Graphic) => {
+        // Load webscene and display it in a SceneView
+        const webscene = new WebScene({
+          portalItem: {
+            id: "9a542f6755274436985617a462ffdf44"
+          }
+        });
+
+        // create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene,
+          highlightOptions: {
+            haloOpacity: 0
+          }
+        });
+
+        // symbol for points on objects
+        let objectPointSymbol = {
+          type: "point-3d",
+          symbolLayers: [
+            {
+              type: "icon", // autocasts as new IconSymbol3DLayer()
+              size: 12, // points
+              resource: { primitive: "circle" },
+              material: { color: "dodgerblue" },
+              outline: {
+                color: "deepskyblue"
+              }
+            }
+          ]
+        };
+
+        // symbol for first object hit point
+        let firstObjectPointSymbol = {
+          type: "point-3d",
+          symbolLayers: [
+            {
+              type: "icon", // autocasts as new IconSymbol3DLayer()
+              size: 12, // points
+              resource: { primitive: "circle" },
+              material: { color: "darkblue" },
+              outline: {
+                color: "deepskyblue"
+              }
+            }
+          ]
+        };
+
+        // symbol for the ground point
+        const groundPointSymbol = {
+          type: "point-3d",
+          symbolLayers: [
+            {
+              type: "icon", // autocasts as new IconSymbol3DLayer()
+              size: 12, // points
+              resource: { primitive: "circle" },
+              material: { color: "darkgreen" },
+              outline: {
+                color: "limegreen"
+              }
+            }
+          ]
+        };
+        // line symbol which connects the points
+        const lineSymbol = {
+          type: "line-3d", // autocasts as new LineSymbol3D()
+          symbolLayers: [
+            {
+              type: "line", // autocasts as new LineSymbol3DLayer()
+              material: {
+                color: "dodgerblue"
+              },
+              size: 4
+            }
+          ]
+        };
+
+        let highlightedList = [];
+        const hitresultground = document.getElementById("hitresultground");
+        const hitresultcount = document.getElementById("hitresultcount");
+        const resetBtn = document.getElementById("reset");
+
+        view.on("immediate-click", (event) => {
+          // get the returned hitTestResult
+          // and draw points on all return mappoints and connect to a line
+          // (using promise chaining for cleaner code and error handling)
+          view
+            .hitTest(event, { exclude: [view.graphics] })
+            .then((hitTestResult) => {
+              // print the information to the panel
+              hitresultground.textContent = `${Math.round(hitTestResult.ground.distance)} m`;
+              hitresultcount.textContent = hitTestResult.results.length;
+
+              let lastHit = null;
+              if (hitTestResult.results.length > 0) {
+                lastHit = hitTestResult.results[hitTestResult.results.length - 1];
+                // create point graphic for each hit on objects
+                hitTestResult.results.forEach((result, index) => {
+                  const hitObject = new Graphic({
+                    geometry: result.mapPoint,
+                    symbol: index === 0 ? firstObjectPointSymbol : objectPointSymbol
+                  });
+                  view.graphics.add(hitObject);
+
+                  let graphic = result.graphic;
+                  // change the layer to be transparent
+                  graphic.layer.opacity = 0.8;
+                  // highlight the hit object
+                  view.whenLayerView(graphic.layer).then((layerView) => {
+                    highlightedList.push(layerView.highlight(graphic));
+                  });
+                });
+              }
+
+              if (hitTestResult.ground.mapPoint) {
+                if (lastHit) {
+                  if (hitTestResult.ground.distance > lastHit.distance) {
+                    // an object under the ground could be more far away,
+                    // check first the distance before set the ground as last point
+                    lastHit = hitTestResult.ground;
+                  }
+                } else {
+                  lastHit = hitTestResult.ground;
+                }
+                // create point graphic for the ground
+                const hitGround = new Graphic({
+                  geometry: hitTestResult.ground.mapPoint,
+                  symbol: groundPointSymbol
+                });
+                view.graphics.add(hitGround);
+              }
+
+              if (lastHit) {
+                // Draw a line to connect all hit objects and ground
+                let linePoints = [
+                  [view.camera.position.x, view.camera.position.y, view.camera.position.z],
+                  [lastHit.mapPoint.x, lastHit.mapPoint.y, lastHit.mapPoint.z]
+                ];
+
+                view.graphics.add({
+                  geometry: {
+                    type: "polyline",
+                    paths: linePoints,
+                    spatialReference: view.spatialReference
+                  },
+
+                  symbol: lineSymbol
+                });
+              }
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        });
+        resetBtn.addEventListener("click", () => {
+          // remove all graphics
+          view.graphics.removeAll();
+          // remove the highlights
+          highlightedList.forEach((highlightObject) => {
+            highlightObject.remove();
+          });
+          highlightedList = [];
+          // disable the transparency
+          view.map.layers.getItemAt(0).opacity = 1;
+          // remove the result
+          hitresultground.textContent = "0 m";
+          hitresultcount.textContent = "-";
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="hitInfo" class="esri-widget">
+      <p>Click in the view and see the hit objects:</p>
+      <table class="esri-widget" style="color: white; background-color: rgba(0, 0, 0, 0)">
+        <tr>
+          <td>Ground hit distance:</td>
+          <td id="hitresultground">0 m</td>
+        </tr>
+        <tr>
+          <td>Objects hit:</td>
+          <td id="hitresultcount">-</td>
+        </tr>
+      </table>
+
+      <br />
+      <button id="reset" class="esri-button">Reset</button>
+    </div>
+  </body>
+</html>
+

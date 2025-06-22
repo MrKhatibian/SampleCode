@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Data-driven continuous size | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/Legend"], (
+        Map,
+        MapView,
+        FeatureLayer,
+        Legend
+      ) => {
+        const defaultSym = {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          color: [0, 0, 0, 0],
+          outline: {
+            // autocasts as new SimpleLineSymbol()
+            color: "#71de6e",
+            width: 1
+          }
+        };
+
+        /*****************************************************************
+         * Set a size visual variable on the renderer. Size visual variables
+         * create continuous ramps that map low data values to small icons
+         * and high data values to large icons. Features
+         * with data values in between the min and max data values are assigned
+         * a size proportionally between the min and max sizes specified in
+         * `minSize` and `maxSize` or `stops`.
+         *****************************************************************/
+
+        const renderer = {
+          type: "simple", // autocasts as new SimpleRenderer()
+          symbol: defaultSym,
+          visualVariables: [
+            {
+              type: "size",
+              field: "POP_POVERTY",
+              normalizationField: "TOTPOP_CY",
+              legendOptions: {
+                title: "% population in poverty by county"
+              },
+              stops: [
+                {
+                  value: 0.15,
+                  size: 4,
+                  label: "<15%"
+                },
+                {
+                  value: 0.25,
+                  size: 12,
+                  label: "25%"
+                },
+                {
+                  value: 0.35,
+                  size: 20,
+                  label: ">35%"
+                }
+              ]
+            }
+          ]
+        };
+
+        const povLayer = new FeatureLayer({
+          url:
+            "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/counties_politics_poverty/FeatureServer/0",
+          renderer: renderer,
+          title: "Poverty in the southeast U.S.",
+          popupTemplate: {
+            // autocasts as new PopupTemplate()
+            title: "{COUNTY}, {STATE}",
+            content: "{POP_POVERTY} of {TOTPOP_CY} people live below the poverty line.",
+            fieldInfos: [
+              {
+                fieldName: "POP_POVERTY",
+                format: {
+                  digitSeparator: true,
+                  places: 0
+                }
+              },
+              {
+                fieldName: "TOTPOP_CY",
+                format: {
+                  digitSeparator: true,
+                  places: 0
+                }
+              }
+            ]
+          }
+        });
+
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          layers: [povLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-85.0502, 33.125524],
+          zoom: 5
+        });
+
+        /******************************************************************
+         *
+         * Add layers to layerInfos on the legend
+         *
+         ******************************************************************/
+
+        view.ui.add(
+          new Legend({
+            view: view
+          }),
+          "top-right"
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

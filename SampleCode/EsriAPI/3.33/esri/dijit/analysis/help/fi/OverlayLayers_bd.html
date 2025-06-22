@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Kerrostasot</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Kerrostasot"></h2>
+        <hr/>
+    <p>Kerrostasot-ty&ouml;kalu yhdist&auml;&auml; v&auml;hint&auml;&auml;n kaksi karttatasoa yhdeksi tasoksi. Voit ajatella Kerros-ty&ouml;kalun ik&auml;&auml;n kuin ottavan karttapinon ja k&auml;yv&auml;n sen l&auml;pi yhdist&auml;en karttapinon tiedot yhdeksi kartaksi. Kerros on muutakin kuin vain eri karttojen yhteinen kuva, sill&auml; kerroksen kaikki kohteiden attribuutit n&auml;kyv&auml;t karttatason lopullisessa versiossa. Kerroksen avulla voit saada vastauksen yhteen maantieteen peruskysymyksist&auml;: Mik&auml; on mink&auml;kin p&auml;&auml;ll&auml;? 
+    </p>
+    <p>Alla on esimerkkej&auml;:
+        <ul>
+            <li>Mitk&auml; kiinteist&ouml;t ovat edellisten 100 vuoden aikana tulvineen alueen sis&auml;ll&auml;? (Sis&auml;ll&auml; on toinen tapa ilmaista p&auml;&auml;llekk&auml;isyytt&auml;.)
+                  
+            </li>
+            <li>Mihin tarkoitukseen tietyn maaper&auml;tyypin maa-alueita k&auml;ytet&auml;&auml;n?
+                 
+            </li>
+            <li>Mit&auml; kaivoja on hyl&auml;ttyjen armeijan tukikohtien alueilla?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Jos  <b>K&auml;yt&auml; nykyist&auml; karttalaajuutta</b> -toiminto on valittuna, vain l&auml;ht&ouml;karttatason ja p&auml;&auml;llekk&auml;isyyskarttatason nykyisess&auml; karttalaajuudessa n&auml;kyv&auml;t kohteet asetetaan p&auml;&auml;lle. Jos toimintoa ei ole valittu, p&auml;&auml;lle asetetaan kaikki l&auml;ht&ouml;karttatason ja kerroskarttatason kohteet, vaikka ne sijaitsisivat nykyisen karttalaajuuden ulkopuolella.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Valitse lähtökarttataso</h2></div>
+        <hr/>
+        <div>
+            <p>P&auml;&auml;lle sijoitettavat piste-, viiva- tai aluekohteet.
+            </p>
+            <p>Kartasta valittavan karttatason lis&auml;ksi voit valita alareunan avattavasta luettelosta  <b>Valitse analyysikarttataso</b> -vaihtoehdon. T&auml;m&auml; vaihtoehto avaa gallerian, jossa voit selata ja valita aineistoryhmi&auml; erilaisista l&auml;hteist&auml; ja k&auml;ytt&auml;&auml; niit&auml; analyysissa. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Valitse kerrostaso</h2></div>
+        <hr/>
+        <div>
+            <p>L&auml;ht&ouml;karttatason p&auml;&auml;lle sijoitettava karttataso.  
+            </p>
+            <p>Sen lis&auml;ksi, ett&auml; voit valita karttatason kartasta, voit valita  <b>Valitse analyysikarttataso</b> -vaihtoehdon avattavan luettelon alareunasta ja selata Big Data -tiedostoresurssin aineistoryhm&auml;n tai karttatason sis&auml;lt&ouml;&ouml;n. Voit valinnaisesti k&auml;ytt&auml;&auml; suodatinta l&auml;ht&ouml;karttatasossa tai valintaa karttaan lis&auml;tyiss&auml; is&auml;nn&ouml;idyiss&auml; karttatasoissa. Suodattimia ja valintoja k&auml;ytet&auml;&auml;n vain analyyseissa. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Valitse kerrostustapa</h2></div>
+        <hr/>
+        <div>
+            <p>M&auml;&auml;ritt&auml;&auml; kerrosmenetelm&auml;n, joka yhdist&auml;&auml; l&auml;ht&ouml;karttatason ja kerroskarttatason.  
+
+                <ul>
+                    <li> <b>Leikkaus</b>: Vain ne kerroskarttatason kohteet tai kohteiden osat, jotka osuvat p&auml;&auml;llekk&auml;in l&auml;ht&ouml;karttatason kohteiden kanssa, yhdistet&auml;&auml;n.
+                    </li>
+                    <li> <b>Pyyhi</b>: Kerroskarttatason sellaiset kohteet tai kohteiden osat, jotka eiv&auml;t mene p&auml;&auml;llekk&auml;in l&auml;ht&ouml;karttatason alueiden kanssa, yhdistet&auml;&auml;n.
+                    </li>
+                    <li> <b>Liitos</b>: Molempien karttatasojen kaikki kohteet yhdistet&auml;&auml;n, jolloin tuloksena on l&auml;ht&ouml;karttatason ja kerroskarttatason geometrinen liitos.  Kaikki kohteet ja niiden ominaisuustiedot kirjoitetaan karttatasoon.
+                    </li>
+                    <li> <b>Samuus</b>: L&auml;ht&ouml;karttatason ja kerroskarttatason kohteet tai kohteiden osat yhdistet&auml;&auml;n. Ne kohteet tai kohteiden osat, jotka ovat p&auml;&auml;llekk&auml;in sek&auml; l&auml;ht&ouml;karttatasossa ett&auml; kerroskarttatasossa, kirjoitetaan kohdekarttatasoon.
+                    </li>
+                    <li> <b>Symmetrinen erotus</b>: L&auml;ht&ouml;karttatason ja kerroskarttatason kohteet tai kohteiden osat, jotka eiv&auml;t ole p&auml;&auml;llekk&auml;in, yhdistet&auml;&auml;n.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Tulostason nimi</h2></div>
+        <hr/>
+        <div>
+            <p>Sen karttatason nimi, joka luodaan  <b>Oma sis&auml;lt&ouml;</b> -kohtaan ja lis&auml;t&auml;&auml;n karttaan. Sen kohdetyyppi (alue, viiva tai piste) on sama kuin l&auml;ht&ouml;karttatasossa ja p&auml;&auml;llekk&auml;isess&auml; karttatasossa. Oletusarvoinen nimi perustuu peittotapaan ja sy&ouml;tekarttatason nimeen. Jos taso on jo luotu, sinua pyydet&auml;&auml;n antamaan toinen nimi.
+            </p>
+            <p>Avattavan  <b>Tallenna tulos kohteeseen</b> -valikon avulla voit m&auml;&auml;ritt&auml;&auml; sen <b>Oma sis&auml;lt&ouml;</b> -kansion nimen, johon tulos tallennetaan.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

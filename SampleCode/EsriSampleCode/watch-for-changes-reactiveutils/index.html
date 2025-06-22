@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Property Changes with ReactiveUtils - 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #calcite-block {
+        overflow: auto;
+      }
+
+      calcite-panel {
+        --calcite-color-text-2: #ffbfc9;
+      }
+
+      .title {
+        color: #e6772e;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <script>
+      require([
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/core/reactiveUtils",
+        "esri/widgets/LayerList",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand"
+      ], (MapView, WebMap, reactiveUtils, LayerList, Legend, Expand) => {
+        // Load a webmap from ArcGIS Online
+        const webmap = new WebMap({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "2361e8f3f8114c0fa544090d2ff1cbe6"
+          }
+        });
+        // Create a view and set view's map to the webmap
+        const view = new MapView({
+          container: "viewDiv",
+          map: webmap
+        });
+        // Get all the UI elements to populate them dynamically
+        const prevExtentLabel = document.getElementById("previous-extent-label");
+        const currExtentLabel = document.getElementById("current-extent-label");
+        const currScaleLabel = document.getElementById("current-scale-label");
+        const popupLabel = document.getElementById("popup-label");
+        const visibleLayersLabel = document.getElementById("layers-label");
+        // Create variables to hold the old extent and scale
+        let oldExtent = view.extent;
+        let oldScale = view.scale;
+        // Use reactiveUtils to check when the extent changes.
+        // We include view.stationary so we only show a message
+        // when the view is not moving.
+        reactiveUtils.watch(
+          () => [view.stationary, view.extent, view.scale],
+          ([stationary, extent, scale], [wasStationary]) => {
+            if (stationary) {
+              if (scale !== oldScale) {
+                currScaleLabel.innerHTML =
+                  `<span class="title">Current Scale</span><b>` + (Math.round(scale * 100) / 100).toFixed(4) + `</b>`;
+              }
+              if (extent !== oldExtent) {
+                currExtentLabel.innerHTML = renderExtent("current", extent);
+                prevExtentLabel.innerHTML = renderExtent("previous", oldExtent);
+              }
+            } else if (wasStationary) {
+              oldExtent = extent;
+              oldScale = scale;
+            }
+            return "";
+          }
+        );
+
+        // Use reactiveUtils to check when the popup is visible
+        reactiveUtils.watch(
+          () => view.popup.visible,
+          (visible) => {
+            popupLabel.innerHTML = `<span class="title">Popup Visible</span><b>` + visible + `</b>`;
+          }
+        );
+        // Use reactiveUtils to check when a Collection has changed
+        reactiveUtils.watch(
+          () => [view.map.allLayers.map((layer) => layer.visible)],
+          () => {
+            let layerNames = "";
+            renderVisibleLayers(layerNames);
+          }
+        );
+        // Add LayerList to toggle layer visibility to trigger the watch
+        // on the Collection of layers
+        const layerList = new LayerList({
+          view: view
+        });
+        view.ui.add(layerList, "top-right");
+        // Add Expand widget with Legend
+        const legend = new Legend({
+          view: view
+        });
+        const expandLegend = new Expand({
+          view: view,
+          content: legend,
+          expandTooltip: "Expand Legend"
+        });
+        view.ui.add(expandLegend, "bottom-left");
+        //When the view loads, render the initial dynamic props
+        view.when(() => {
+          const text = view.popup.visible ? "true" : "false";
+          popupLabel.innerHTML = `<span class="title">Popup Visible</span><b>` + text + `</b>`;
+          currScaleLabel.innerHTML =
+            `<span class="title">Current Scale</span><b>` + (Math.round(view.scale * 100) / 100).toFixed(4) + `</b>`;
+        });
+        // Function to format the visible layer list
+        function renderVisibleLayers(layerNames) {
+          const text = view.map.allLayers.every((layer) => layer.visible)
+            ? `<span class="title">All layers are visible.</span><br>`
+            : `<span class="title">Not all layers are visible.</span><br>`;
+          view.map.allLayers.forEach((layer) => {
+            if (layer.visible) {
+              layerNames += `-` + layer.title + `<br>`;
+            }
+          });
+          visibleLayersLabel.innerHTML = text + layerNames;
+        }
+        // Function to format the extent in the list
+        function renderExtent(newOrPrev, extent) {
+          if (extent) {
+            const text = newOrPrev === "current" ? "Current Extent" : "Previous Extent";
+            return (
+              `<span class="title">` +
+              text +
+              `</span><br>
+              &emsp;xmin: ${(Math.round(extent.xmin * 100) / 100).toFixed(4)},<br>
+              &emsp;ymin: ${(Math.round(extent.ymin * 100) / 100).toFixed(4)},<br>
+              &emsp;xmax: ${(Math.round(extent.xmax * 100) / 100).toFixed(4)},<br>
+              &emsp;ymax: ${(Math.round(extent.ymax * 100) / 100).toFixed(4)},<br>
+              &emsp;spatialReference: ${extent.spatialReference.wkid}<br><br>`
+            );
+          }
+          return "";
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-shell class="calcite-mode-dark">
+      <div id="viewDiv"></div>
+      <calcite-shell-panel slot="panel-end">
+        <calcite-panel heading="ReactiveUtils Watch Events">
+          <calcite-block
+            heading="Extent Property"
+            description="Displays the current and previous extent value when the extent has changed."
+            collapsible
+            open
+            id="calcite-block"
+          >
+            <calcite-label id="current-extent-label"></calcite-label>
+            <calcite-label id="previous-extent-label"></calcite-label>
+          </calcite-block>
+          <calcite-block
+            heading="Scale Property"
+            description="Displays the current scale value when the scale has changed."
+            collapsible
+            open
+            id="calcite-block"
+          >
+            <calcite-label id="current-scale-label" layout="inline-space-between"></calcite-label>
+          </calcite-block>
+          <calcite-block
+            heading="Popup Visible Property"
+            description="Displays the value of the popup's visible property on the view."
+            collapsible
+            open
+            id="calcite-block"
+          >
+            <calcite-label id="popup-label" layout="inline-space-between"></calcite-label>
+          </calcite-block>
+          <calcite-block
+            heading="Visible Layers Properties"
+            description="Checks if all the layers are visible or not and shows the current visible layers in the map."
+            collapsible
+            open
+            id="calcite-block"
+          >
+            <calcite-label id="layers-label"></calcite-label>
+          </calcite-block>
+        </calcite-panel>
+      </calcite-shell-panel>
+    </calcite-shell>
+  </body>
+</html>
+

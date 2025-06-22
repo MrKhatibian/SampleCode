@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Color theming for interactive tools | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      #themeSelector {
+        position: absolute;
+        bottom: 25px;
+        max-width: 300px;
+      }
+
+      /* Customize the buttons' colors */
+      .theme-green,
+      .theme-green .esri-ui {
+        --calcite-color-brand: rgb(55, 200, 100);
+        --calcite-color-brand-hover: rgb(0, 150, 50);
+        --calcite-color-brand-press: rgb(0, 100, 0);
+      }
+      .theme-pink,
+      .theme-pink .esri-ui {
+        --calcite-color-brand: rgb(255, 0, 155);
+        --calcite-color-brand-hover: rgb(200, 0, 100);
+        --calcite-color-brand-press: rgb(150, 0, 50);
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/Basemap",
+        "esri/layers/VectorTileLayer",
+        "esri/layers/SceneLayer",
+        "esri/widgets/DirectLineMeasurement3D",
+        "esri/analysis/DirectLineMeasurementAnalysis"
+      ], (
+        WebScene,
+        SceneView,
+        Basemap,
+        VectorTileLayer,
+        SceneLayer,
+        DirectLineMeasurement3D,
+        DirectLineMeasurementAnalysis
+      ) => {
+        // Theme values
+        const themes = {
+          green: {
+            className: "theme-green",
+            accentColor: [55, 200, 100, 0.75],
+            textColor: [55, 200, 100, 1]
+          },
+          pink: {
+            className: "theme-pink",
+            accentColor: [255, 0, 155, 0.75],
+            textColor: [255, 0, 155, 1]
+          }
+        };
+        const map = new WebScene({
+          portalItem: {
+            id: "d1cb3b6e149c4fe2b0850462cf0fa80d"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          theme: {
+            // autocasts as new Theme()
+            accentColor: themes["green"].accentColor,
+            textColor: themes["green"].textColor
+          }
+        });
+        view.when(() => {
+          // Create measurement analysis that is shown on app load
+          const directLineMeasurementAnalysis = new DirectLineMeasurementAnalysis({
+            startPoint: {
+              spatialReference: {
+                latestWkid: 3857,
+                wkid: 102100
+              },
+              x: 13524791.756455708,
+              y: 3664204.9533284465,
+              z: 468.78590039536357
+            },
+            endPoint: {
+              spatialReference: {
+                latestWkid: 3857,
+                wkid: 102100
+              },
+              x: 13524889.74472405,
+              y: 3663991.688408358,
+              z: 0.7362305875867605
+            }
+          });
+          view.analyses.add(directLineMeasurementAnalysis);
+          // Add measurement widget to show the measurements
+          const measurementTool = new DirectLineMeasurement3D({
+            view,
+            analysis: directLineMeasurementAnalysis
+          });
+          view.ui.add(measurementTool, "top-right");
+          // Add the possibility to switch between two theme colors
+          let themeChoice = "green";
+
+          function toggleTheme() {
+            themeChoice = themeChoice == "green" ? "pink" : "green";
+            const { className, accentColor, textColor } = themes[themeChoice];
+            // Change the CSS class name to toggle colors of UI elements
+            document.body.className = className;
+            // Change the theme colors of the measurement
+            view.theme = {
+              accentColor: accentColor,
+              textColor: textColor
+            };
+          }
+          // Add the UI element to toggle between two theme colors
+          const themeSelector = document.getElementById("themeSelector");
+          themeSelector.addEventListener("calciteSegmentedControlChange", () => {
+            switch (themeSelector.selectedItem.value) {
+              case "green":
+                toggleTheme();
+                break;
+              case "pink":
+                toggleTheme();
+                break;
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body class="theme-green">
+    <div id="viewDiv"></div>
+    <calcite-segmented-control id="themeSelector" width="full">
+      <calcite-segmented-control-item value="green" checked>Green theme</calcite-segmented-control-item>
+      <calcite-segmented-control-item value="pink">Pink theme</calcite-segmented-control-item>
+    </calcite-segmented-control>
+  </body>
+</html>
+

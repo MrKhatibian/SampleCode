@@ -1,0 +1,5 @@
+/*
+All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+*/
+import e from"../core/Accessor.js";import{S as r}from"./Matrix4PassUniform.js";import{V as s}from"./VertexArrayObject.js";const t={required:[]},n={required:[r.Depth]};class c extends e{consumes(){return t}get usedMemory(){return 0}get isDecoration(){return!1}get running(){return!1}get materialReference(){return null}modify(e){}get numGeometries(){return 0}get hasOccludees(){return!1}queryRenderOccludedState(e){return!1}}class a extends c{}class u extends c{constructor(){super(...arguments),this.drapedPriority=0}}class o extends c{}class d extends c{}function i(e){return"prepareTechnique"in e}function l(e){return"prepareTechniques"in e}var m;!function(e){e[e.Occluded=0]="Occluded",e[e.NotOccluded=1]="NotOccluded",e[e.Both=2]="Both",e[e.COUNT=3]="COUNT"}(m||(m={}));class p extends s{}export{d as A,n as C,m as H,a as S,p as V,t as a,u as b,o as c,l as d,i};

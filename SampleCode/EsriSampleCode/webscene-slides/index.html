@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Web scene - slides | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #createSlideDiv {
+        background-color: white;
+        opacity: 0.9;
+        color: black;
+        padding: 6px;
+      }
+
+      #slidesDiv {
+        background-color: white;
+        opacity: 0.9;
+        color: black;
+        padding: 10px;
+        visibility: hidden;
+        bottom: 20px;
+        overflow-y: auto;
+        text-align: center;
+        height: 260px;
+      }
+
+      #slidesDiv .slide {
+        /* Show cursor as pointer when on a slide */
+        cursor: pointer;
+        margin-bottom: 6px;
+      }
+
+      #slidesDiv .slide .title {
+        /* Center the title text */
+        text-align: center;
+      }
+      /* Draw active slide with a nice border around the thumbnail */
+
+      #slidesDiv .slide.active img {
+        box-shadow: 0px 0px 12px black;
+        border-style: solid;
+        border-width: thin;
+        border-color: black;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/webscene/Slide"
+      ], (SceneView, WebScene, Slide) => {
+        /*********************************************************************
+         * Create a new WebScene referencing a WebScene ID from ArcGIS Online
+         * or an on-premise portal.
+         *********************************************************************/
+        const scene = new WebScene({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "1c7a06421a314ac9b7d0fae22aa367fb"
+          }
+        });
+
+        /*********************************************************************
+         * Reference the WebScene in a SceneView instance.
+         *********************************************************************/
+        const view = new SceneView({
+          map: scene,
+          container: "viewDiv"
+        });
+
+        view.ui.add(["createSlideDiv", "slidesDiv"], "top-right");
+
+        /*********************************************************************
+         * Function to create the UI for a slide by creating DOM nodes and
+         * adding them to the slidesDiv container.
+         *********************************************************************/
+        function createSlideUI(slide, placement) {
+          /*********************************************************************
+           * Create a new <div> element which contains all the slide information.
+           * Store a reference to the created DOM node so we can use it to place
+           * other DOM nodes and connect events.
+           *********************************************************************/
+          const slideElement = document.createElement("div");
+          // Assign the ID of the slide to the <span> element
+          slideElement.id = slide.id;
+          slideElement.classList.add("slide");
+
+          /*********************************************************************
+           * Place the newly created DOM node either at the beginning or end of
+           * the slidesDiv, as applicable.
+           *********************************************************************/
+          const slidesDiv = document.getElementById("slidesDiv");
+          if (placement === "first") {
+            slidesDiv.insertBefore(slideElement, slidesDiv.firstChild);
+          } else {
+            slidesDiv.appendChild(slideElement);
+          }
+
+          /*********************************************************************
+           * Create a <div> element to contain the slide title text
+           *********************************************************************/
+          const title = document.createElement("div");
+          title.innerText = slide.title.text;
+          // Place the title of the slide in the <div> element
+          slideElement.appendChild(title);
+
+          /*********************************************************************
+           * Create a new <img> element and place it inside the newly created slide
+           * element. This will reference the thumbnail from the slide.
+           *********************************************************************/
+          const img = new Image();
+          // Set the src URL of the image to the thumbnail URL of the slide
+          img.src = slide.thumbnail.url;
+          // Set the title property of the image to the title of the slide
+          img.title = slide.title.text;
+          // Place the image inside the new <div> element
+          slideElement.appendChild(img);
+
+          /*********************************************************************
+           * Set up a click event handler on the newly created slide. When clicked,
+           * the code defined below will execute, which toggles the selected slide.
+           *********************************************************************/
+          slideElement.addEventListener("click", () => {
+            /*******************************************************************
+             * Remove the "active" class from all elements with the .slide class
+             *******************************************************************/
+            const slides = document.querySelectorAll(".slide");
+            Array.from(slides).forEach((node) => {
+              node.classList.remove("active");
+            });
+
+            /*******************************************************************
+             * Add the "active" class on the current element being selected
+             *******************************************************************/
+            slideElement.classList.add("active");
+
+            /******************************************************************
+             * Applies a slide's settings to the SceneView.
+             *
+             * Each slide has a viewpoint and visibleLayers property that define
+             * the point of view or camera for the slide and the layers that should
+             * be visible to the user when the slide is selected. This method
+             * allows the user to animate to the given slide's viewpoint and turn
+             * on its visible layers and basemap layers in the view.
+             ******************************************************************/
+            slide.applyTo(view);
+          });
+        }
+
+        view.when(() => {
+          /*********************************************************************
+           * The slides will be placed in the 'slidesDiv' <div> element.
+           *********************************************************************/
+          document.getElementById("slidesDiv").style.visibility = "visible";
+
+          /*********************************************************************
+           * The slides are a collection inside the presentation property of
+           * the WebScene.
+           *********************************************************************/
+          const slides = scene.presentation.slides;
+
+          /*********************************************************************
+           * Loop through each slide in the collection and render the slide
+           *********************************************************************/
+          slides.forEach(createSlideUI);
+
+          /*********************************************************************
+           * When the 'create slide' button is clicked, a new slide is created
+           * using Slide.createFrom. It uses the text from the title input
+           * element for the slide's title.
+           *********************************************************************/
+          document.getElementById("createSlideButton").addEventListener("click", () => {
+            /*******************************************************************
+             * Use the Slide.createFrom static method to create a new slide which
+             * contains a snapshot (visible layers, basemap, camera) of the
+             * current view. This method returns a Promise which resolves with a
+             * new Slide instance once the slide has been successfully created.
+             *******************************************************************/
+            Slide.createFrom(view).then((slide) => {
+              /*****************************************************************
+               * Set the slide title
+               *****************************************************************/
+              slide.title.text = document.getElementById("createSlideTitleInput").value;
+
+              /*****************************************************************
+               * Add the slide to the slides collection of the scene presentation
+               * such that if the scene were published back to the portal, the
+               * newly created slide would be correctly persisted as part of the
+               * WebScene
+               *****************************************************************/
+              scene.presentation.slides.add(slide);
+
+              /*****************************************************************
+               * Create UI for the slide and present it to the user. Set it so
+               * that the new slide appears at the top of the list of slides.
+               *****************************************************************/
+              createSlideUI(slide, "first");
+            });
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="createSlideDiv" class="esri-widget">
+      New slide: <input type="text" id="createSlideTitleInput" size="10" />
+      <button id="createSlideButton">Create</button>
+    </div>
+    <div id="slidesDiv" class="esri-widget"></div>
+  </body>
+</html>
+

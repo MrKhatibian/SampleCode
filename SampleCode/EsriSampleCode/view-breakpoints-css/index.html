@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Responsive apps using CSS | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #titleDiv {
+        position: absolute;
+        height: 55px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        color: #f8f8f8;
+        background: #464646;
+        z-index: 1;
+      }
+
+      #title {
+        margin: 15px;
+        font-size: 20px;
+        overflow: hidden;
+      }
+
+      .invisible {
+        visibility: collapse;
+      }
+
+      .esri-expand .esri-expand__content {
+        box-shadow: none;
+      }
+
+      .esri-view-height-xsmall .esri-ui-corner .esri-expand .esri-legend.esri-widget,
+      .esri-view-height-small .esri-ui-corner .esri-expand .esri-legend.esri-widget {
+        max-height: 100%;
+      }
+
+      .esri-view-width-less-than-small .esri-zoom .esri-widget--button {
+        display: none;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils"
+      ], (WebMap, MapView, Legend, Expand, reactiveUtils) => {
+        const webmap = new WebMap({
+          portalItem: {
+            id: "52333f74c9d9465c88f2ed7336e1e627"
+          }
+        });
+
+        webmap.when((map) => {
+          document.getElementById("title").innerHTML = map.portalItem.title + " - Expand Widget";
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: webmap,
+          padding: {
+            top: 55
+          }
+        });
+
+        // Desktop
+
+        const legend = new Legend({
+          view: view,
+          container: document.createElement("div")
+        });
+
+        // Mobile
+
+        const expandLegend = new Expand({
+          view: view,
+          content: new Legend({
+            view: view,
+            container: document.createElement("div")
+          })
+        });
+
+        // Load
+
+        isResponsiveSize = view.widthBreakpoint === "xsmall";
+        updateView(isResponsiveSize);
+
+
+        // Breakpoints
+        reactiveUtils.watch(
+          () => view.widthBreakpoint,
+          (breakpoint) => {
+            switch (breakpoint) {
+              case "xsmall":
+                updateView(true);
+                break;
+              case "small":
+              case "medium":
+              case "large":
+              case "xlarge":
+                updateView(false);
+                break;
+            }
+          }
+        );
+
+
+        function updateView(isMobile) {
+          setTitleMobile(isMobile);
+          setLegendMobile(isMobile);
+        }
+
+        function setTitleMobile(isMobile) {
+          if (isMobile) {
+            document.querySelector("#titleDiv").classList.add("invisible");
+            view.padding = {
+              top: 0
+            };
+          } else {
+            document.querySelector("#titleDiv").classList.remove("invisible");
+            view.padding = {
+              top: 55
+            };
+          }
+        }
+
+        function setLegendMobile(isMobile) {
+          const toAdd = isMobile ? expandLegend : legend;
+          const toRemove = isMobile ? legend : expandLegend;
+
+          view.ui.remove(toRemove);
+          view.ui.add(toAdd, "top-right");
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="titleDiv" class="esri-widget"><div id="title"></div></div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

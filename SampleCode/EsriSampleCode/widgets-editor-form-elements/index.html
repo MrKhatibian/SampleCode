@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Edit FeatureLayers with form elements | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  
+  </style>
+
+  <script>
+    require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/widgets/Editor",
+        "esri/widgets/Legend",
+        "esri/layers/FeatureLayer",
+        "esri/form/FormTemplate",
+        "esri/form/elements/FieldElement",
+        "esri/form/elements/RelationshipElement",
+        "esri/form/elements/TextElement"
+      ], (
+        Map,
+        MapView,
+        Editor,
+        Legend,
+        FeatureLayer,
+        FormTemplate,
+        FieldElement,
+        RelationshipElement,
+        TextElement
+      ) => {
+
+        // Initialize a FeatureLayer with its FormTemplate.
+        // This layer contains TextElement, FieldElement, and RelationshipElement.
+        // Note: This FeatureLayer only supports attribute editing.
+        const counties = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/Reported_Hauntings/FeatureServer/1",
+          title: "Counties",
+          formTemplate: new FormTemplate({
+            elements: [
+              new TextElement({
+                textFormat: "markdown",
+                text: "### {NAME} county hauntings"
+              }),
+              new FieldElement({
+                fieldName: "NAME",
+                label: "County name",
+                editableExpression: false
+              }),
+              new FieldElement({
+                fieldName: "STATE_NAME",
+                label: "State name",
+                editableExpression: false
+              }),
+              new FieldElement({
+                fieldName: "GlobalID",
+                label: "Global ID",
+                editableExpression: false
+              }),
+              new RelationshipElement({
+                description: "Reported hauntings in this county.",
+                orderByFields: [{
+                  field: "TYPE_OF_HAUNTING",
+                  order: "desc"
+                }],
+                relationshipId: 0
+              })
+            ]
+          })
+        });
+
+        // This layer contains TextElement and FieldElement.
+        // Note: This FeatureLayer only supports attribute editing.
+        const reported_hauntings = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/ArcGIS/rest/services/Reported_Hauntings/FeatureServer/0",
+          title: "Reported Hauntings",
+          formTemplate: new FormTemplate({
+            elements: [
+              new TextElement({
+                textFormat: "markdown",
+                text: "# Report a haunting experience\n _This survey is anonymous_"
+              }),
+              new TextElement({
+                textFormat: "markdown",
+                text: "**Most common hauntings** \n1.  Residual\n2.  Objects\n3.  Shadows"
+              }),
+              new TextElement({
+                textFormat: "markdown",
+                text: "**Article containing a list of haunted locations in the United States:** [_List of Reportedly Haunted Locations in the United States_](https://en.wikipedia.org/wiki/List_of_reportedly_haunted_locations_in_the_United_States)**.**"
+              }),
+              new FieldElement({
+                fieldName: "TYPE_OF_HAUNTING",
+                label: "Type of haunting",
+                input: {
+                  type: "combo-box"
+                }
+              }),
+              new FieldElement({
+                fieldName: "TEMPERATURE_DROP",
+                label: "Was there a drop in temperature?",
+                input: {
+                  type: "radio-buttons",
+                  showNoValueOption: false
+                }
+              }),
+              new FieldElement({
+                fieldName: "AUDITORY_SIGNS",
+                label: "Were there any sounds?",
+                input: {
+                  type: "radio-buttons",
+                  showNoValueOption: false
+                }
+              }),
+              new FieldElement({
+                fieldName: "NUMBER_OF_WITNESSES",
+                label: "Number of witnesses (people / pets)"
+              }),
+              new FieldElement({
+                fieldName: "DATE_OF_ENCOUNTER",
+                label: "Date of encounter"
+              }),
+              new FieldElement({
+                fieldName: "LOCATION_OF_ENCOUNTER ",
+                label: "Location of haunting",
+                input: {
+                  type: "combo-box"
+                }
+              }),
+            ]
+          })
+        });
+
+        const map = new Map({
+          basemap: "streets-night-vector",
+          layers: [counties, reported_hauntings]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map,
+          center: [-71.75523, 41.78653],
+          zoom: 6
+        });
+
+        const editor = new Editor({
+          view: view
+        });
+
+        const legend = new Legend({
+          view: view
+        });
+
+        // Add the widgets to the view
+        view.ui.add(editor, "top-right");
+        view.ui.add(legend, "bottom-left");
+
+      });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
+

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="regularsize">
+        <h2>レイヤーのオーバーレイ (Overlay Layers)</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="オーバーレイ"></h2>
+        <hr/>
+    <p>[オーバーレイ] は、複数のレイヤーを 1 つのレイヤーに結合します。オーバーレイは、積み重ねたマップを透過して、中にあるすべての情報を含む 1 つのマップを作成することと考えることができます。オーバーレイは、線画の重ね合わせではなく、オーバーレイ内のフィーチャの属性がすべて最終製品に含まれます。オーバーレイは、「何の上には何があるか？」という地理で最も基本的な質問の 1 つに答えるために使用されます。
+    </p>
+    <p>以下に例を示します。
+        <ul>
+            <li>100 年の氾濫原内にどのような土地区画があるか (ここでいう「内」は「上」と同じ意味です)。
+                  
+            </li>
+            <li>どのような土壌タイプの上にどのような土地利用があるか？
+                 
+            </li>
+            <li>軍用基地の跡地にどのような井戸があるか？
+            </li>
+        </ul>
+        
+    </p>
+    <p> <b>[現在のマップ範囲を使用]</b> をオンにすると、現在のマップ範囲内に表示されている入力レイヤーとオーバーレイ レイヤーのフィーチャだけがオーバーレイされます。オフにすると、入力レイヤーとオーバーレイ レイヤーのすべてのフィーチャが、現在のマップ範囲内になくてもオーバーレイされます。
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>入力レイヤーの選択</h2></div>
+        <hr/>
+        <div>
+            <p>オーバーレイされるポイント フィーチャ、ライン フィーチャ、またはポリゴン フィーチャ。
+            </p>
+            <p>マップからレイヤーを選択するだけでなく、ドロップダウン リストの下部にある  <b>[解析レイヤーの選択]</b> を選択することもできます。このオプションを選択すると、解析で使用するためにさまざまなソースのデータセットを参照して選択できるギャラリーが開きます。 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>オーバーレイ レイヤーの選択</h2></div>
+        <hr/>
+        <div>
+            <p>入力レイヤー上にオーバーレイするレイヤー。
+            </p>
+            <p>マップからレイヤーを選択できるだけでなく、ドロップダウン リストの下部にある  <b>[解析レイヤーの選択]</b> を選択し、ビッグ データ ファイル共有データセットまたはフィーチャ レイヤーのコンテンツを参照して選択することもできます。必要に応じて、入力レイヤーにフィルターを適用したり、マップに追加したホスト レイヤーに選択を適用したりできます。フィルターおよび選択は解析目的でのみ適用されます。 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>オーバーレイ方法の選択</h2></div>
+        <hr/>
+        <div>
+            <p>入力レイヤーとオーバーレイ レイヤーを結合するオーバーレイ方法を選択します。
+
+                <ul>
+                    <li> <b>[インターセクト]</b> - 入力レイヤーのフィーチャと重なるオーバーレイ レイヤーのフィーチャまたはフィーチャの一部だけが結合されます。
+                    </li>
+                    <li> <b>[イレース]</b> - 入力レイヤー内のエリアと重ならないオーバーレイ レイヤーのフィーチャまたはフィーチャの一部だけが結合されます。
+                    </li>
+                    <li> <b>[ユニオン]</b> - 両方のレイヤーのすべてのフィーチャが結合されて、入力レイヤーとオーバーレイ レイヤーの幾何学的ユニオンが作成されます。すべてのフィーチャとその属性がレイヤーに書き込まれます。
+                    </li>
+                    <li> <b>[アイデンティティ]</b> - 入力レイヤーとオーバーレイ レイヤーのフィーチャまたはフィーチャの一部が結合されます。入力レイヤーおよびオーバーレイ レイヤーの両方で重複するフィーチャまたはフィーチャ部分が出力レイヤーに書き出されます。
+                    </li>
+                    <li> <b>[シンメトリカル ディファレンス]</b> - 入力レイヤーとオーバーレイ レイヤーの重なり合わないフィーチャまたはフィーチャの一部が結合されます。
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>結果レイヤー名</h2></div>
+        <hr/>
+        <div>
+            <p> <b>[マイ コンテンツ]</b> で作成され、マップに追加されるレイヤーの名前。これは、入力レイヤーおよびオーバーレイ レイヤーと同じフィーチャ タイプ (エリア、ライン、ポイント) を持ちます。デフォルト名は、オーバーレイの方法と入力レイヤー名に基づきます。レイヤーがすでに存在する場合は、別の名前を指定するよう求められます。
+            </p>
+            <p> <b>[出力の保存先]</b> ドロップダウン ボックスを使用して、結果を保存する <b>[マイ コンテンツ]</b> 内のフォルダーの名前を指定できます。
+            </p>
+        </div>
+    </div>
+</div>
+</html>

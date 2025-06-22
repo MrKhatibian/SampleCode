@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Detect WebGL support | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #webglNotSupportedDiv {
+        position: absolute;
+        top: 0;
+        visibility: hidden;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView"], (Map, SceneView) => {
+        // Create the Map
+        const map = new Map({
+          basemap: "streets-vector"
+        });
+
+        // Create the SceneView
+        const view = new SceneView({
+          map: map,
+          container: "viewDiv"
+        });
+
+        view
+          .when(() => {
+            // View successfully loaded, show viewDiv
+            document.getElementById("viewDiv").style.display = "flex";
+          })
+          .catch((error) => {
+            if (error.name.includes("webgl")) {
+              // View was rejected, show webgl unsupported message and turn off the viewDiv
+              document.getElementById("viewDiv").style.display = "none";
+              const webglDiv = document.getElementById("webglNotSupportedDiv");
+              webglDiv.innerHTML = error.message;
+              webglDiv.style.visibility = "visible";
+            }
+          });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="webglNotSupportedDiv"></div>
+  </body>
+</html>
+

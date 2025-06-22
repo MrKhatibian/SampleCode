@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="regularsize">
+        <h2>ラスターをフィーチャに変換 (Convert Raster To Feature)</h2><p/>
+        <h2><img src="../images/GUID-7BBBCE28-2FDA-46B8-99D7-65F560AB2F2B-web.png" alt="[ラスターをフィーチャに変換 (Convert Raster To Feature)] ツール"></h2>
+        <hr/>
+    <p>このツールは、ラスターをポイント、ライン、またはポリゴンとしてフィーチャ データセットに変換します。
+    </p>
+    <p> <b>[フィールドの選択]</b> パラメーターを使用すると、入力ラスター データセットのどの属性フィールドを出力フィーチャクラス内の属性にするかを選択できます。このパラメーターは、関連テーブル内に追加属性がある整数ラスターにのみ使用できます。
+    </p>
+    <p>入力ラスターには任意のセル サイズを設定することができます。
+    </p>
+    <p>整数ラスターはポイント、ライン、またはポリゴン フィーチャに変換できますが、浮動小数点ラスターはポイント フィーチャにしか変換できません。
+    </p>
+    <p> <b>[現在のマップ範囲を使用]</b> をオンにすると、現在のマップ範囲内に表示されているラスター セルだけが変換されます。オフにすると、現在のマップ範囲内にない場合でも、ラスター レイヤー内のすべてのセルが変換されます。ラスター レイヤーが大規模な場合やラスター レイヤーの解像度が特に高い場合は、このことを記録しておきます。
+    </p>
+    <p>このツールの使用事例を次に示します。
+
+        <ul>
+            <li>土地利用分類ラスターからポリゴン フィーチャを作成します。
+                
+
+            </li>
+            <li>DEM で識別されたストリームはライン フィーチャに変換できます。
+                
+
+            </li>
+            <li>DEM は、非ラスター ベースのワークフローで使用可能なポイント フィーチャに変換することができます。
+                
+
+            </li>
+        </ul>
+        
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>変換するラスター レイヤーを選択</h2></div>
+        <hr/>
+        <div>
+            <p>フィーチャ レイヤーに変換される入力ラスター レイヤー。
+            </p>
+        </div>
+    </div>
+    <div id="field">
+        <div><h2>フィールドの選択</h2></div>
+        <hr/>
+        <div>
+            <p>変換値を指定するフィールド。
+            </p>
+            <p>任意の整数値またはテキスト値を設定できます。
+            </p>
+            <p>浮動小数点値を含むフィールドは、出力先がポイント データセットの場合にのみ使用できます。
+            </p>
+            <p>デフォルトは、各ラスター セルに値が格納される  <i>Value</i> フィールドです。
+            </p>
+        </div>
+    </div>
+    <div id="outputType">
+        <div><h2>出力タイプの選択</h2></div>
+        <hr/>
+        <div>
+            <p>出力タイプを指定します。
+            </p>
+            <ul>
+                <li> <b>ポイント</b> - ラスターがポイント データセットに変換されます。これがデフォルトです。
+                    
+ 
+                </li>
+                <li> <b>ライン</b> - ラスターがライン フィーチャ データセットに変換されます。
+                    
+ 
+                </li>
+                <li> <b>ポリゴン</b> - ラスターがポリゴン フィーチャ データセットに変換されます。
+                    
+
+                </li>
+            </ul>
+            
+        </div>
+    </div>
+    <div id="simplifyLinesOrPolygons">
+        <div><h2>ラインまたはポリゴンの単純化</h2></div>
+        <hr/>
+        <div>
+            <p>ラインまたはポリゴンを単純化 (スムージング) するかどうかを指定します。スムージングは、元のラスター セルのエッジにできるだけ近づけながら、ラインに含まれるセグメントの数が最小になるように実行されます。
+            </p>
+            <ul>
+                <li>オン - ライン フィーチャまたはポリゴン フィーチャがスムージングされ、より単純化された結果が生成されます。これがデフォルトです。
+                    
+
+                </li>
+                <li>オフ - ライン フィーチャまたはポリゴン フィーチャがラスター データセットのセルの境界に従います。
+                    
+
+                </li>
+            </ul>
+            
+            <p>このパラメーターは、 出力タイプがラインまたはポリゴンの場合のみサポートされます。
+            </p>
+        </div>
+    </div>
+    <div id="createMultipartFeatures">
+        <div><h2>マルチパート フィーチャの作成</h2></div>
+        <hr/>
+        <div>
+            <p>出力ポリゴンを構成するフィーチャがシングルパートかマルチパートかを指定します。
+            </p>
+            <ul>
+                <li>オン - 同じ値のポリゴンに基づいて、マルチパート フィーチャが作成されます。
+                    
+
+                </li>
+                <li>オフ - ポリゴンごとに個別の (シングルパート) フィーチャが作成されます。これがデフォルトです。
+                    
+
+                </li>
+            </ul>
+            
+            <p>このパラメーターは、出力タイプがポリゴンの場合のみサポートされます。
+            </p>
+        </div>
+    </div>
+    <div id="maxVerticesPerFeature">
+        <div><h2>1 ポリゴン フィーチャあたりの最大頂点数</h2></div>
+        <hr/>
+        <div>
+            <p>ポリゴンをより小さなポリゴンに分割するために使う、頂点数の上限。
+            </p>
+            <p>空のままであれば、ポリゴンを分割せずに出力します。これがデフォルトです。
+            </p>
+            <p>このパラメーターは、出力タイプがポリゴンの場合のみサポートされます。
+            </p>
+        </div>
+    </div>
+    <div id="outputName">
+        <div><h2>結果レイヤー名</h2></div>
+        <hr/>
+        <div>
+            <p> <b>[マイ コンテンツ]</b> で作成され、マップに追加されるレイヤーの名前。デフォルトの名前は、ツール名と入力レイヤー名に基づいて設定されます。レイヤーがすでに存在する場合は、別の名前を指定するよう求められます。
+            </p>
+            <p> <b>[出力の保存場所]</b> ドロップダウン ボックスを使用して、結果を保存する <b>[マイ コンテンツ]</b> 内のフォルダーの名前を指定できます。
+            </p>
+        </div>
+    </div>
+</div>
+</html>

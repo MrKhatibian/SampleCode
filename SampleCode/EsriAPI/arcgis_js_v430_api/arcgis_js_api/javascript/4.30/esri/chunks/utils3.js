@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports"],function(d){d.getDepth=function(a,c=!1){return document.evaluate(c?"ancestor::calcite-list-item | ancestor::calcite-list-item-group":"ancestor::calcite-list-item",a,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null).snapshotLength};d.getListItemChildLists=function(a){return Array.from(a.assignedElements({flatten:!0}).filter(c=>c.matches("calcite-list")))};d.getListItemChildren=function(a){a=a.assignedElements({flatten:!0});const c=a.filter(b=>b?.matches("calcite-list-item-group")).map(b=>
+Array.from(b.querySelectorAll("calcite-list-item"))).reduce((b,e)=>[...b,...e],[]),f=a.filter(b=>b?.matches("calcite-list-item"));return[...a.filter(b=>b?.matches("calcite-list")).map(b=>Array.from(b.querySelectorAll("calcite-list-item"))).reduce((b,e)=>[...b,...e],[]),...c,...f]};d.updateListItemChildren=function(a){a.forEach(c=>{c.setPosition=a.indexOf(c)+1;c.setSize=a.length})}});

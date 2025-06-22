@@ -1,0 +1,6 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define("../../chunks/tslib.es6 ../../core/JSONSupport ../../core/accessorSupport/decorators/property ../../core/has ../../core/Logger ../../core/RandomLCG ../../core/accessorSupport/decorators/subclass ../../portal/PortalItem ../../rest/support/fileFormat ../../rest/support/layoutTemplate".split(" "),function(b,a,c,k,l,m,d,e,f,g){a=class extends a.JSONSupport{constructor(h){super(h);this.layoutTemplateInfo=this.layoutOptions=this.layoutItem=this.layout=this.label=this.format=this.description=null}};
+b.__decorate([c.property()],a.prototype,"description",void 0);b.__decorate([c.property({json:{read:f.fromJSON}})],a.prototype,"format",void 0);b.__decorate([c.property()],a.prototype,"label",void 0);b.__decorate([c.property({json:{read:g.fromJSON}})],a.prototype,"layout",void 0);b.__decorate([c.property({type:e})],a.prototype,"layoutItem",void 0);b.__decorate([c.property()],a.prototype,"layoutOptions",void 0);b.__decorate([c.property()],a.prototype,"layoutTemplateInfo",void 0);return a=b.__decorate([d.subclass("esri.widgets.Print.CustomTemplate")],
+a)});

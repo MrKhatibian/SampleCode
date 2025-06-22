@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom LERC Layer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      var dojoConfig = {
+        paths: {
+          // see https://github.com/Esri/lerc
+          lerc: "https://cdn.jsdelivr.net/gh/Esri/lerc@b0650ff915a05b2a045641235323d59b26a40550/OtherLanguages/js/"
+        }
+      };
+    </script>
+
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/BaseTileLayer",
+        "esri/request",
+        "lerc/LercDecode"
+      ], (Map, MapView, BaseTileLayer, esriRequest, LercDecode) => {
+        // **********************************************
+        // Create a subclass of BaseTileLayer
+        // **********************************************
+
+        const LercLayer = BaseTileLayer.createSubclass({
+          // lerc layer properties
+          properties: {
+            urlTemplate: null,
+            minElevation: 0,
+            maxElevation: 4000
+          },
+
+          // Generates the URL to an image to be requested from the server
+          getTileUrl: function(level, row, col) {
+            return this.urlTemplate
+              .replace("{z}", level)
+              .replace("{x}", col)
+              .replace("{y}", row);
+          },
+
+          // fetch tiles visible in the view
+          fetchTile: function(level, row, col, options) {
+            const url = this.getTileUrl(level, row, col);
+
+            // requested encoded elevation information
+            // the signal option ensures that obsolete requests are aborted
+            return esriRequest(url, {
+              responseType: "array-buffer",
+              signal: options && options.signal
+            }).then((response) => {
+                // create a canvas to draw the processed image
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                const width = this.tileInfo.size[0];
+                const height = this.tileInfo.size[1];
+
+                canvas.width = width;
+                canvas.height = height;
+
+                // uncompress raw elevation values in lerc format
+                // into a pre-allocated array of elevation values.
+                const lerc = LercDecode.decode(response.data, { noDataValue: 0 });
+
+                // Array of elevation values
+                const pixels = lerc.pixels[0];
+
+                // stats for min, max and no data
+                // values for uncompressed elevation
+                const stats = lerc.statistics[0];
+
+                // set the min and max elevation values set
+                // by the layer
+                const min = this.minElevation;
+                const max = this.maxElevation;
+                const noDataValue = stats.noDataValue;
+
+                // Create a new blank image data object with the specified
+                // dimensions. The imageData represents the underlying
+                // pixel data of the canvas.
+                const imageData = context.createImageData(width, height);
+
+                // get one-dimensional array
+                // containing the data in the RGBA order, with integer values
+                // between 0 and 255 (included).
+                const data = imageData.data;
+
+                const factor = 256 / (max - min);
+                let value = 0;
+                let j;
+
+                // Loop through elevation array to generate an
+                // image that will be displayed.
+                // As mentioned above `pixels` is a flat array of color values
+                // and alpha [r, g, b, a, r, g, b, a, ...]
+                // We need to iterate through elevations and assign color
+                // and alpha values respectively.
+                for (let i = 0; i < width * height; i++) {
+                  // map tile size is 256x256. Elevation values have a
+                  // tile size of 257 so we skip the last elevation
+                  // whenever "i" is incremented by 256 to jump to the next row.
+                  j = i + Math.floor(i / width);
+                  // read the elevation value at the given index from the elevation
+                  // array and multiply it by the factor. This will define
+                  // the shade of yellow color for the pixel.
+                  value = (pixels[j] - min) * factor;
+
+                  // create RGBA value for the pixels
+                  data[i * 4] = value; // r
+                  data[i * 4 + 1] = value; // g
+                  data[i * 4 + 2] = 0; // b
+                  data[i * 4 + 3] = pixels[i] === noDataValue ? 0 : value; // a
+                }
+
+                // The elevation change image and ready for display
+                context.putImageData(imageData, 0, 0);
+
+                return canvas;
+              }
+            );
+          }
+        });
+
+        // **********************************************
+        // Start of the javascript application
+        // **********************************************
+
+        // create a new instance of the LercLayer
+        // assign values for urlTemplate and maxElevation
+        const lercLayer = new LercLayer({
+          urlTemplate:
+            "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer/tile/{z}/{y}/{x}",
+          maxElevation: 6000
+        });
+
+        // create a new instance of Map and add LercLayer
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          layers: [lercLayer]
+        });
+
+        // create a new instance of MapView
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [74.5535, 36.50879],
+          zoom: 7
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

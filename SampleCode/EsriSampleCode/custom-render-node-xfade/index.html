@@ -1,0 +1,309 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Custom RenderNode - Cross-fade slide transition | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #controls {
+        width: 100%;
+        bottom: 12px;
+        display: flex;
+        justify-content: center;
+      }
+      slides {
+        margin-top: 5px;
+        display: block;
+      }
+      slides > img {
+        cursor: pointer;
+        border: 2px solid transparent;
+        width: 80px;
+      }
+      slides > img:hover {
+        border: 2px solid #007ac2;
+      }
+    </style>
+
+    <script>
+      require(["esri/views/SceneView", "esri/WebScene", "esri/views/3d/webgl/RenderNode"], function (
+        SceneView,
+        WebScene,
+        RenderNode
+      ) {
+        const scene = new WebScene({
+          portalItem: {
+            id: "cc2071118509424790a8762666fe5a19"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: scene
+        });
+
+        view.ui.add("controls", "manual");
+        scene.when(() => {
+          loadSlides();
+        });
+
+        // When the FadeRenderNode is constructed it immediately captures the frame and starts fading.
+        // The FadeRenderNode takes the current framebuffer and the initially captured framebuffer
+        // and blends them according to animation time.
+        // Once the animation is done, The FadeRenderNode destroys itself.
+
+        const FadeRenderNode = RenderNode.createSubclass({
+          constructor: function () {
+            this.consumes.required.push("composite-color");
+            this.produces = "composite-color";
+
+            // render one frame to capture initial framebuffer
+            this.requestRender();
+
+            // ready will resolve once render node has captured start framebuffer on first render
+            this.ready = new Promise((resolve) => (this._resolve = resolve));
+          },
+
+          render(inputs) {
+            const now = performance.now();
+            const input = inputs.find(({ name }) => name === "composite-color");
+            const gl = this.gl;
+
+            // hold on to the start framebuffer when the render function runs the first time
+            if (!this._startFramebuffer) {
+              this._startTime = now;
+              this._startFramebuffer = input;
+              this._startFramebuffer.retain(); //retain ensures framebuffer is kept in memory
+              this._resolve?.();
+              return this._startFramebuffer;
+            }
+
+            // check if the animation has finished or continue fading
+            const delta = (now - this._startTime) / this.duration;
+            if (delta >= 1) {
+              // animation has finished
+              this._startFramebuffer.release();
+              this._startFramebuffer = null;
+              this.destroy();
+              return input;
+            }
+
+            // to apply the crossfading we need a new output framebuffer
+            const output = this.acquireOutputFramebuffer();
+
+            gl.clearColor(0, 0, 0, 1);
+            gl.colorMask(true, true, true, true);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            this.ensureShader();
+            this.ensureScreenSpacePass();
+
+            gl.useProgram(this._program);
+            gl.uniform1f(this._deltaLocation, delta);
+
+            // there are two texture inputs into the fragment shader. First the current
+            // framebuffer and second the start framebuffer.
+            const currentTex = input.getTexture(gl.COLOR_ATTACHMENT0);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, currentTex.glName);
+            gl.uniform1i(this._currentLocation, 0);
+
+            const startTex = this._startFramebuffer.getTexture(gl.COLOR_ATTACHMENT0);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, startTex.glName);
+            gl.uniform1i(this._startLocation, 1);
+
+            // bind and draw a screen space filling triangle
+            gl.bindVertexArray(this._vao);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+            // use depth from input on output framebuffer
+            output.attachDepth(input.getAttachment(gl.DEPTH_STENCIL_ATTACHMENT));
+            this.requestRender();
+            return output;
+          },
+
+          duration: 3_000, // ms
+          _ready: null,
+          _resolve: null,
+          _startTime: 0,
+
+          _program: null,
+          _currentLocation: null,
+          _startLocation: null,
+          _positionLocation: null,
+          _deltaLocation: null,
+          _vao: null,
+          _positionBuffer: null,
+          _startFramebuffer: null,
+
+          destroy() {
+            if (this._program) {
+              this.gl?.deleteProgram(this._program);
+            }
+            if (this._positionBuffer) {
+              this.gl?.deleteBuffer(this._positionBuffer);
+            }
+            if (this._vao) {
+              this.gl?.deleteVertexArray(this._vao);
+            }
+          },
+
+          ensureScreenSpacePass() {
+            if (this._vao) {
+              return;
+            }
+
+            const gl = this.gl;
+            this._vao = gl.createVertexArray();
+            gl.bindVertexArray(this._vao);
+            this._positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._positionBuffer);
+            const vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+            gl.vertexAttribPointer(this._positionLocation, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(this._positionLocation);
+
+            gl.bindVertexArray(null);
+          },
+
+          ensureShader() {
+            if (this._program != null) {
+              return;
+            }
+
+            const gl = this.gl;
+            const vshader = `#version 300 es
+                    in vec2 position;
+                    out vec2 uv;
+
+                    void main() {
+                      gl_Position = vec4(position, 0.0, 1.0);
+                      uv = position * 0.5 + vec2(0.5);
+                    }
+                  `;
+            // the fragment shader blends between the start and the current framebuffer weighted by time since start (delta)
+            const fshader = `#version 300 es
+                    precision highp float;
+                    out lowp vec4 fragColor;
+
+                    in vec2 uv;
+                    uniform sampler2D currentTex;
+                    uniform sampler2D startTex;
+                    uniform float delta;
+
+                    void main() {
+                      vec4 current = texture(currentTex, uv);
+                      vec4 start = texture(startTex, uv);
+                      fragColor = mix(start, current, delta);
+                    }`;
+
+            const program = createProgram(gl, vshader, fshader);
+            if (program) this._program = program;
+
+            this._currentLocation = gl.getUniformLocation(this._program, "currentTex");
+            this._startLocation = gl.getUniformLocation(this._program, "startTex");
+            this._positionLocation = gl.getAttribLocation(this._program, "position");
+            this._deltaLocation = gl.getUniformLocation(this._program, "delta");
+          }
+        });
+
+        function createShader(gl, src, type) {
+          const shader = gl.createShader(type);
+          if (!shader) {
+            console.error("Failed to create shader");
+            return null;
+          }
+          gl.shaderSource(shader, src);
+          gl.compileShader(shader);
+          return shader;
+        }
+
+        function createProgram(gl, vsSource, fsSource) {
+          const program = gl.createProgram();
+          if (!program) {
+            console.error("Failed to create program");
+            return null;
+          }
+          const vertexShader = createShader(gl, vsSource, gl.VERTEX_SHADER);
+          const fragmentShader = createShader(gl, fsSource, gl.FRAGMENT_SHADER);
+          if (!vertexShader || !fragmentShader) {
+            return null;
+          }
+
+          gl.attachShader(program, vertexShader);
+          gl.attachShader(program, fragmentShader);
+          gl.linkProgram(program);
+          const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+          if (!success) {
+            console.error(`Failed to link program:
+                        error ${gl.getError()},
+                        info log: ${gl.getProgramInfoLog(program)},
+                        vertex: ${gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)},
+                        fragment: ${gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)}
+                        vertex info log: ${gl.getShaderInfoLog(vertexShader)},
+                        fragment info log: ${gl.getShaderInfoLog(fragmentShader)}`);
+          }
+          return program;
+        }
+
+        function loadSlides() {
+          const slidesNode = document.getElementsByTagName("slides")[0];
+          const speedSelect = document.getElementById("crossfade-speed");
+          const map = view.map;
+
+          map.presentation.slides.forEach((slide) => {
+            // create a clickable thumbnail for each slide
+            const slideThumbnail = document.createElement("img");
+            slideThumbnail.src = slide.thumbnail.url;
+            slideThumbnail.title = slide.title.text;
+            slidesNode.append(slideThumbnail);
+
+            slideThumbnail.onclick = async () => {
+              // create a new fade render node, and set its animation speed
+              const node = new FadeRenderNode({ view });
+              node.duration = speedSelect.value * 1000;
+
+              // Wait for node to capture current view before going to next one
+              await node.ready;
+
+              // apply slide without fly-to animation
+              slide.applyTo(view, { animate: false });
+            };
+          });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+
+    <div id="controls">
+      <calcite-block open>
+        <span>Crossfade slide transition</span>
+        <calcite-segmented-control id="crossfade-speed">
+          <calcite-segmented-control-item value="1">fast</calcite-segmented-control-item>
+          <calcite-segmented-control-item value="3" checked>medium</calcite-segmented-control-item>
+          <calcite-segmented-control-item value="5">slow</calcite-segmented-control-item>
+        </calcite-segmented-control>
+        <slides> </slides>
+      </calcite-block>
+    </div>
+  </body>
+</html>
+

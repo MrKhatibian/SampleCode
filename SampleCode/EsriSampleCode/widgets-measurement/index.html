@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Measurement widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #toolbarDiv {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: default;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+      }
+
+      #infoDiv {
+        position: absolute;
+        top: 15px;
+        left: 60px;
+      }
+      #infoDiv input {
+        border: none;
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 2px;
+      }
+
+      .esri-widget--button.active,
+      .esri-widget--button.active:hover,
+      .esri-widget--button.active:focus {
+        cursor: default;
+        background-color: #999696;
+      }
+      .esri-widget--button.active path,
+      .esri-widget--button.active:hover path,
+      .esri-widget--button.active:focus path {
+        fill: #E4E4E4;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/views/SceneView",
+        "esri/layers/TileLayer",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Measurement",
+        "esri/widgets/Legend"
+      ], (
+        Map,
+        MapView,
+        SceneView,
+        TileLayer,
+        FeatureLayer,
+        Measurement,
+        Legend
+      ) => {
+
+        // World Ocean Base Basemap
+        const tileLayer = new TileLayer({
+          url:
+            "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer"
+        });
+
+        // Capital cities in Europe FeatureLayer
+        const featureLayer = new FeatureLayer({
+          url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/europe_country_capitals/FeatureServer/0"
+        });
+
+        // Create new Map with TileLayer and FeatureLayer
+        const map = new Map({
+          layers: [tileLayer, featureLayer]
+        });
+
+        // Create MapView with defined zoom and center
+        const mapView = new MapView({
+          zoom: 6,
+          center:  [26.1025, 44.4268],
+          map: map
+        });
+
+        // Create SceneView with similar extent to MapView
+        const sceneView = new SceneView({
+          scale: 123456789,
+          center:  [26.1025, 44.4268],
+          map: map
+        });
+
+        // Set the activeView to the 2D MapView
+        let activeView = mapView;
+
+        // Create new instance of the Measurement widget
+        const measurement = new Measurement();
+
+        // Create new instance of the Legend widget
+        const legend = new Legend({
+          layerInfos: [{
+            layer: featureLayer,
+            title: "European Capital Cities"
+          }]
+        });
+
+        // Set-up event handlers for buttons and click events
+        const switchButton = document.getElementById("switch-btn");
+        const distanceButton = document.getElementById('distance');
+        const areaButton = document.getElementById('area');
+        const clearButton = document.getElementById('clear');
+
+        switchButton.addEventListener("click", () => {
+          switchView();
+        });
+        distanceButton.addEventListener("click", () => {
+          distanceMeasurement();
+        });
+        areaButton.addEventListener("click", () => {
+          areaMeasurement();
+        });
+        clearButton.addEventListener("click", () => {
+          clearMeasurements();
+        });
+
+        // Call the loadView() function for the initial view
+        loadView();
+
+        // The loadView() function to define the view for the widgets and div
+        function loadView() {
+          activeView.set({
+            container: "viewDiv"
+          });
+          // Add the appropriate measurement UI to the bottom-right when activated
+          activeView.ui.add(measurement, "bottom-right");
+          // Add the legend to the bottom left
+          activeView.ui.add(legend, "bottom-left");
+          // Set the views for the widgets
+          measurement.view = activeView;
+          legend.view = activeView;
+        }
+
+        // When the 2D or 3D button is activated, the switchView() function is called
+        function switchView() {
+          // Clone the viewpoint for the MapView or SceneView
+          const viewpoint = activeView.viewpoint.clone();
+          // Get the view type, either 2d or 3d
+          const type = activeView.type;
+
+          // Clear any measurements that had been drawn
+          clearMeasurements();
+
+          // Reset the measurement tools in the div
+          activeView.container = null;
+          activeView = null;
+          // Set the view based on whether it switched to 2D MapView or 3D SceneView
+          activeView = type.toUpperCase() === "2D" ? sceneView : mapView;
+          activeView.set({
+            container: "viewDiv",
+            viewpoint: viewpoint
+          });
+          // Add the appropriate measurement UI to the bottom-right when activated
+          activeView.ui.add(measurement, "bottom-right");
+          // Add the legend to the bottom left
+          activeView.ui.add(legend, "bottom-left");
+
+          // Set the views for the widgets
+          measurement.view = activeView;
+          legend.view = activeView;
+          // Reset the value of the 2D or 3D switching button
+          switchButton.value = type.toUpperCase();
+        }
+
+        // Call the appropriate DistanceMeasurement2D or DirectLineMeasurement3D
+        function distanceMeasurement() {
+          const type = activeView.type;
+          measurement.activeTool = type.toUpperCase() === "2D" ? "distance" : "direct-line";
+          distanceButton.classList.add("active");
+          areaButton.classList.remove("active");
+        }
+
+        // Call the appropriate AreaMeasurement2D or AreaMeasurement3D
+        function areaMeasurement() {
+          measurement.activeTool = "area";
+          distanceButton.classList.remove("active");
+          areaButton.classList.add("active");
+        }
+
+        // Clears all measurements
+        function clearMeasurements() {
+          distanceButton.classList.remove("active");
+          areaButton.classList.remove("active");
+          measurement.clear();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="infoDiv">
+      <input
+        class="esri-component esri-widget--button esri-widget esri-interactive"
+        type="button"
+        id="switch-btn"
+        value="3D"
+      />
+    </div>
+    <div id="toolbarDiv" class="esri-component esri-widget">
+      <button id="distance" class="esri-widget--button esri-interactive esri-icon-measure-line" title="Distance Measurement Tool">
+      </button>
+      <button id="area" class="esri-widget--button esri-interactive esri-icon-measure-area" title="Area Measurement Tool">
+      </button>
+      <button id="clear" class="esri-widget--button esri-interactive esri-icon-trash" title="Clear Measurements">
+      </button>
+    </div>
+  </body>
+</html>
+

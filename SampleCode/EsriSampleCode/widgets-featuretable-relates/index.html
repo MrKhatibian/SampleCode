@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>FeatureTable with related records | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+      }
+
+      #viewDiv {
+        height: 100%;
+        width: 30%;
+      }
+
+      .container {
+        height: 100%;
+        width: 70%;
+      }
+
+      calcite-modal {
+        --calcite-modal-scrim-background: rgb(34, 77, 122, 0.7);
+      }
+
+      #modal hr {
+        margin: 1rem 0;
+        border: 0;
+        border-bottom: 1px solid var(--calcite-color-border-3);
+      }
+
+      #modal ul li {
+        margin-bottom: 0.5rem;
+      }
+
+      #modal calcite-notice {
+        margin-bottom: 1.25rem;
+      }
+    </style>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/WebMap",
+        "esri/widgets/FeatureTable",
+        "esri/core/reactiveUtils"
+      ], function (Map, MapView, WebMap, FeatureTable, reactiveUtils) {
+        (async () => {
+          const infoButton = document.createElement("calcite-action");
+          infoButton.text = "Sample information";
+          infoButton.icon = "information";
+          infoButton.label = "Info";
+
+          const modalDiv = document.getElementById("modal");
+
+          // Add event listener to the button
+          infoButton.addEventListener("click", () => {
+            // Open the modal
+            modalDiv.open = true;
+          });
+
+          let features = [];
+          const webmap = new WebMap({
+            portalItem: {
+              id: "050f311bbe4141fb858a0eed1540d363"
+            }
+          });
+          const view = new MapView({
+            container: "viewDiv",
+            map: webmap,
+            popupEnabled: false,
+            extent: {
+              type: "extent",
+              spatialReference: {
+                wkid: 102100
+              },
+              xmax: -9813220.950671788,
+              xmin: -9814367.506096095,
+              ymax: 5126453.530938191,
+              ymin: 5125469.404198993
+            },
+            zoom: 16
+          });
+
+          const calciteLoader = document.getElementById("calcite-loader");
+          await reactiveUtils.whenOnce(() => !view.updating);
+
+          // Once the view is finished updating, get the first layer in the webmap
+          const featureLayer = webmap.layers.getItemAt(0);
+
+          // Make sure the layer is loaded before constructing the FeatureTable
+          await reactiveUtils.whenOnce(() => featureLayer.loaded);
+
+          // Create the feature table
+          // The title is created as a function that dynamically updates based on the amount of selected features within the table.
+          // The actionColumnConfig property creates a new action column within the table that creates an action that zooms to the feature in that row.
+          const featureTable = new FeatureTable({
+            title: () => {
+              if (!featureTable) {
+                return;
+              }
+
+              const state = featureTable.state;
+              switch (state) {
+                case "loading":
+                  return "Loading layer data...";
+                case "loaded":
+                  const title = featureTable.layer?.title;
+                  const rowCount = featureTable.size;
+                  const selectedCount = featureTable.highlightIds?.length ?? 0;
+                  return `${title} (${selectedCount} rows selected out of ${rowCount} total)`;
+                case "error":
+                  return "Error loading layer.";
+                default:
+                  return;
+              }
+            },
+            description: "Hydrants are related to inspections, inspections are related to violations",
+            actionColumnConfig: {
+              label: "Go to feature",
+              icon: "zoom-to-object",
+              callback: (params) => {
+                view.goTo(params.feature);
+              }
+            },
+            view: view,
+            editingEnabled: true, // required to enable editing
+            relatedRecordsEnabled: true, // required to enable related records
+            layer: featureLayer,
+            tableTemplate: {
+              // TableTemplate is autocastable
+              columnTemplates: [
+                {
+                  type: "field", // FieldColumnTemplate is autocastable, 'type' must be set
+                  fieldName: "FACILITYID",
+                  label: "Facility ID",
+                  icon: "key",
+                  autoWidth: true // set this to have the columns automatically adjust width
+                },
+                {
+                  type: "field",
+                  fieldName: "MANUFACTURER",
+                  label: "Manufacturer",
+                  autoWidth: true
+                },
+                {
+                  type: "field",
+                  fieldName: "OPERABLE",
+                  label: "Operable",
+                  autoWidth: true
+                },
+                {
+                  type: "field",
+                  fieldName: "LASTSERVICE",
+                  label: "Date of last service",
+                  autoWidth: true
+                },
+                {
+                  type: "field",
+                  fieldName: "FLOW",
+                  label: "Flow rate",
+                  autoWidth: true
+                }
+              ]
+            },
+            container: document.getElementById("tableDiv")
+          });
+
+          reactiveUtils.when(
+            () => view.stationary,
+            () => {
+              // Filter out and show only the visible features in the feature table.
+              featureTable.filterGeometry = view.extent;
+            },
+            {
+              initial: true
+            }
+          );
+
+          // Listen for the view's click event.
+          // Perform a hitTest on the clicked location
+          // grab any features that fall within it
+          view.on("click", async (event) => {
+            const response = await view.hitTest(event);
+            const candidate = response.results.find(
+              (result) => result.graphic && result.graphic.layer === featureLayer
+            );
+
+            if (candidate) {
+              const objectId = candidate.graphic.attributes.OBJECTID;
+              const index = featureTable.highlightIds.indexOf(objectId);
+
+              // If there are objectIds in the highlightIds, remove the clicked feature
+              // from the array. If there are no more objectIds, remove the filter
+              // to show only selected records
+              if (index > -1) {
+                featureTable.highlightIds.splice(index, 1);
+                if (featureTable.highlightIds.length === 0) {
+                  featureTable.filterBySelectionEnabled = false;
+                }
+              } else {
+                // Add the objectId of the clicked feature into the highlightIds.
+                // This selects the feature in the table and sets a filter to only display
+                // the selected rows
+                featureTable.highlightIds.push(objectId);
+                featureTable.filterBySelectionEnabled = true;
+              }
+            }
+          });
+
+          // Check if the highlights (selection) are being changed on the table by
+          // checking and unchecking the rows,
+          // and update the features array to match the table selection by adding
+          // or removing as appropriate
+          featureTable.highlightIds.on("change", async (event) => {
+            event.removed.forEach((item) => {
+              const data = features.find((data) => {
+                return data === item;
+              });
+              if (data) {
+                features.splice(features.indexOf(data), 1);
+              }
+              // Check if there are no more selected rows in the table,
+              // Once everything is unchecked, remove the filter for selected records
+              if (featureTable.highlightIds.length === 0) {
+                featureTable.filterBySelectionEnabled = false;
+              }
+            });
+
+            // If the selection is added, push all added selections to array
+            event.added.forEach((item) => {
+              features.push(item);
+            });
+          });
+
+          view.ui.add(infoButton, "bottom-left");
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <!-- Demo template interactive elements -->
+    <calcite-modal id="modal">
+      <div slot="header">About this application</div>
+      <div slot="content">
+        <calcite-notice open>
+          <span slot="title"
+            >This sample demonstrates how to display and edit related data using the
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html"
+              >FeatureTable</calcite-link
+            >
+            widget.
+          </span>
+        </calcite-notice>
+        This example illustrates the main areas of functionality:
+        <ul>
+          <li>
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html#related-records"
+              >Working with related records in the table</calcite-link
+            >
+          </li>
+          <li>
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html#selection"
+              >Syncing selection between table and view</calcite-link
+            >
+          </li>
+          <li>
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html#editing-in-featuretable"
+              >Editing in the table</calcite-link
+            >
+          </li>
+          <li>
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html#filtering-and-sorting"
+              >Filtering in the table</calcite-link
+            >
+          </li>
+          <li>
+            <calcite-link
+              target="_blank"
+              href="https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureTable.html#column-configuration"
+              >Configuring columns</calcite-link
+            >
+          </li>
+        </ul>
+      </div>
+    </calcite-modal>
+
+    <div id="viewDiv"></div>
+    <div class="container">
+      <div id="tableDiv"></div>
+    </div>
+  </body>
+</html>
+

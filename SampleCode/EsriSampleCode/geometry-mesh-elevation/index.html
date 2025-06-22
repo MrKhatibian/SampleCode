@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Low poly terrain using mesh geometry | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        background-color: ghostwhite;
+      }
+
+      #metallicSlider {
+        width: 150px;
+        padding-bottom: 1.5em;
+      }
+
+      #menu {
+        max-width: 200px;
+        padding: 1em;
+      }
+
+      canvas {
+        filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.2));
+      }
+
+      #credits {
+        font-size: 0.7em;
+        line-height: 1.1em;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/Graphic",
+        "esri/geometry/Extent",
+        "esri/geometry/Point",
+        "esri/geometry/Polygon",
+        "esri/geometry/Mesh",
+        "esri/geometry/SpatialReference",
+        "esri/geometry/support/MeshComponent",
+        "esri/geometry/support/MeshMaterial",
+        "esri/geometry/support/MeshMaterialMetallicRoughness",
+        "esri/geometry/support/meshUtils",
+        "esri/layers/ElevationLayer",
+        "esri/layers/FeatureLayer",
+        "esri/layers/GraphicsLayer",
+        "esri/Color",
+        "esri/widgets/Slider",
+        "esri/rest/query",
+        "esri/rest/support/Query"
+      ], (
+        Map,
+        SceneView,
+        Graphic,
+        Extent,
+        Point,
+        Polygon,
+        Mesh,
+        SpatialReference,
+        MeshComponent,
+        MeshMaterial,
+        MeshMaterialMetallicRoughness,
+        meshUtils,
+        ElevationLayer,
+        FeatureLayer,
+        GraphicsLayer,
+        Color,
+        Slider,
+        query,
+        Query
+      ) => {
+        /**************************************************
+         * This sample shows how to create a low-poly terrain from the ground
+         * elevation and color it based on the height.
+         * It also adds random trees with low-poly tree 3D models in gltf format.
+         * It uses the elevationSampler to synchronously get the height values
+         * at which the trees should be placed.
+         * Additionally it loads a polygon from a FeatureLayer and it converts
+         * it into a mesh, adding a texture to it.
+         ***************************************************/
+
+        // The factor to exaggerate height values
+        const exaggeration = 2;
+
+        // The extent of the webscene - used for clipping the view and
+        // to set the extent for the terrain mesh geometry.
+        const extent = new Extent({
+          xmin: 946167.5337,
+          xmax: 948790.0892,
+          ymin: 5990530.5228,
+          ymax: 5993025.5886,
+          spatialReference: 102100
+        });
+
+        // The terrain mesh surface uses a material that reflects back
+        // the light to simulate the reflective behavior of snow
+        const reflectiveTerrainMaterial = new MeshMaterialMetallicRoughness({
+          metallic: 0.3,
+          roughness: 0.8
+        });
+
+        // These options renderer the lake with a stylized effect
+        const lakeMaterialOptions = {
+          // Texture that applies a triangular pattern where each triangle has a different color
+          colorTexture: "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/water-color.png",
+          // Texture that applies a height map so that the triangle borders are sunk in
+          normalTexture: "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/water-normal.png",
+          // Texture that makes each triangle reflect back different amounts of light
+          metallicRoughnessTexture: "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/water-metallic-roughness.png"
+        };
+
+        const terrainSurfaceLayer = new GraphicsLayer();
+        const lakeLayer = new GraphicsLayer();
+
+        // Hide the ground, as the mesh is used as terrain
+        const map = new Map({
+          ground: {
+            opacity: 0
+          },
+          layers: [terrainSurfaceLayer, lakeLayer]
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          alphaCompositingEnabled: true,
+          viewingMode: "local",
+          clippingArea: extent,
+          spatialReference: SpatialReference.WebMercator,
+          environment: {
+            background: {
+              type: "color",
+              color: [232, 232, 227, 0]
+            },
+            starsEnabled: false,
+            atmosphereEnabled: false,
+            lighting: {
+              directShadowsEnabled: true,
+              date: "Mon Mar 16 2020 13:55:53 GMT+0100 (Central European Standard Time)"
+            }
+          },
+          camera: {
+            position: [8.52836455, 47.31549006, 1484.56348],
+            heading: 218.76,
+            tilt: 77.08
+          }
+        });
+
+        view.when().then(createTerrain).then(createTrees).then(createLake).catch(console.error);
+
+        function createTerrain() {
+          const elevationLayer = new ElevationLayer({
+            url: "//elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer"
+          });
+          // Use meshUtils.createFromElevation to generate a mesh geometry from a given
+          // elevation layer, for a certain extent and at a custom resolution.
+          // Try to change the resolution at which points are sampled on the
+          // terrain. For example with a resolution of 10, the mesh becomes a detailed
+          // depiction of the terrain.
+          return meshUtils
+            .createFromElevation(elevationLayer, extent, {
+              demResolution: 120
+            })
+            .then((mesh) => {
+              // A flat array of vertex positions is already created
+              const vPositions = mesh.vertexAttributes.position;
+              // A flat array of vertex colors, where we add color values
+              // based on the vertex height value
+              const vColors = [];
+
+              // Every third element in the positions array represents the height value
+              // [x1, y1, z1, x2, y2, z2, ...]
+              for (let index = 0; index < vPositions.length; index += 3) {
+                // Modify the height position by applying the exaggeration
+                vPositions[index + 2] = vPositions[index + 2] * exaggeration;
+                // Set a color for each vertex based on the height
+                const color = getColorFromHeight(vPositions[index + 2]);
+                vColors.push(color.r, color.g, color.b, 255);
+              }
+              mesh.vertexAttributes.color = vColors;
+
+              // Set the shading of the component to flat, to see the generated triangles
+              // and generate the low-poly effect.
+              mesh.components[0].shading = "flat";
+
+              mesh.components[0].material = reflectiveTerrainMaterial;
+
+              // Create the graphic using the mesh geometry and a MeshSymbol3D
+              const graphic = new Graphic({
+                geometry: mesh,
+                symbol: {
+                  type: "mesh-3d",
+                  symbolLayers: [
+                    {
+                      type: "fill"
+                    }
+                  ]
+                }
+              });
+
+              terrainSurfaceLayer.add(graphic);
+              return mesh;
+            });
+        }
+
+        // Computes a color based on the height value
+        function getColorFromHeight(value) {
+          // The color ramp used for interpolation.
+          // Colors are set based on the elevation values, for example
+          // the color white is used for 1900m and higher.
+          const stops = [
+            { value: 900, color: new Color([199, 228, 255]) },
+            { value: 1200, color: new Color([199, 250, 255]) },
+            { value: 1900, color: new Color([255, 255, 255]) }
+          ];
+          for (let i = 0; i < stops.length; i++) {
+            const stop = stops[i];
+
+            if (value < stop.value) {
+              if (i === 0) {
+                return stop.color;
+              }
+
+              const prev = stops[i - 1];
+
+              const weight = (value - prev.value) / (stop.value - prev.value);
+              return Color.blendColors(prev.color, stop.color, weight);
+            }
+          }
+
+          return stops[stops.length - 1].color;
+        }
+
+        function createTrees(mesh) {
+          const treeXYCoordinates = [
+            [948679.688, 5991891.073],
+            [948591.112, 5992539.966],
+            [948225.558, 5990993.036],
+            [948355.502, 5990724.109],
+            [948680.565, 5990724.573],
+            [948572.575, 5991008.635],
+            [948690.841, 5991588.655],
+            [948272.249, 5991884.554],
+            [948319.68, 5991508.649],
+            [948509.429, 5992708.717],
+            [948472.268, 5992293.389],
+            [948360.319, 5992981.142]
+          ];
+
+          // Create an elevationSampler to synchronously query the elevation
+          // of the mesh at the tree locations
+          return meshUtils.createElevationSampler(mesh).then((elevationSampler) => {
+            // Feature collection used to generate a FeatureLayer with tree features
+            const featureCollection = [];
+            for (let i = 0; i < treeXYCoordinates.length; i++) {
+              const geometry = new Point({
+                x: treeXYCoordinates[i][0],
+                y: treeXYCoordinates[i][1],
+                spatialReference: extent.spatialReference
+              });
+
+              // Query elevation of the mesh at tree location
+              const geometry3D = elevationSampler.queryElevation(geometry);
+
+              featureCollection.push({
+                geometry: geometry3D,
+                attributes: {
+                  ObjectID: i,
+                  height: Math.floor(50 + Math.random() * 80),
+                  heading: Math.floor(Math.random() * 360)
+                }
+              });
+            }
+
+            // Create a FeatureLayer from the feature collection
+            const treesLayer = new FeatureLayer({
+              fields: [
+                {
+                  name: "ObjectID",
+                  alias: "ObjectID",
+                  type: "oid"
+                },
+                {
+                  name: "heading",
+                  alias: "heading",
+                  type: "integer"
+                },
+                {
+                  name: "height",
+                  alias: "height",
+                  type: "integer"
+                }
+              ],
+              source: featureCollection,
+              spatialReference: SpatialReference.WebMercator,
+              renderer: {
+                type: "simple",
+                symbol: {
+                  type: "point-3d",
+                  symbolLayers: [
+                    {
+                      type: "object",
+                      resource: {
+                        // Pine tree 3D model downloaded from Google Poly:
+                        // https://poly.google.com/view/7rTNpk6j01O
+                        href: "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/pine_tree.glb"
+                      },
+                      anchor: "bottom"
+                    }
+                  ]
+                },
+                visualVariables: [
+                  {
+                    type: "size",
+                    field: "height",
+                    axis: "height"
+                  },
+                  {
+                    type: "rotation",
+                    field: "heading"
+                  }
+                ]
+              }
+            });
+            map.add(treesLayer);
+          });
+        }
+
+        function createLake() {
+          // URL to lake polygon geometry, stored in a feature layer
+          const queryUrl =
+            "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/LakeLowPolySample/FeatureServer/0";
+
+          // create new Query object
+          const queryObject = new Query({
+            returnZ: true,
+            returnGeometry: true,
+            where: "1=1"
+          });
+
+          // use URL and new Query object to call executeQueryJSON() method
+          query.executeQueryJSON(queryUrl, queryObject).then((result) => {
+            const lakePolygon = result.features[0].geometry;
+
+            // Function that converts a polygon into a 3D mesh geometry
+            const mesh = Mesh.createFromPolygon(lakePolygon);
+            // Set uv coordinates that are used to map the texture on the geometry
+            mesh.vertexAttributes.uv = getUVCoordinates(mesh);
+            mesh.components[0].material = new MeshMaterialMetallicRoughness(lakeMaterialOptions);
+
+            lakeLayer.add(
+              new Graphic({
+                geometry: mesh,
+                symbol: {
+                  type: "mesh-3d",
+                  symbolLayers: [{ type: "fill" }]
+                }
+              })
+            );
+          });
+        }
+
+        // Normalize mesh vertex positions to use them
+        // as UV coordinates for the texture mapping
+        function getUVCoordinates(mesh) {
+          const uv = [];
+          const xmin = mesh.extent.xmin;
+          const xmax = mesh.extent.xmax;
+          const ymin = mesh.extent.ymin;
+          const ymax = mesh.extent.ymax;
+
+          const position = mesh.vertexAttributes.position;
+
+          for (let i = 0; i < position.length; i += 3) {
+            const x = position[i];
+            const y = position[i + 1];
+            const u = (x - xmin) / (xmax - xmin);
+            const v = (y - ymin) / (ymax - ymin);
+            uv.push(u);
+            uv.push(v);
+          }
+
+          return uv;
+        }
+
+        // Event listeners that switch on and off the different material properties
+        // for the terrain and the lake surfaces
+
+        document.getElementById("reflection-effect").addEventListener("change", (event) => {
+          if (event.target.checked) {
+            const geometry = terrainSurfaceLayer.graphics.getItemAt(0).geometry.clone();
+            geometry.components[0].material = reflectiveTerrainMaterial;
+            terrainSurfaceLayer.graphics.getItemAt(0).geometry = geometry;
+          } else {
+            const geometry = terrainSurfaceLayer.graphics.getItemAt(0).geometry.clone();
+            geometry.components[0].material = new MeshMaterial({
+              color: "white"
+            });
+            terrainSurfaceLayer.graphics.getItemAt(0).geometry = geometry;
+          }
+        });
+
+        document.getElementsByName("shading-mode").forEach((element) => {
+          element.addEventListener("click", (event) => {
+            const geometry = terrainSurfaceLayer.graphics.getItemAt(0).geometry.clone();
+            geometry.components[0].shading = event.target.value;
+            terrainSurfaceLayer.graphics.getItemAt(0).geometry = geometry;
+          });
+        });
+
+        document.getElementById("normal-texture").addEventListener("change", (event) => {
+          lakeMaterialOptions.normalTexture = event.target.checked
+            ? "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/water-normal.png"
+            : null;
+          renderLake();
+        });
+
+        document.getElementById("metallic-roughness-texture").addEventListener("change", (event) => {
+          lakeMaterialOptions.metallicRoughnessTexture = event.target.checked
+            ? "https://developers.arcgis.com/javascript/latest/sample-code/geometry-mesh-elevation/live/water-metallic-roughness.png"
+            : null;
+          renderLake();
+        });
+
+        function renderLake() {
+          lakeLayer.graphics.removeAll();
+          createLake();
+        }
+
+        view.ui.add("menu", { position: "top-right" });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="menu" class="esri-widget">
+        <h3>Mesh surface options</h3>
+        <input type="checkbox" id="reflection-effect" checked />
+        <label for="reflection-effect">Light reflection effect</label>
+        <p>Switch between a smooth and a flat terrain shading:</p>
+        <div class="mode">
+          <input type="radio" name="shading-mode" id="smooth" value="smooth" checked />
+          <label for="smooth">smooth</label>
+          <input type="radio" name="shading-mode" id="flat" value="flat" checked />
+          <label for="flat">flat</label>
+        </div>
+        <h3>Lake material options</h3>
+        <input type="checkbox" id="normal-texture" checked />
+        <label for="normal-texture">Normal texture</label>
+        <br />
+        <input type="checkbox" id="metallic-roughness-texture" checked />
+        <label for="metallic-roughness-texture">Metallic/roughness texture</label>
+        <p id="credits">
+          Pine trees GLTF model from
+          <a href="https://poly.google.com/view/7rTNpk6j01O" target="_blank">Google Poly</a> under
+          <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank">CC-BY 3.0 License</a>.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+

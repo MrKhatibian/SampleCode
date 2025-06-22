@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MediaLayer with control points | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script>
+      require([
+        "esri/core/Collection",
+        "esri/geometry/Point",
+        "esri/geometry/SpatialReference",
+        "esri/Graphic",
+        "esri/layers/GraphicsLayer",
+        "esri/layers/MediaLayer",
+        "esri/layers/support/ControlPointsGeoreference",
+        "esri/layers/support/ImageElement",
+        "esri/Map",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleMarkerSymbol",
+        "esri/Viewpoint",
+        "esri/views/MapView",
+        "esri/webmap/Bookmark",
+        "esri/widgets/Bookmarks",
+        "esri/widgets/Expand",
+        "esri/widgets/Sketch/SketchViewModel"
+      ], (
+        Collection,
+        Point,
+        SpatialReference,
+        Graphic,
+        GraphicsLayer,
+        MediaLayer,
+        ControlPointsGeoreference,
+        ImageElement,
+        Map,
+        SimpleLineSymbol,
+        SimpleMarkerSymbol,
+        Viewpoint,
+        MapView,
+        Bookmark,
+        Bookmarks,
+        Expand,
+        SketchViewModel
+      ) => {
+        // a function to create a Graphic from a point, color and index
+        const createGraphic = (point, color, index) =>
+          new Graphic({
+            geometry: point,
+            symbol: new SimpleMarkerSymbol({
+              style: "circle",
+              color,
+              size: 12,
+              outline: new SimpleLineSymbol({
+                color: "white",
+                width: 1.5
+              })
+            }),
+            attributes: { index }
+          });
+
+        // a function to update the georeference control points based on the location of graphics
+        const updateGeoreference = (graphics, controlPointsGeoreference) => {
+          const points = graphics
+            .toArray()
+            .sort((a, b) => a.attributes.index - b.attributes.index)
+            .map((graphic) => graphic.geometry);
+
+          controlPointsGeoreference.controlPoints = points.map((mapPoint, index) => ({
+            sourcePoint: controlPointsGeoreference.controlPoints[index].sourcePoint,
+            mapPoint
+          }));
+        };
+
+        // the spatial reference for the Telluride MediaLayer, North American Datum 1927
+        const spatialReference = new SpatialReference({ wkid: 4267 });
+
+        const tellurideCenter = new Point({ x: -107.762, y: 37.9375, spatialReference });
+        const denverCenter = new Point({ x: -104.98604461997, y: 39.74799276 });
+
+        const map = new Map({ basemap: "topo-vector" });
+        const zoom = 12;
+
+        const view = new MapView({
+          center: tellurideCenter,
+          container: "viewDiv",
+          map,
+          zoom
+        });
+
+        // create bookmarks for Telluride and Denver
+        const tellurideBookmark = new Bookmark({
+          name: "Telluride Geology",
+          viewpoint: new Viewpoint({
+            targetGeometry: tellurideCenter,
+            scale: 100000
+          })
+        });
+
+        const denverBookmark = new Bookmark({
+          name: "Sanborn Fire Insurance Map from Denver (1887)",
+          viewpoint: new Viewpoint({
+            targetGeometry: denverCenter,
+            scale: 2500
+          })
+        });
+
+        const bookmarksCollection = new Collection();
+        bookmarksCollection.addMany([tellurideBookmark, denverBookmark]);
+
+        // add a Bookmarks widget
+        const bookmarks = new Bookmarks({
+          bookmarks: bookmarksCollection,
+          view
+        });
+
+        const bookmarksExpand = new Expand({
+          content: bookmarks,
+          expanded: true,
+          view
+        });
+        view.ui.add(bookmarksExpand, "top-right");
+
+
+        // when a bookmark is selected add the appropriate MediaLayer
+        bookmarks.on("bookmark-select", (event) => {
+          if (event.bookmark.name === "Telluride Geology") {
+            map.removeAll();
+            addTellurideGeologyMediaLayer();
+          }
+
+          if (event.bookmark.name === "Sanborn Fire Insurance Map from Denver (1887)") {
+            map.removeAll();
+            addDenverInsuranceMediaLayer();
+          }
+        });
+
+
+        // use the SketchViewModel to allow updating the graphics and control points
+        const sketch = new SketchViewModel({
+          updateOnGraphicClick: true,
+          view
+        });
+
+        const addTellurideGeologyMediaLayer = async () => {
+          // set view scale constraints
+          view.constraints.maxScale = 10000;
+          view.constraints.minScale = 1000000;
+
+
+          // four points representing known map coordinates on the MediaLayer's ImageElement
+          const swCornerMapPoint = new Point({ x: -107.875, y: 37.875, spatialReference });
+          const nwCornerMapPoint = new Point({ x: -107.875, y: 38, spatialReference });
+          const neCornerMapPoint = new Point({ x: -107.75, y: 38, spatialReference });
+          const seCornerMapPoint = new Point({ x: -107.75, y: 37.875, spatialReference });
+
+          // create a GraphicsLayer to show the four points on the Map
+          const graphicsLayer = new GraphicsLayer({
+            graphics: [
+              createGraphic(swCornerMapPoint, "green", 0),
+              createGraphic(nwCornerMapPoint, "purple", 1),
+              createGraphic(neCornerMapPoint, "blue", 2),
+              createGraphic(seCornerMapPoint, "red", 3)
+            ]
+          });
+
+          // create an array of four control points composed of a sourcePoint, a point
+          // on the image element in pixels, and a mapPoint which is the location of the
+          // sourcePoint in map space
+          const swCornerControlPoint = {
+            sourcePoint: { x: 89, y: 1918 },
+            mapPoint: swCornerMapPoint
+          };
+
+          const nwCornerControlPoint = {
+            sourcePoint: { x: 83, y: 101 },
+            mapPoint: nwCornerMapPoint
+          };
+
+          const neCornerControlPoint = {
+            sourcePoint: { x: 1508, y: 97 },
+            mapPoint: neCornerMapPoint
+          };
+
+          const seCornerControlPoint = {
+            sourcePoint: { x: 1517, y: 1906 },
+            mapPoint: seCornerMapPoint
+          };
+
+          const controlPoints = [
+            swCornerControlPoint,
+            nwCornerControlPoint,
+            neCornerControlPoint,
+            seCornerControlPoint
+          ];
+
+
+
+          // georeference for the imageElement using the control points,
+          // image width, and image height
+          const controlPointsGeoreference = new ControlPointsGeoreference({ controlPoints, width: 1585, height: 2048 });
+
+          const imageElement = new ImageElement({
+            image:
+              "https://arcgis.github.io/arcgis-samples-javascript/sample-data/media-layer/telluride/TellurideQuad.webp",
+            georeference: controlPointsGeoreference
+          });
+
+          const mediaLayer = new MediaLayer({
+            source: [imageElement],
+            title: "Geologic Map of the Telluride Quadrangle, Southwestern Colorado",
+            copyright: "Wilbur S Burbank and Robert G. Luedke, 1966",
+            spatialReference
+          });
+
+
+          map.layers.addMany([mediaLayer, graphicsLayer]);
+
+
+          // use the SketchViewModel to allow updating the graphics and control points
+          sketch.layer = graphicsLayer;
+
+          sketch.on("update", (event) => {
+            if (event.toolEventInfo?.type === "move-start") {
+              imageElement.opacity = 0.3;
+            }
+            if (event.toolEventInfo?.type === "move-stop") {
+              imageElement.opacity = 0.9;
+            }
+
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+
+          sketch.on("redo", () => {
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+
+          sketch.on("undo", () => {
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+
+
+          await view.when();
+          await mediaLayer.when();
+          view.goTo(mediaLayer.fullExtent);
+        };
+
+        const addDenverInsuranceMediaLayer = async () => {
+          // set view scale constraints
+          view.constraints.maxScale = 500;
+          view.constraints.minScale = 50000;
+
+          // four points representing known map coordinates on the MediaLayer's ImageElement
+          const swCornerMapPoint = new Point({ x: -104.98621754464038, y: 39.74613888637972 });
+          const nwCornerMapPoint = new Point({ x: -104.98869072957527, y: 39.747982021406564 });
+          const neCornerMapPoint = new Point({ x: -104.98622558569664, y: 39.749857357393935 });
+          const seCornerMapPoint = new Point({ x: -104.98353115392514, y: 39.74749717720185 });
+
+          // create a GraphicsLayer to show the four points on the Map
+          const graphicsLayer = new GraphicsLayer({
+            graphics: [
+              createGraphic(swCornerMapPoint, "green", 0),
+              createGraphic(nwCornerMapPoint, "purple", 1),
+              createGraphic(neCornerMapPoint, "blue", 2),
+              createGraphic(seCornerMapPoint, "red", 3)
+            ]
+          });
+
+          // create an array of four control points composed of a sourcePoint, a point
+          // on the image element in pixels, and a mapPoint which is the location of the
+          // sourcePoint in map space
+          const swCornerControlPoint = {
+            sourcePoint: { x: 125, y: 1634 },
+            mapPoint: swCornerMapPoint
+          };
+
+          const nwCornerControlPoint = {
+            sourcePoint: { x: 125, y: 63 },
+            mapPoint: nwCornerMapPoint
+          };
+
+          const neCornerControlPoint = {
+            sourcePoint: { x: 1639, y: 55 },
+            mapPoint: neCornerMapPoint
+          };
+
+          const seCornerControlPoint = {
+            sourcePoint: { x: 1591, y: 1994 },
+            mapPoint: seCornerMapPoint
+          };
+
+          const controlPoints = [
+            swCornerControlPoint,
+            nwCornerControlPoint,
+            neCornerControlPoint,
+            seCornerControlPoint
+          ];
+
+          // georeference for the imageElement using the control points,
+          // image width, and image height
+          const controlPointsGeoreference = new ControlPointsGeoreference({ controlPoints, width: 1691, height: 2048 });
+
+          const imageElement = new ImageElement({
+            image:
+              "http://arcgis.github.io/arcgis-samples-javascript/sample-data/media-layer/denver/DenverFireInsurance.webp",
+            georeference: controlPointsGeoreference
+          });
+
+          const mediaLayer = new MediaLayer({
+            source: [imageElement],
+            title: "Sanborn Fire Insurance Map from Denver (1887)",
+            copyright: "United States Library of Congress's Geography & Map Division"
+          });
+
+          map.layers.addMany([mediaLayer, graphicsLayer]);
+
+          // use the SketchViewModel to allow updating the graphics and control points
+          sketch.layer = graphicsLayer;
+
+          sketch.on("update", (event) => {
+            if (event.toolEventInfo?.type === "move-start") {
+              imageElement.opacity = 0.3;
+            }
+            if (event.toolEventInfo?.type === "move-stop") {
+              imageElement.opacity = 0.9;
+            }
+
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+
+          sketch.on("redo", () => {
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+
+          sketch.on("undo", () => {
+            updateGeoreference(graphicsLayer.graphics, controlPointsGeoreference);
+          });
+        };
+
+        // when the web page first loads add the Telluride geology map
+        addTellurideGeologyMediaLayer();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

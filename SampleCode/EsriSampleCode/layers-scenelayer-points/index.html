@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Scene Layer with point geometries | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      h1 {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        color: white;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/layers/SceneLayer", "esri/layers/FeatureLayer"], (
+        Map,
+        SceneView,
+        SceneLayer,
+        FeatureLayer
+      ) => {
+        // setup the renderer with color visual variable
+        const renderer = {
+          type: "simple", // autocasts as new SimpleRenderer()
+          symbol: {
+            type: "point-3d", // autocasts as new PointSymbol3D()
+            symbolLayers: [
+              {
+                type: "icon", // autocasts as new IconSymbol3DLayer()
+                size: 0.5,
+                material: {
+                  color: [252, 250, 215]
+                }
+              }
+            ]
+          }
+        };
+
+        // Create SceneLayer from a Scene Service URL
+        const sceneLayer = new SceneLayer({
+          url:
+            "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/World_GeoNames_Cities/SceneServer",
+          renderer: renderer, // Set the renderer to sceneLayer
+          popupTemplate: { title: "{name}"},
+          copyright: `Data from <a href="http://www.geonames.org/">GeoNames</a>`
+        });
+
+        const countries = new FeatureLayer({
+          url:
+            "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Countries_(Generalized)/FeatureServer",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "polygon-3d", // autocasts as new PolygonSymbol3D()
+              symbolLayers: [
+                {
+                  type: "fill", // autocasts as new FillSymbol3DLayer()
+                  material: {
+                    color: [0, 0, 0, 0.6]
+                  },
+                  outline: {
+                    color: [0, 0, 0, 0]
+                  }
+                }
+              ]
+            }
+          }
+        });
+
+        // Create Map
+        const map = new Map({
+          layers: [countries, sceneLayer],
+          ground: {
+            surfaceColor: "#0b0d2e"
+          }
+        });
+
+        // Create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          environment: {
+            atmosphereEnabled: false
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div class="esri-widget">
+      <h1>World cities</h1>
+    </div>
+  </body>
+</html>
+

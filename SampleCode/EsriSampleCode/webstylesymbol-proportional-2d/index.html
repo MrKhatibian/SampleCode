@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>WebStyleSymbol - continuous size (2D) | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #info {
+        z-index: 99;
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        padding: 10px 15px 5px 15px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 70%;
+        background: rgba(255, 255, 255, 0.7);
+        font-size: 25pt;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/symbols/WebStyleSymbol",
+        "esri/widgets/Legend"
+      ], (Map, MapView, FeatureLayer, WebStyleSymbol, Legend) => {
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+          center: [-98, 40],
+          zoom: 4
+        });
+
+        const layer = new FeatureLayer({
+          portalItem: { id: "a7c5a8c8ea42416e8bd92df9872cc51b" }
+        });
+
+        const legend = new Legend({
+          view: view
+        });
+
+        view.ui.add(legend, "bottom-right");
+
+        layer
+          .load()
+          .then(updateRenderer)
+          .catch(rejection);
+
+        // Update renderer with new web style symbol
+        function updateRenderer() {
+          const renderer = layer.renderer.clone();
+
+          const cb = renderer.classBreakInfos[0];
+          cb.symbol = new WebStyleSymbol({
+            name: "school",
+            styleName: "Esri2DPointSymbolsStyle"
+          });
+
+          layer.renderer = renderer;
+          map.add(layer);
+        }
+
+        function rejection(error) {
+          console.error("Layer failed to load: ", error);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="info" class="esri-widget">
+      Percent College Educated by County
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to CatalogLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --my-width: 100vw;
+      }
+
+      calcite-shell-panel {
+        --calcite-shell-panel-min-width: var(--my-width);
+      }
+
+      calcite-tile-group {
+        width: var(--my-width);
+      }
+
+      #my-custom-group {
+        display: flex;
+        justify-content: center;
+      }
+
+      calcite-tile {
+        flex: 1;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/layers/CatalogLayer",
+        "esri/views/SceneView",
+        "esri/Map",
+        "esri/layers/catalog/catalogUtils",
+        "esri/widgets/LayerList",
+        "esri/widgets/Expand",
+        "esri/core/reactiveUtils",
+        "esri/widgets/Legend",
+        "esri/layers/support/SceneFilter"
+      ], (CatalogLayer, SceneView, Map, catalogUtils, LayerList, Expand, reactiveUtils, Legend, SceneFilter) =>
+        (async () => {
+          let highlight;
+
+
+          // Create a new CatalogLayer instance from a portal item
+          const layer = new CatalogLayer({
+            portalItem: {
+              id: "487cc66d305145d3b67fed383456af48",
+              portal: {
+                url: "https://jsapi.maps.arcgis.com/"
+              }
+            }
+          });
+
+
+          const map = new Map({
+            basemap: "topo-3d",
+            ground: "world-elevation",
+            layers: [layer]
+          });
+
+          const view = new SceneView({
+            map: map,
+            container: "viewDiv",
+            camera: {
+              position: {
+                x: 8.42008735,
+                y: 47.36922556,
+                z: 3604.57579
+              },
+              heading: 71.78,
+              tilt: 68.15
+            },
+            environment: {
+              lighting: {
+                date: "Fri Mar 15 2024 14:30:00 GMT+0100 (Central European Standard Time)",
+                directShadowsEnabled: true
+              }
+            }
+          });
+
+          // Wait until catalog layer is loaded
+          const layerView = await view.whenLayerView(layer);
+
+          // Add a label to the footprint layer
+          layer.footprintLayer.labelingInfo = [
+            {
+              labelExpressionInfo: {
+                expression: "$feature." + layer.itemNameField
+              },
+              symbol: {
+                type: "label-3d",
+                verticalOffset: {
+                  screenLength: 30,
+                  maxWorldLength: 50
+                },
+                callout: {
+                  type: "line",
+                  color: [30, 30, 30]
+                },
+                symbolLayers: [
+                  {
+                    type: "text",
+                    background: {
+                      color: [30, 30, 30, 0.75]
+                    },
+                    material: {
+                      color: "white"
+                    },
+                    halo: {
+                      size: 1,
+                      color: [30, 30, 30, 0.75]
+                    },
+                    size: 10
+                  }
+                ]
+              }
+            }
+          ];
+
+          // query all footprints from the catalog layer
+          const result = await layer.queryFeatures({
+            where: "1=1",
+            returnGeometry: true,
+            returnZ: true,
+            outFields: ["*"],
+            orderByFields: [layer.itemNameField]
+          });
+
+          const footprintSelectTileGroup = document.getElementById("footprintSelectTileGroup");
+
+          // create a calcite tile for each footprint
+          // users can click the tile and the view will zoom to and highlight the footprint
+          result.features.forEach((feature) => {
+            createTileForFootprint(
+              feature.attributes[layer.itemNameField],
+              "Highlight and zoom to its footprint",
+              feature
+            );
+          });
+
+          // mask footprints out of the 3d basemap
+          const buildingLayer = view.map.basemap.referenceLayers.find(
+            (layer) => layer.type === "scene" && layer.geometryType === "mesh"
+          );
+
+          buildingLayer.filter = new SceneFilter({
+            geometries: result.features.map((feature) => feature.geometry)
+          });
+
+          await reactiveUtils.whenOnce(() => !layerView.updating);
+
+
+          // create a new LayerList widget and add catalogOptions to display and interact with CatalogLayers
+          const layerList = new LayerList({
+            catalogOptions: {
+              selectionMode: "single"
+            },
+            // create a listItemCreatedFunction that adds an "add-layer" action to each catalog layer list item
+            listItemCreatedFunction: (event) => {
+              if (event.item.layer.type === "catalog") {
+                event.item.open = true;
+              }
+
+              if (catalogUtils.isLayerFromCatalog(event.item.layer)) {
+                event.item.actionsSections = [
+                  [
+                    {
+                      title: "Add layer to map",
+                      icon: "add-layer",
+                      id: "add-layer"
+                    }
+                  ]
+                ];
+              }
+            },
+            visibilityAppearance: "checkbox",
+            view
+          });
+          view.ui.add(layerList, "top-right");
+
+
+          // watch for layer selection in the LayerList and highlight the footprint
+          reactiveUtils.watch(
+            () => layerList.catalogLayerList?.selectedItems.at(0)?.layer,
+            (layer) => {
+              layer && handleLayerSelection(layer);
+            }
+          );
+
+          async function handleLayerSelection(layer) {
+            if (catalogUtils.isLayerFromCatalog(layer)) {
+              const parentCatalogLayer = catalogUtils.getCatalogLayerForLayer(layer);
+              const footprint = parentCatalogLayer.createFootprintFromLayer(layer);
+
+              highlight?.remove();
+              highlight = layerView.footprintLayerView.highlight(footprint);
+            }
+          }
+
+          // watch for changes in the catalog layer list and remove the highlight
+          reactiveUtils.watch(
+            () => layerList.catalogLayerList,
+            () => highlight && highlight.remove()
+          );
+
+
+          // Listen for the trigger-action event on the CatalogLayerListViewModel
+          // and add layers from the catalog to the map when the "add-layer" action is triggered.
+          // To correctly add a layer to the map, you must create a footprint from the layer
+          // and then create a new layer from the footprint.
+          reactiveUtils.on(
+            () => layerList.catalogLayerList,
+            "trigger-action",
+            async (event) => {
+              if (event.action.id === "add-layer") {
+                // Get the parent catalog layer
+                const parentCatalogLayer = catalogUtils.getCatalogLayerForLayer(event.item.layer);
+                // Get the footprint from the parent catalog layer
+                const footprint = parentCatalogLayer.createFootprintFromLayer(event.item.layer);
+                // Get the layer from the footprint
+                const layerFromFootprint = await parentCatalogLayer.createLayerFromFootprint(footprint);
+                // Add the layer to the map
+                map.add(layerFromFootprint);
+              }
+            }
+          );
+
+
+          const legend = new Legend({ view });
+          const legendExpand = new Expand({ content: legend });
+          view.ui.add(legendExpand, "top-left");
+
+          function createTileForFootprint(heading, description, feature) {
+            const tileSelect = document.createElement("calcite-tile");
+
+            tileSelect.setAttribute("input-alignment", "end");
+            tileSelect.setAttribute("icon", "apply-selection-to-existing-view");
+            tileSelect.setAttribute("heading", heading);
+            tileSelect.setAttribute("description", description);
+            tileSelect.setAttribute("input-enabled", "true");
+
+            tileSelect.addEventListener("calciteTileSelect", (event) => {
+              highlight?.remove();
+              highlight = layerView.footprintLayerView.highlight(feature);
+
+              view.goTo({ target: feature, tilt: 70, scale: 2500, heading: 350 });
+            });
+
+            footprintSelectTileGroup.appendChild(tileSelect);
+          }
+        })());
+    </script>
+  </head>
+  <body>
+    <calcite-shell>
+      <div id="viewDiv"></div>
+      <calcite-shell-panel id="bottomPanel" slot="panel-bottom" position="start" id="shell-panel-start">
+        <div id="my-custom-group">
+          <calcite-tile-group id="footprintSelectTileGroup"></calcite-tile-group>
+        </div>
+      </calcite-shell-panel>
+    </calcite-shell>
+  </body>
+</html>
+

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Blend modes in 3D | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      #selection {
+        position: absolute;
+        bottom: 20px;
+        width: 70%;
+        max-width: 1000px;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/layers/TileLayer", "esri/widgets/Home"], (
+        Map,
+        SceneView,
+        TileLayer,
+        Home
+      ) => {
+        /***********************************
+         * Load the hillshade tile layer and set the blend mode
+         ***********************************/
+        const hillshade = new TileLayer({
+          url: "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer",
+          blendMode: "luminosity"
+        });
+
+        /***********************************
+         * Create the SceneView
+         ***********************************/
+        const map = new Map({
+          basemap: "osm",
+          ground: "world-elevation",
+          layers: [hillshade]
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+
+          camera: {
+            position: {
+              longitude: 7.8027741,
+              latitude: 46.0200663,
+              z: 3318.92652
+            },
+            heading: 242.83,
+            tilt: 84.65
+          },
+          map: map
+        });
+
+        // Home button to return to the initial viewpoint
+        view.ui.add(new Home({ view: view }), "top-left");
+
+        /***********************************
+         * Add functionality to change between blending and no blending
+         ***********************************/
+        const selection = document.getElementById("selection");
+
+        selection.addEventListener("calciteSegmentedControlChange", () => {
+          switch (selection.selectedItem.value) {
+            case "basemap":
+              // Turn off the hillshade to show the basemap
+              hillshade.visible = false;
+              break;
+
+            case "hillshade":
+              // Turn on the hillshade and remove the luminosity blend mode
+              hillshade.visible = true;
+              hillshade.blendMode = "normal";
+              break;
+
+            case "blended":
+              // Turn on the hillshade and add the luminosity blend mode
+              hillshade.visible = true;
+              hillshade.blendMode = "luminosity";
+              break;
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-segmented-control id="selection" width="full">
+      <calcite-segmented-control-item value="basemap">Basemap</calcite-segmented-control-item>
+      <calcite-segmented-control-item value="hillshade">Hillshade</calcite-segmented-control-item>
+      <calcite-segmented-control-item value="blended" checked>Blended</calcite-segmented-control-item>
+    </calcite-segmented-control>
+  </body>
+</html>
+

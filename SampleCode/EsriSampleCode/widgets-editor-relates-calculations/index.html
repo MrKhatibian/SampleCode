@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Editing related data with calculated expressions | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script type="text/plain" id="create-parcel-id">
+    // Check if in the Create feature workflow. If so, generate a new ID.
+    // If in an update workflow, return the original parcel_id value
+    if ($editcontext.editType == 'INSERT') {
+      var newParcelId = Random();
+      var updatedId = Replace(newParcelId, '0.', '');
+      var trimmedId = Left(updatedId, 7);
+      return trimmedId;
+    } else {
+      var originalId = $originalFeature.parcel_id;
+      return originalId;
+    }
+  </script>
+
+  <script type="text/plain" id="calculate-parcel-area">
+    // Calculate the area of the parcel in square meters
+    var parcelArea = Area($feature, 'square-meters');
+    if (IsEmpty(parcelArea)) {
+      return 0;
+    }
+    // Rounds the value to 2 decimal places
+    return Round(parcelArea, 2);
+  </script>
+
+  <script type="text/plain" id="get-owner-count">
+    // Check the edit context
+    // If it is insert (create workflow), return and get out
+    if ($editcontext.editType == "INSERT") {
+      return;
+    } else {
+      // If not Insert/Create
+      // Get a FeatureSet of owners from the related owners table
+      var ownersFeatureSet = (FeatureSetByRelationshipName($feature, 'NZParcels_Owners', ['*'], false));
+      // Make sure ownersFeatureSet is not empty
+      if(!(IsEmpty(ownersFeatureSet))) {
+      // Count the amount of owners within the owners featureset
+        var countOwners;
+        countOwners = Count(ownersFeatureSet)
+        // Apply the count to the value in the owner_number field
+        return countOwners;
+      }
+      // If ownersFeatureSet is empty, return nothing.
+      return;
+    }
+  </script>
+
+  <script type="text/plain" id="parcel-id-owner">
+    // Get the FeatureSet from the related owners table
+    var ownerFeatureSet = First(FeatureSetByRelationshipName($feature, 'NZParcels_Owners', ['parcel_id'], false));
+
+    // Check that the ownerFeatureSet is not empty. 
+    // If not, return the parcel id, otherwise, return nothing.
+    if (!IsEmpty(ownerFeatureSet)) {
+      return ownerFeatureSet['parcel_id'];
+    } else {
+      return null;
+    }
+  </script>
+
+  <script type="text/plain" id="parcel-id-permit">
+    // Get the FeatureSet for the parcel permits and return the first parcel ID
+    var permit = First(FeatureSetByRelationshipName($feature, 'NZParcels_Permits', ['parcel_id'], false));
+    
+    // If there is a permit, return its parcel's ID,
+    // Otherwise, return null
+    if (!IsEmpty(permit)) {
+      return permit['parcel_id'];
+    } else {
+      return null;
+    }
+  </script>
+
+
+<style>
+  html,
+  body,
+  #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+  }
+</style>
+
+<script>
+  require([
+    "esri/WebMap",
+    "esri/views/MapView",
+    "esri/layers/FeatureLayer",
+    "esri/widgets/Editor",
+    "esri/form/ExpressionInfo",
+    "esri/form/FormTemplate",
+    "esri/form/elements/FieldElement",
+    "esri/form/elements/RelationshipElement",
+    "esri/form/elements/GroupElement"
+  ], (
+    WebMap,
+    MapView,
+    FeatureLayer,
+    Editor,
+    ExpressionInfo,
+    FormTemplate,
+    FieldElement,
+    RelationshipElement,
+    GroupElement
+  ) => {
+
+    let parcelsLayer, ownersTable, permitsTable;
+
+    //=======================================================
+    //   Set the expressionInfos for the parcels formTemplate
+    //=======================================================
+
+    const trueExp = new ExpressionInfo({
+      expression: "true",
+      name: "true-boolean",
+      title: "True boolean expression",
+      returnType: "boolean"
+    })
+
+    const falseExp = new ExpressionInfo({
+      expression: "false",
+      name: "false-boolean",
+      title: "False boolean expression",
+      returnType: "boolean"
+    });
+
+    const createParcelIdExp = new ExpressionInfo({
+      expression: document.getElementById("create-parcel-id").text,
+      name: "create-parcel-id",
+      title: "Create parcel id",
+      returnType: "number"
+    });
+
+    const calcParcelAreaExp = new ExpressionInfo({
+      expression: document.getElementById("calculate-parcel-area").text,
+      name: "calculate-parcel-area",
+      title: "Calculate parcel area"
+    });
+
+    const getOwnerCountExp = new ExpressionInfo({
+      expression: document.getElementById("get-owner-count").text,
+      name: "get-owner-count",
+      returnType: "number",
+      title: "Get owner count"
+    });
+
+    //============================================================
+    //   Set the form elements for the parcel layer's formTemplate
+    //============================================================
+
+    const parcelIdFE = new FieldElement({
+      description: "Randomly generates a new numeric parcel identifier if none exists",
+      label: "Parcel ID",
+      editableExpression: falseExp.name,
+      fieldName: "parcel_id",
+      input: { // autocastable to TextBoxInput
+        type: "text-box"
+      },
+      valueExpression: createParcelIdExp.name
+    });
+
+
+    const parcelTypeFE = new FieldElement({
+      label: "Parcel type",
+      fieldName: "parcel_type",
+      input: { // autocastable to ComboBoxInput
+        type: "combo-box",
+        showNoValueOption: false
+      }
+    });
+
+    const ownerCountParcelFE = new FieldElement({
+      description: "Queries the related owners table and counts the number of owners related to this parcel",
+      label: "Total no. of owners",
+      fieldName: "owner_number",
+      editableExpression: falseExp.name,
+      input: { // autocastable to TextBoxInput
+        type: "text-box"
+      },
+      valueExpression: getOwnerCountExp.name
+    });
+
+
+    const calcParcelAreaFE = new FieldElement({
+      description: "Parcel area in sq. meters",
+      label: "Area",
+      fieldName: "calc_area",
+      editableExpression: falseExp.name,
+      input: { //autocastable to TextBoxInput
+        type: "text-box",
+        minLength: 0
+      },
+      valueExpression: calcParcelAreaExp.name
+    });
+
+    const relatedOwners = new RelationshipElement({
+      description: "The owners associated to the parcel",
+      label: "Owners",
+      displayCount: 2,
+      displayType: "list",
+      orderByFields: [{
+        field: "ownership_date",
+        order: "desc"
+      }],
+      relationshipId: 1
+    });
+
+    const relatedPermits = new RelationshipElement({
+      description: "The permit associated with the parcel",
+      label: "Permits",
+      displayCount: 1,
+      displayType: "list",
+      orderByFields: [{
+        field: "issue_date",
+        order: "desc"
+      }],
+      relationshipId: 0
+    });
+
+    //===========================================
+    //   Create the parcel layer's formTemplate
+    //===========================================
+
+    const parcelsFormTemplate = new FormTemplate({
+      title: "Parcel ID - {parcel_id}",
+      elements: [parcelIdFE, parcelTypeFE, calcParcelAreaFE, ownerCountParcelFE, relatedOwners, relatedPermits],
+      expressionInfos: [createParcelIdExp, calcParcelAreaExp, getOwnerCountExp, trueExp, falseExp]
+    });
+
+    //=============================================================
+    //   Set the expressionInfos for the owners' table formTemplate
+    //=============================================================
+
+    const parcelIdOwnerExp = new ExpressionInfo({
+      expression: document.getElementById("parcel-id-owner").text,
+      name: "parcel-id-owner",
+      title: "Copy parcel ID from parent parcels layer",
+      returnType: "number"
+    });
+
+    //=============================================================
+    //   Set the expressionInfos for the permits' table formTemplate
+    //=============================================================
+
+    const parcelIdPermitExp = new ExpressionInfo({
+      expression: document.getElementById("parcel-id-permit").text,
+      name: "parcel-id-permit",
+      title: "Copy parcel ID from parent parcels layer",
+      returnType: "number"
+    });
+
+    //============================================================
+    //   Set the form elements for the owners' table's formTemplate
+    //============================================================
+
+    const parcelIdOwnerFE = new FieldElement({
+      description: "Access the parcel feature's related owners table and populate it with the parcel ID",
+      label: "Parcel ID",
+      editableExpression: falseExp.name,
+      fieldName: "parcel_id",
+      input: { // autocastable to TextBoxInput
+        type: "text-box"
+      },
+      valueExpression: parcelIdOwnerExp.name
+    });
+
+    const ownerFE = new FieldElement({
+      label: "Owner",
+      fieldName: "owner",
+      input: { // autocastable to TextBoxInput
+        type: "text-box"
+      }
+    });
+
+    const ownDateFE = new FieldElement({
+      description: "The date the parcel ownership was authorized (required)",
+      label: "Ownership date",
+      fieldName: "ownership_date",
+      input: { // autocastable DateTimePickerInput
+        type: "datetime-picker",
+        includeTime: false
+      },
+      requiredExpression: trueExp.name
+    });
+
+    //===========================================
+    //   Create the owners' table's formTemplate
+    //===========================================
+
+    const ownersFormTemplate = new FormTemplate({
+      title: "Owner",
+      elements: [parcelIdOwnerFE, ownerFE, ownDateFE],
+      expressionInfos: [parcelIdOwnerExp, falseExp, trueExp]
+    });
+
+    //============================================================
+    //   Set the form elements for the permits' table's formTemplate
+    //============================================================
+
+    const parcelIdPermitFE = new FieldElement({
+      description: "Access the parcel feature's related permit and populate it with the feature's parcel ID",
+      label: "Parcel ID",
+      fieldName: "parcel_id",
+      editableExpression: falseExp.name,
+      input: { // autocastable to TextBoxInput
+        type: "text-box"
+      },
+      valueExpression: parcelIdPermitExp.name
+    });
+
+    const poolPermitFE = new FieldElement({
+      description: "Indicates whether this parcel contains a swiming pool",
+      label: "Swimming pool",
+      fieldName: "swim_pool",
+      input: { // autocastable to ComboBoxInput
+        type: "combo-box",
+        showNoValueOption: false
+      }
+    });
+
+    //===========================================
+    //   The following three field elements will
+    //   be grouped together
+    //===========================================
+
+
+
+    const permitIssueDateFE = new FieldElement({
+      description: "Indicates when the permit was issued",
+      label: "Issue date",
+      fieldName: "issue_date",
+      input: { // autocastable to DateTimePickerInput
+        type: "datetime-picker",
+        includeTime: false
+      }
+    });
+
+    const permitExpDateFE = new FieldElement({
+      description: "Indicates when the permit expires",
+      label: "Expiration date",
+      fieldName: "ExpireDate",
+      input: { // autocastable to DateTimePickerInput
+        type: "date-picker"
+      }
+    });
+
+    const isPermitValidFE = new FieldElement({
+      description: "Indicates if the permit is expired",
+      label: "Expired",
+      fieldName: "expired",
+      input: { // autocastable to ComboBoxInput
+        type: "combo-box",
+        noValueOptionLabel: "No entry",
+        showNoValueOption: true
+      }
+    });
+
+    //===========================================
+    //   Create a GroupElement for the permits 
+    //   form template and pass in the field
+    //   elements created above
+    //===========================================
+
+    const groupPermits = new GroupElement({
+      description: "When was this permit issued and when does it expire?",
+      label: "Issuance and expiration",
+      elements: [permitIssueDateFE, permitExpDateFE, isPermitValidFE]
+    });
+
+    //===========================================
+    //   Create the permits' table's formTemplate
+    //===========================================
+
+    const permitsFormTemplate = new FormTemplate({
+      title: "Parcel permit",
+      elements: [parcelIdPermitFE, poolPermitFE, groupPermits],
+      expressionInfos: [parcelIdPermitExp, falseExp]
+    });
+
+
+    //================================================
+    //   Access the webmap
+    //================================================
+
+    const webmap = new WebMap({
+      portalItem: {
+        id: "df86acc302f94270be51c2df69a0ce72"
+      }
+    });
+    //79f71e509a5d4c5f8cc445ae8cfa0a9b
+    const view = new MapView({
+      container: "viewDiv",
+      map: webmap
+    });
+
+    //================================================
+    //   Once all the layers are loaded, iterate
+    //   through all editable layers and set the
+    //   parcels feature layer and its formTemplate
+    //================================================
+
+    view.when(() => {
+      view.map.loadAll().then(() => {
+        view.map.editableLayers.forEach((layer) => {
+          if (layer.title == "Parcels") {
+            parcelsLayer = layer;
+            parcelsLayer.formTemplate = parcelsFormTemplate;
+          }
+        });
+
+        //================================================
+        //   Iterate through the standalone tables within 
+        //   the map and set the specific table to its 
+        //   formTemplate
+        //================================================
+
+        view.map.tables.forEach((table) => {
+          if (table.title == "Permits") {
+            permitsTable = table;
+            permitsTable.formTemplate = permitsFormTemplate;
+          }
+          if (table.title == "Owners") {
+            ownersTable = table;
+            ownersTable.formTemplate = ownersFormTemplate;
+          }
+        });
+
+        //================================================
+        //   Instantiate the Editor and add to the view
+        //================================================
+        const editor = new Editor({
+          view: view
+        });
+
+        view.ui.add(editor, "top-right");
+
+      });
+    });
+  });
+</script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>

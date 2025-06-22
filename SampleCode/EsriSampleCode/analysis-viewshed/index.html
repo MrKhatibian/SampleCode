@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Interactive viewshed analysis | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <style>
+    html,
+    body,
+    html,
+    body,
+    #viewDiv {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #viewshedComponent {
+      width: 270px;
+    }
+    #viewshedComponent calcite-button {
+      display: flex;
+    }
+    #promptText {
+      margin-top: 0.4rem;
+    }
+  </style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/geometry/SpatialReference",
+      "esri/core/promiseUtils",
+      "esri/core/reactiveUtils",
+      "esri/views/3d/environment/SunLighting",
+      "esri/analysis/ViewshedAnalysis",
+      "esri/analysis/Viewshed"
+    ], function (
+      Map,
+      SceneView,
+      SpatialReference,
+      promiseUtils,
+      reactiveUtils,
+      SunLighting,
+      ViewshedAnalysis,
+      Viewshed
+    ) {
+      const view = new SceneView({
+        container: "viewDiv",
+        camera: {
+          position: {
+            spatialReference: SpatialReference.WebMercator,
+            x: -9753837.742627423,
+            y: 5140806.202422867,
+            z: 995.4546383377165
+          },
+          heading: 1.2311944909542853,
+          tilt: 70.07900968078631
+        },
+        map: new Map({
+          basemap: "topo-3d",
+          ground: "world-elevation"
+        }),
+        environment: {
+          lighting: new SunLighting({
+            date: new Date("January 18, 2024 12:50:00 UTC-6"),
+            directShadowsEnabled: true
+          })
+        }
+      });
+
+      view.when(async () => {
+        // Hide the 3D basemap's labels layer.
+        const labelsLayer = view.map.basemap.referenceLayers.find(
+          (layer) => layer.title === "Places and Labels"
+        );
+        labelsLayer.visible = false;
+
+        // Create the viewshed shape.
+        const viewshed = new Viewshed({
+          observer: {
+            spatialReference: SpatialReference.WebMercator,
+            x: -9754426,
+            y: 5143111,
+            z: 330
+          },
+          farDistance: 900, // In meters
+          tilt: 84, // Tilt of 0 looks down, tilt of 90 looks parallel to the ground, tilt of 180 looks up to the sky
+          heading: 63, // Counted clockwise from North
+          horizontalFieldOfView: 85,
+          verticalFieldOfView: 52
+        });
+        // Initialize viewshed analysis with the created viewshed shape and add it to the view.
+        const viewshedAnalysis = new ViewshedAnalysis({ viewsheds: [viewshed] });
+        view.analyses.add(viewshedAnalysis);
+
+        // Access the viewshed's analysis view.
+        const analysisView = await view.whenAnalysisView(viewshedAnalysis);
+        // Make the existing analysis interactive and select the created viewshed.
+        analysisView.interactive = true;
+        analysisView.selectedViewshed = viewshed;
+
+        // Add interactivity to the custom UI component's buttons.
+        const createButton = document.getElementById("createButton");
+        const cancelButton = document.getElementById("cancelButton");
+        const promptText = document.getElementById("promptText");
+
+        // Controller which allows to cancel an ongoing viewshed creation operation.
+        let abortController = null;
+
+        createButton.addEventListener("click", () => {
+          // Cancel any pending creation operation.
+          stopCreating();
+
+          // Create a new abort controller for the new operation.
+          abortController = new AbortController();
+
+          updateUI();
+
+          // Save current number of viewsheds to track whenever a new one is created.
+          const viewshedCounter = viewshedAnalysis.viewsheds.length;
+          // Watch whenever the a new viewshed is created and selected and then stop the creation method.
+          reactiveUtils.when(
+            () => viewshedAnalysis.viewsheds.length > viewshedCounter && analysisView.selectedViewshed,
+            () => {
+              stopCreating();
+              updateUI();
+            }
+          );
+
+          // Pass the controller as an argument to the interactive creation method
+          // and schedule the updateUI function after creating viewsheds is finished.
+          analysisView
+            .createViewsheds(abortController)
+            .catch((e) => {
+              // When the operation is cancelled, don't do anything. Any other errors are thrown.
+              if (!promiseUtils.isAbortError(e)) {
+                throw e;
+              }
+            })
+            .finally(() => {
+              // Update the UI to reflect the non-creating mode.
+              updateUI();
+            });
+        });
+
+        cancelButton.addEventListener("click", () => {
+          // Pressing the Cancel button stops the viewshed creation process and updates the UI accordingly.
+          stopCreating();
+          updateUI();
+        });
+        // Cancel the creation process and updates the UI when ESC is pressed.
+        view.on("key-down", (event) => {
+          if ((event.key = "Escape")) {
+            stopCreating();
+            updateUI();
+          }
+        });
+
+        // Cancel any pending viewshed creation operation.
+        function stopCreating() {
+          abortController?.abort();
+          abortController = null;
+        }
+
+        // Update the UI component according to whether there is a pending operation.
+        function updateUI() {
+          const creating = abortController != null;
+          createButton.style.display = !creating ? "flex" : "none";
+          cancelButton.style.display = creating ? "flex" : "none";
+          promptText.style.display = creating ? "flex" : "none";
+        }
+
+        // Add the component to the UI.
+        view.ui.add("viewshedComponent", "top-right");
+      });
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <calcite-card id="viewshedComponent">
+    <calcite-button id="createButton">Create viewshed</calcite-button>
+    <calcite-button id="cancelButton" style="display:none">Cancel </calcite-button>
+    <div id="promptText" style="display: none">
+      <em>Start the analysis by clicking in the scene to place the observer point and set the target.</em>
+    </div>
+  </calcite-card>
+</body>
+
+</html>

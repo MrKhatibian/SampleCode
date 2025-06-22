@@ -1,0 +1,6 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/utils/FieldUtil",[],function(){function b(a){return("string"===typeof a?a:a&&a.type)||""}var c={isNumericField:function(a){switch(b(a)){case "esriFieldTypeSmallInteger":case "esriFieldTypeInteger":return"i";case "esriFieldTypeSingle":case "esriFieldTypeDouble":return"f"}return!1},isStringField:function(a){return"esriFieldTypeString"==b(a)||!1},isDateField:function(a){return"esriFieldTypeDate"==b(a)||!1}},e=/DISTANCE$/;c.isDistanceField=function(a){return e.test(b(a))};
+var f=/^(SHAPE__Area|SHAPE__Length)$/i;c.canShowField=function(a,d){if(!a||!a.name||"esriFieldTypeOID"===a.type)return!1;if("esriFieldTypeDate"===a.type)return"d";var b=c.isNumericField(a)||c.isStringField(a);if("f"===b&&!1===a.editable&&f.test(a.name))return null;void 0===d&&(d=/^(OBJECTID|OID|FID)$/i);return d&&d.test(a.name)?!1:!0===b?"s":b};c.createFieldInfo=function(a){var b=c.canShowField(a);a={fieldName:a.name,label:a.alias||a.name,isEditable:!!a.editable,visible:!!b};switch(b){case "i":a.format=
+{places:0,digitSeparator:!0};break;case "f":a.format={digitSeparator:!0};break;case "s":a.stringFieldOption="textbox"}return a};return c});

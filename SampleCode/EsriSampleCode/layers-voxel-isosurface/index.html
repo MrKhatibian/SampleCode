@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Explore a VoxelLayer using isosurface | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .esri-legend {
+        width: 220px !important;
+      }
+      #infoDiv {
+        max-height: calc(100vh - 100px);
+        height: 100%;
+      }
+      .displaynone {
+        display: none;
+      }
+      .colorPickerContainer {
+        position: absolute;
+        z-index: 9999;
+        top: 20px;
+        right: 310px;
+      }
+      calcite-block {
+        margin: 0px;
+      }
+    </style>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30"></script>
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/VoxelLayer",
+        "esri/layers/voxel/VoxelIsosurface",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend",
+        "esri/Color"
+      ], (SceneView, WebScene, VoxelLayer, VoxelIsosurface, Expand, Legend, Color) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "3a922ed0c7a8489ea4fbe8747ac560ba"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "bottom-left");
+        view.ui.add("infoDiv", "top-right");
+        map.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          view.whenLayerView(vxlLayer).then((layerView) => {
+            const addIsosurface = document.getElementById("addIsosurfaceButton");
+            const newIsosurfaceItemsList = document.getElementById("newIsosurfaceItemsList");
+            const existingIsosurfaceList = document.getElementById("existingIsosurfaceList");
+            vxlLayer.renderMode = "surfaces";
+            vxlLayer.enableIsosurfaces = true;
+            let currentVariableId = null;
+            let contItem = 0;
+            let isosurfaceCount = 0;
+            let currentVariableStyle = null;
+            let selectedIsosurface = null;
+            let isosurfaceList = [];
+            currentVariableStyle = vxlLayer.getVariableStyle(null);
+
+            isosurfaceCount = currentVariableStyle.isosurfaces.length;
+            const createIsosurfaceItem = function (isosurfaceIndex, isosurface, addNew, calcitelist) {
+              //create a block per each isosurface
+              const itemBlock = document.createElement("calcite-block");
+              itemBlock.collapsible = false;
+              itemBlock.open = true;
+              itemBlock.heading = "";
+              calcitelist.appendChild(itemBlock);
+
+              const itemLabel = document.createElement("calcite-label");
+              const itemSwitch = document.createElement("calcite-switch");
+              itemLabel.layout = "inline-space-between";
+              itemLabel.innerHTML = "Color Locked";
+              itemSwitch.checked = isosurface.colorLocked;
+              itemBlock.appendChild(itemLabel);
+              itemLabel.appendChild(itemSwitch);
+
+              const itemSlider = document.createElement("calcite-slider");
+              itemSwitch.classList.add("color-locked-action");
+              itemLabel.classList.add("color-locked-action");
+              itemSlider.id = "isosurfaceValueSlider_" + isosurfaceIndex.toString();
+              //Isosurface can have a value less than the minimum value or greater than the maximum value of the stretch range.
+              const range = currentVariableStyle.transferFunction.stretchRange;
+              const min = Math.min(Math.round(range[0]), Math.round(range[1]));
+              const max = Math.max(Math.round(range[0]), Math.round(range[1]));
+              itemSlider.min = min > isosurface.value ? isosurface.value : min;
+              itemSlider.max = max < isosurface.value ? isosurface.value : max;
+              itemSlider.value = isosurface.value;
+              itemSlider.labelHandles = true;
+              itemSlider.step = max - min < 10 ? 0.2 : 1;
+              itemSlider.addEventListener("calciteSliderInput", function (e) {
+                const index = isosurfaceList.map((obj) => obj.sliderId).indexOf(itemSlider.id);
+                selectedIsosurface = currentVariableStyle.isosurfaces.getItemAt(index);
+                selectedIsosurface.value = itemSlider.value;
+                colorPicker.value = selectedIsosurface.color.toHex();
+              });
+              if (addNew) {
+                const itemDeleteAction = document.createElement("calcite-action");
+                itemDeleteAction.icon = "trash";
+                itemDeleteAction.slot = "control";
+                itemDeleteAction.onclick = function () {
+                  const index = isosurfaceList.map((obj) => obj.sliderId).indexOf(itemSlider.id);
+                  currentVariableStyle.isosurfaces.removeAt(index);
+                  isosurfaceList.splice(index, 1);
+                  itemBlock.remove();
+                  isosurfaceCount = currentVariableStyle.isosurfaces.length;
+                  //The maximum number of isosurfaces that can be created is 4.
+                  addIsosurface.disabled = isosurfaceCount < 4 ? false : true;
+                };
+                itemBlock.appendChild(itemDeleteAction);
+                currentVariableStyle.isosurfaces.add(isosurface);
+              }
+              //itemList.appendChild(itemSlider);
+              itemBlock.appendChild(itemSlider);
+              isosurfaceList.push({
+                id: isosurfaceIndex,
+                sliderId: itemSlider.id
+              });
+              isosurfaceCount = currentVariableStyle.isosurfaces.length;
+              addIsosurface.disabled = isosurfaceCount < 4 ? false : true;
+              itemSwitch.addEventListener("calciteSwitchChange", function () {
+                //A voxel layer can have multiple isosurface with a maximum of 4 and is stored as an array.
+                //If an isosurface needs to be modified or removed, it is important to always check the index because it can change (e.g. removing an isosurface in the middle of the array).
+                //Having a separate array variable that stores all the isosurfaces can help to specify which index to use.*/
+                const index = isosurfaceList.map((obj) => obj.sliderId).indexOf(itemSlider.id);
+                selectedIsosurface = currentVariableStyle.isosurfaces.getItemAt(index);
+                selectedIsosurface.colorLocked = !selectedIsosurface.colorLocked;
+                let rect = this.getBoundingClientRect();
+                //If the isosurface colorLocked is true, the isosurface will use the chosen color from the color picker window.
+                //If the isosurface colorLocked is false, it will use the color from the colorStops.
+                if (selectedIsosurface.colorLocked) {
+                  colorPicker.style = `position:absolute;top:${rect.bottom}px;right:${
+                    window.innerWidth - rect.right
+                  }px;z-index:999`;
+                  colorPicker.value = selectedIsosurface.color.toHex();
+                } else {
+                  colorPicker.style = "display:none";
+                }
+              });
+              if (!addNew && isosurfaceIndex === 0) {
+                selectedIsosurface = !isosurface.colorLocked ? isosurface : selectedIsosurface;
+                colorPicker.value = isosurface.color.toHex();
+              }
+            };
+            const resetIsosurface = function () {
+              isosurfaceList = [];
+              while (existingIsosurfaceList.hasChildNodes()) {
+                existingIsosurfaceList.removeChild(existingIsosurfaceList.firstChild);
+              }
+              while (newIsosurfaceItemsList.hasChildNodes()) {
+                newIsosurfaceItemsList.removeChild(newIsosurfaceItemsList.firstChild);
+              }
+              for (let i = 0; i < isosurfaceCount; i++) {
+                createIsosurfaceItem(i, currentVariableStyle.isosurfaces.getItemAt(i), false, existingIsosurfaceList);
+              }
+              if (isosurfaceCount == 0) addIsosurface.disabled = false;
+            };
+            resetIsosurface();
+            addIsosurface.onclick = () => {
+              currentVariableStyle = vxlLayer.getVariableStyle(null);
+              isosurfaceCount = currentVariableStyle.isosurfaces.length;
+              if (isosurfaceCount <= 3) {
+                const range = currentVariableStyle.transferFunction.stretchRange;
+                const min = Math.min(Math.round(range[0]), Math.round(range[1]));
+                const max = Math.max(Math.round(range[0]), Math.round(range[1]));
+                let currentValue = Math.floor((min + max) / 2);
+                const lockedColor = vxlLayer.getColorForContinuousDataValue(
+                  vxlLayer.currentVariableId,
+                  currentValue,
+                  false
+                );
+                let newIsosurface = new VoxelIsosurface({
+                  value: currentValue,
+                  enabled: true,
+                  color: lockedColor,
+                  label: "Isosurface " + (isosurfaceCount + 1).toString()
+                });
+                createIsosurfaceItem(isosurfaceCount, newIsosurface, true, newIsosurfaceItemsList);
+              }
+            };
+            colorPicker.addEventListener("calciteColorPickerChange", function (e) {
+              selectedIsosurface.color = colorPicker.value;
+            });
+            /**
+             * Color picker window will close when clicking or scrolling outside the window.
+             **/
+            document.addEventListener("click", (e) => {
+              if (e.target !== colorPicker && !e.target.classList.contains("color-locked-action")) {
+                colorPicker.style = "display:none";
+              }
+            });
+            document.addEventListener(
+              "scroll",
+              (e) => {
+                if (e.target !== colorPicker && !e.target.classList.contains("color-locked-action")) {
+                  colorPicker.style = "display:none";
+                }
+              },
+              true
+            );
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv" heading="Temperature Prediction Isosurface">
+      <div id="content">
+        <div id="existingIsosurfaceList"></div>
+        <div id="newIsosurfaceItemsList"></div>
+        <div style="padding: 10px; background-color: var(--calcite-color-foreground-1)">
+          <calcite-button width="full" id="addIsosurfaceButton" disabled="true">Add Isosurface</calcite-button>
+        </div>
+      </div>
+    </calcite-panel>
+    <calcite-color-picker id="colorPicker" style="display: none" allow-empty hide-channels hide-saved scale="s">
+    </calcite-color-picker>
+  </body>
+</html>
+

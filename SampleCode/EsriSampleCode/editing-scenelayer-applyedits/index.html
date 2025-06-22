@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>SceneLayer upload 3D models and applyEdits | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #view-div {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #view-div:not(.esri-view) * {
+        display: none;
+      }
+
+      calcite-notice {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      calcite-notice[open] {
+        animation-duration: 0.2s;
+        animation-name: slidein;
+      }
+
+      @keyframes slidein {
+        from {
+          opacity: 0;
+          transform: translateY(-30%);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0%);
+        }
+      }
+
+      #drop-zone {
+        position: relative;
+        display: flex;
+
+        aspect-ratio: 1;
+        height: 250px;
+        background-color: var(--calcite-color-foreground-1);
+        padding: 12px;
+
+        cursor: pointer;
+      }
+
+      #drop-zone div {
+        display: flex;
+        flex-direction: column;
+        place-content: center;
+        place-items: center;
+        flex: 1;
+
+        border: 1px dashed gray;
+        padding-top: 12px;
+      }
+
+      #drop-zone h1 {
+        color: -var(-calcite-ui-text-1);
+        font-size: var(--calcite-font-size-1);
+        font-weight: var(--calcite-font-weight-medium);
+        margin: 0;
+      }
+
+      #drop-zone section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        place-content: center;
+        place-items: center;
+      }
+
+      #drop-zone label {
+        opacity: 0;
+        position: absolute;
+        inset: 0;
+      }
+
+      #downloads {
+        display: flex;
+        background: white;
+        gap: 10px;
+        padding: 10px;
+
+        & a {
+          display: flex;
+          width: 200px;
+          height: 200px;
+        }
+      }
+
+      calcite-loader {
+        padding: 0;
+      }
+    </style>
+    <script>
+      require([
+        "esri/core/reactiveUtils",
+        "esri/layers/SceneLayer",
+        "esri/geometry/SpatialReference",
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/widgets/Sketch/SketchViewModel",
+        "esri/layers/GraphicsLayer",
+        "esri/geometry/Mesh",
+        "esri/Graphic",
+        "esri/widgets/Expand"
+      ], (
+        reactiveUtils,
+        SceneLayer,
+        SpatialReference,
+        WebScene,
+        SceneView,
+        SketchViewModel,
+        GraphicsLayer,
+        Mesh,
+        Graphic,
+        Expand
+      ) => {
+        const MAX_FILESIZE_MB = 50;
+        let isUploading = false;
+        let isUpdating = false;
+        /* scene setup */
+        /**
+         * to allow persistence of your models we assign a random id to every device using the app.
+         * this method is useful for demonstration purposes but should utilize proper authentication/authorization in a production application
+         **/
+        let deviceId = localStorage.getItem("deviceId");
+        if (deviceId === null) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem("deviceId", deviceId);
+        }
+
+        const webscene = new WebScene({
+          portalItem: {
+            id: "48a900de3c124a47993de5fe9090671d"
+          }
+        });
+
+        const view = new SceneView({
+          container: "view-div",
+          map: webscene
+        });
+        view.popup.defaultPopupTemplateEnabled = true;
+
+        const sketchLayer = new GraphicsLayer();
+        view.map.add(sketchLayer);
+
+        const sketchVM = new SketchViewModel({
+          layer: sketchLayer,
+          view: view
+        });
+
+        // enables snapping on the site layer
+        view.when(async () => {
+          const siteLayer = view.map.layers
+            .filter((layer) => layer.title === "EditableFeatures3DObjectProjectSite")
+            .getItemAt(0);
+          sketchVM.snappingOptions = {
+            enabled: true,
+            featureSources: [{ layer: siteLayer, enabled: true }],
+            snappingDistance: 50
+          };
+        });
+        /* scene setup */
+
+        let sceneLayer;
+
+        /* uploading */
+        /**
+         * This section sets up the functionality to upload a 3d model from the users file system.
+         *
+         * It registers event handlers on the #drop-zone element, to handle
+         */
+        view.when(async () => {
+          sceneLayer ??= view.map.layers.filter((layer) => layer.title === "EditableFeatures3DObject").getItemAt(0);
+
+          sceneLayer.popupEnabled = false;
+
+          sceneLayer.definitionExpression = `deviceId = '${deviceId}' OR deviceId = 'initial-model'`;
+
+          const dropZone = document.getElementById("drop-zone");
+          // this makes sure we prevent the browser default drag over behaviour
+          // see mdn: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop#define_the_drop_zone
+          dropZone.addEventListener("dragover", (event) => event.preventDefault());
+          dropZone.addEventListener("drop", async (event) => {
+            // Prevent the browsers default drop behavior, so it doesn't try to open the file
+            event.preventDefault();
+
+            // Makes sure the items we're dealing with are a File
+            const files = event.dataTransfer.items
+              ? Array.from(event.dataTransfer.items)
+                  .filter((item) => item.kind === "file")
+                  .map((item) => item.getAsFile())
+              : Array.from(event.dataTransfer.files);
+            const [file] = files;
+
+            if (file) await disableUI(uploadModel(sceneLayer, file));
+          });
+
+          // allows users to also browse for files
+          const input = dropZone.querySelector("input");
+          input.addEventListener("change", async (event) => {
+            const input = event.target;
+            const [file] = Array.from(input.files);
+            if (file) await disableUI(uploadModel(sceneLayer, file));
+          });
+          dropZone.querySelector("calcite-button").addEventListener("click", () => input.click());
+        });
+
+        /**
+         * takes a file and a scene layer, creates a mesh and places it into the scene
+         */
+        async function uploadModel(sceneLayer, file) {
+          if (isUploading) return;
+          const bytes = file.size;
+          const mb = bytes / (1024 * 1024);
+
+          if (mb > MAX_FILESIZE_MB) {
+            showSizeWarning();
+          } else {
+            try {
+              isUploading = true;
+              // Make sure the scene layer has loaded before doing anything
+              if (!sceneLayer.loaded) await sceneLayer.load();
+
+              const mesh = await sceneLayer.convertMesh([file]);
+
+              await mesh.load();
+              // Add the graphic to the sketch-viewmodel to enable editing
+              sketchVM.place(mesh, {
+                graphicProperties: {
+                  layer: sketchLayer,
+                  attributes: { deviceId: deviceId }
+                }
+              });
+            } finally {
+              isUploading = false;
+            }
+          }
+        }
+        /* uploading */
+
+        /* editing */
+        view.when(async () => {
+          /**
+           * Sets up listeners on the SketchViewModel to persist edits to the model on creation and updates
+           */
+
+          sceneLayer ??= view.map.layers.filter((layer) => layer.title === "EditableFeatures3DObject").getItemAt(0);
+
+          sketchVM.on("update", async (event) => {
+            if (isUpdating) return sketchVM.cancel();
+
+            const objectIdField = sceneLayer.objectIdField;
+
+            /**
+             * Synchronizes the hiding/showing of the model on the scene and sketch layers,
+             * so that the model is always visible in at least one of the layers
+             */
+            if (event.state === "start") {
+              const [graphic] = event.graphics;
+              /**
+               * After the graphic is added to the sketch layer the layerview goes through an update cycle
+               *
+               * It updates once, and when it stops updating the graphic is visible so we can safely exclude the scene layer feature
+               *
+               * This is needed to prevent flickering when selecting a model that has not been interacted with already
+               */
+              const sv = view.layerViews.filter((view) => view.layer === sketchLayer).getItemAt(0);
+
+              await reactiveUtils.whenOnce(() => sv.updating);
+              await reactiveUtils.whenOnce(() => !sv.updating);
+
+              sceneLayer.excludeObjectIds.add(graphic.attributes[objectIdField]);
+            }
+
+            if (event.state === "complete" && !event.aborted) {
+              const graphic = event.graphics[0];
+
+              /**
+               *  if the graphic has an object id it means it has already been added to the scene layer and we should use `updateFeatures` instead of `addFeatures`
+               */
+              const hasBeenAdded = graphic.attributes[objectIdField] != null;
+
+              isUpdating = true;
+              document.body.style.cursor = "progress";
+
+              const edits = hasBeenAdded ? { updateFeatures: [graphic] } : { addFeatures: [graphic] };
+
+              await sceneLayer
+                .applyEdits(edits)
+                .then(({ addFeatureResults }) => {
+                  if (!hasBeenAdded) {
+                    const id = addFeatureResults[0].objectId;
+
+                    /**
+                     * To allow further updates to the model, we need to associate the graphic that is on the sketch layer with the features object id
+                     *
+                     * We do this by adding the object id into the graphics attributes
+                     */
+                    graphic.attributes[objectIdField] = id;
+
+                    /**
+                     * To keep interactions snappy we hide the feature on the scene layer and instead use the graphic that is already present on the sketch layer
+                     *
+                     * The model is still in the scene layer, only hidden for the duration of this session
+                     */
+                    sceneLayer.excludeObjectIds.add(id);
+                  }
+                })
+                .finally(() => {
+                  document.body.style.cursor = "pointer";
+                  isUpdating = false;
+                });
+            }
+          });
+
+          sketchVM.on("create", async (event) => {
+            if (isUpdating) return sketchVM.cancel();
+            if (event.state === "complete" && !event.aborted) {
+              sketchVM.update(event.graphic);
+            }
+          });
+
+          sketchVM.on("delete", async (event) => {
+            isUpdating = true;
+            document.body.style.cursor = "wait";
+            await sceneLayer
+              .applyEdits({
+                deleteFeatures: event.graphics
+              })
+              .finally(() => {
+                document.body.style.cursor = "pointer";
+                isUpdating = false;
+              });
+          });
+        });
+        /* editing */
+
+        /* ui setup */
+        /**
+         * Various ui related things, like hiding the loader and settings up the download functionality for the premade models
+         */
+        view.when(async () => {
+          loader.hidden = true;
+        });
+        view.ui.add("panel", "bottom-right");
+
+        const expand = new Expand({
+          expandIcon: "download",
+          content: document.querySelector("#downloads"),
+          expanded: true,
+          view: view
+        });
+        view.ui.add(expand, "bottom-left");
+        /* ui setup */
+
+        /* error, loading state manipulation */
+        const loader = document.getElementById("loader");
+        const sizeWarning = document.getElementById("size-warning");
+
+        async function disableUI(action) {
+          document.body.style.cursor = "progress";
+          loader.hidden = false;
+
+          action.finally(() => {
+            document.body.style.cursor = "pointer";
+            loader.hidden = true;
+          });
+        }
+
+        function showSizeWarning() {
+          sizeWarning.open = true;
+        }
+        /* error, loading state manipulation */
+
+        view.on("click", async (event) => {
+          // disable the click handler when there are updates being processed
+          if (isUploading || isUpdating) return;
+
+          // Listen for the click event
+          const hitTestResults = await view.hitTest(event);
+          // Search for features where the user clicked
+          if (hitTestResults.results) {
+            const graphicHits = hitTestResults.results.filter((result) => "graphic" in result);
+
+            const [userGraphic] = graphicHits
+              .map((result) => result.graphic)
+              .filter((graphic) => graphic.attributes?.deviceid === deviceId);
+
+            if (userGraphic) {
+              if (!sketchLayer.graphics.includes(userGraphic)) {
+                const objectIdField = sceneLayer.objectIdField;
+
+                const query = sceneLayer.createQuery();
+                query.returnGeometry = true;
+                query.objectIds = [userGraphic.attributes[objectIdField]];
+
+                const res = await sceneLayer.queryFeatures(query);
+                const mesh = res.features.find((feature) => feature.geometry.type === "mesh");
+
+                if (mesh != null) {
+                  // the default graphic symbol will color the mesh orange. We simply give it an  empty fill so the look of the graphic is not changed.
+                  mesh.symbol = {
+                    type: "mesh-3d", // autocasts as new PolygonSymbol3D()
+                    symbolLayers: [
+                      {
+                        type: "fill" // autocasts as new FillSymbol3DLayer()
+                      }
+                    ]
+                  };
+
+                  sketchLayer.add(mesh);
+                  sketchVM.update(mesh);
+                }
+              }
+            }
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="view-div">
+      <calcite-panel id="panel">
+        <!-- loading indicator -->
+        <calcite-scrim id="loader" loading></calcite-scrim>
+
+        <!-- area to upload files -->
+        <div id="drop-zone">
+          <div>
+            <h1>Add your own model</h1>
+            <label>
+              Browse for files
+              <input type="file" />
+            </label>
+            <section aria-hidden="true">
+              <calcite-button
+                id="upload-model-button"
+                icon-end="files"
+                label="Browse files"
+                alignment="icon-start-space-between"
+              >
+                Browse</calcite-button
+              >
+              <p>or drag a file here</p>
+            </section>
+          </div>
+        </div>
+      </calcite-panel>
+
+      <div id="downloads">
+        <a download href="https://developers.arcgis.com/javascript/latest/sample-code/editing-scenelayer-applyedits/live/Tower.glb">
+          <calcite-card>
+            <img slot="thumbnail" alt="" src="https://developers.arcgis.com/javascript/latest/sample-code/editing-scenelayer-applyedits/live/Tower.png" />
+            <div slot="title">
+              <span slot="title">Tower</span>
+              <calcite-icon scale="s" icon="arrow-bold-down"></calcite-icon>
+            </div>
+          </calcite-card>
+        </a>
+        <a download href="https://developers.arcgis.com/javascript/latest/sample-code/editing-scenelayer-applyedits/live/GreenBuilding.fbx">
+          <calcite-card>
+            <img slot="thumbnail" alt="" src="https://developers.arcgis.com/javascript/latest/sample-code/editing-scenelayer-applyedits/live/GreenBuilding.png" />
+            <div slot="title">
+              <span slot="title">Building</span>
+              <calcite-icon scale="s" icon="arrow-bold-down"></calcite-icon>
+            </div>
+          </calcite-card>
+        </a>
+      </div>
+    </div>
+
+    <calcite-notice id="size-warning" kind="danger" icon closable>
+      <div slot="title">File was to large</div>
+      <div slot="message">The uploaded file can be 50Mb maximum</div>
+    </calcite-notice>
+  </body>
+</html>
+

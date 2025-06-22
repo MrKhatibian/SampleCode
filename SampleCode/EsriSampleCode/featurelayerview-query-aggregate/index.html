@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Aggregate spatial statistics | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+          padding: 0;
+          margin: 0;
+          height: 100%;
+          width: 100%;
+      }
+
+      calcite-shell-panel {
+        --calcite-shell-panel-max-width: 345px;
+        --calcite-shell-panel-min-width: 345px;
+      }
+
+      .content-container {
+        overflow-x: hidden;
+      }
+
+      .esri-feature {
+        letter-spacing: 0em;
+        line-height: 1.55rem;
+        font-feature-settings: "liga"1, "calt"0;
+        background: #fff;
+        padding: 1em;
+      }
+    </style>
+    <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Legend",
+      "esri/widgets/Expand",
+      "esri/widgets/Feature",
+      "esri/core/reactiveUtils"
+    ], (Map, MapView, FeatureLayer, Legend, Expand, Feature, reactiveUtils) =>
+      (async () => {
+        let chart;
+        let groupField = "REGION";
+        let statsField = "GIS_ACRES";
+
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "6e8c367e59ab425a955623bba36e8e1b"
+          },
+          outFields: ["*"],
+          blendMode: "multiply",
+          effect: "drop-shadow(2px, 2px, 2px)",
+          title: "National Forests By Regions"
+        });
+
+        const map = new Map({
+          basemap: {
+            portalItem: {
+              id: "eedd0d4fff1347dcb188c09832e640b4"
+            }
+          },
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          scale: 73957191,
+          center: [-120, 38],
+          padding: {
+            right: 345
+          },
+          constraints: {
+            minScale: 73957191
+          }
+        });
+
+        const legendExpand = new Expand({
+          content: new Legend({
+            view
+          }),
+          expanded: false,
+          expandIcon: "legend",
+          expandTooltip: "Expand Legend"
+        });
+        view.ui.add(legendExpand, "top-left");
+
+        // Provide graphic to a new instance of a Feature widget
+        const feature = new Feature({
+          // graphic: graphic,
+          map: view.map,
+          spatialReference: view.spatialReference,
+          visible: false
+        });
+
+        view.ui.add(feature, "bottom-left");
+
+        const layerView = await view.whenLayerView(layer);
+        await reactiveUtils.whenOnce(() => !layerView.updating);
+
+        const aggregateForestDataByRegions = [];
+        await runStats();
+
+        // function runs once after when the app loads and runs stats query
+        // on the national forests layer to get count, total acres of forests
+        // in each region. It will also return convex-hull for each region so that
+        // they can be used to show the convex-hull of features in each stats group.
+        async function runStats() {
+
+          const consumeStatsByRegion = {
+            onStatisticField: statsField,
+            outStatisticFieldName: "totalAcresStatsField",
+            statisticType: "sum"
+          };
+
+          const forestsInRegion = {
+            onStatisticField: "OBJECTID",
+            outStatisticFieldName: "forestCountStatsField",
+            statisticType: "count"
+          };
+
+          const aggregatedConvex = {
+            statisticType: "convex-hull-aggregate",
+            outStatisticFieldName: "aggregateConvexHull"
+          };
+
+          const query = layer.createQuery();
+          query.groupByFieldsForStatistics = [groupField];
+          query.orderByFields = [`${groupField} desc`];
+          query.outStatistics = [
+            consumeStatsByRegion,
+            forestsInRegion,
+            aggregatedConvex
+          ];
+
+          const statsResults = await layerView.queryFeatures(query);
+
+
+          const regions = statsResults.features.map(function (feature, i) {
+            return feature.attributes[groupField];
+          });
+
+          const chartData = statsResults.features.map(function (feature, i) {
+            const region = {
+              extent: feature.aggregateGeometries.aggregateConvexHull,
+              region: feature.attributes[groupField],
+              count: feature.attributes.forestCountStatsField,
+              totalAcres: feature.attributes.totalAcresStatsField
+            };
+            aggregateForestDataByRegions.push(region);
+            return feature.attributes.totalAcresStatsField;
+          });
+          const chartBlock = document.getElementById("chart-block");
+          chartBlock.loading = false;
+          updateChart(regions, chartData);
+        }
+
+        let currentBiggestPark = null;
+        let previousRegion = "";
+
+        const factSection = document.getElementById("factSection");
+        factSection.addEventListener("calciteBlockSectionToggle", (event) => {
+          handleParkPopup();
+        });
+        const resultBlock = document.getElementById("resultsHeading");
+        const clearAction = document.getElementById("clearAction");
+
+        // this function is called when user hovers over the donut chart
+        // it will run stats on the region user is hovering over
+        // get the number of forests in the region and get the largest forest
+        function getForestStatsByRegion(data) {
+          // run the query only when user is hovering over a new region on the chart
+          if (data.region !== previousRegion) {
+            resultBlock.heading = `Region ${data.region}`;
+            resultBlock.disabled = false;
+            resultBlock.open = true;
+            clearAction.icon = "x";
+            clearAction.disabled = false;
+            clearAction.addEventListener("click", () => clearStatsInfo());
+
+            const queryBiggestForest = layer.createQuery();
+            queryBiggestForest.set({
+              geometry: data.extent,
+              orderByFields: [`${statsField} desc`],
+              returnGeometry: true,
+              num: 1
+            });
+
+            const totalAcres = parseInt(data.totalAcres).toLocaleString("en-US");
+
+            // query for the selected region's forests for region specific stats
+            layerView.queryFeatures(queryBiggestForest).then(async (results) => {
+              if (results.features.length) {
+                document.getElementById(
+                  "acreageCount"
+                ).innerHTML = `<b>${totalAcres}</b>`;
+                document.getElementById(
+                  "forestCount"
+                ).innerHTML = `<b>${data.count}</b>`;
+
+                currentBiggestPark = results.features[0];
+                if (factSection.open) {
+                  await handleParkPopup();
+                }
+
+                const card = document.createElement("calcite-card");
+                const cardTitle = document.createElement("span");
+                cardTitle.slot = "title";
+                cardTitle.innerHTML = currentBiggestPark.attributes.FORESTNAME;
+
+                const cardSubtitle = document.createElement("span");
+                cardSubtitle.slot = "subtitle";
+                cardSubtitle.innerHTML = `${currentBiggestPark.attributes.GIS_ACRES.toLocaleString("en-US")} acres`;
+
+                const button = document.createElement("calcite-button");
+                button.innerHTML = `Visit ${currentBiggestPark.attributes.FORESTNAME}`;
+                button.iconEnd = `launch`;
+                button.target = "_blank";
+                button.width = "full";
+                button.value = currentBiggestPark;
+                button.href = currentBiggestPark.attributes.url;
+                button.slot = "footer-trailing";
+
+                factSection.innerHTML = "";
+                factSection.text = `Highlight largest forest in region ${data.region}`;
+                card.appendChild(button);
+                card.appendChild(cardTitle);
+                card.appendChild(cardSubtitle);
+                factSection.appendChild(card);
+              }
+            });
+          }
+          previousRegion = data.region;
+        }
+
+        // this function is called once after the aggregate spatial statistics runs
+        // show the total acres of forests in each region in the chart
+        function updateChart(regions, chartData) {
+          // Get the canvas element and render the chart in it
+          const canvasElement = document.getElementById("chart");
+          chart = new Chart(canvasElement.getContext("2d"), {
+            type: "doughnut",
+            data: {
+              labels: regions,
+              datasets: [
+                {
+                  backgroundColor: [
+                    "#64bfae",
+                    "#b277b0",
+                    "#b8d161",
+                    "#49b1d8",
+                    "#f17474",
+                    "#fda853",
+                    "#f8a1e0",
+                    "#ffe569",
+                    "#c69a6f"
+                  ],
+                  borderWidth: 0,
+                  data: chartData
+                }
+              ]
+            },
+            options: {
+              responsive: false,
+              legend: {
+                display: false
+              },
+              title: {
+                display: false
+              },
+              tooltips: {
+                callbacks: {
+                  label: (tooltipItem, data) => {
+                    const acres =
+                      data.datasets[tooltipItem.datasetIndex].data[
+                        tooltipItem.index
+                      ];
+                    return (
+                      "Region: " + data.labels[tooltipItem.index] + " Total acres: " + parseInt(acres).toLocaleString("en-US")
+                    );
+                  }
+                }
+              }
+            }
+          });
+
+          async function updateMapForSelectedRegion(data) {
+            view.graphics.removeAll();
+            view.graphics.add({
+              geometry: data.extent,
+              symbol: {
+                type: "simple-fill",
+                color: [0, 0, 0, 0],
+                outline: {
+                  width: "3px",
+                  color: "magenta"
+                }
+              }
+            });
+            getForestStatsByRegion(data);
+
+            layerView.featureEffect = {
+              filter: {
+                where: `${groupField} = '${data.region}'`
+              },
+              excludedEffect: "blur(0pt) opacity(0.5) grayscale(1)",
+              includedEffect: "drop-shadow(3pt 2pt 2pt rgba(50, 50, 50, 0.5))"
+            };
+          }
+
+
+          // Add the convex hull of grouped forests for that region
+          // set a featureffect on the layerview
+          // run stats on forests of the clicked region
+          canvasElement.addEventListener("mousemove", async () => {
+            const data = await getRegionFromChart(event);
+            if (data) {
+              await updateMapForSelectedRegion(data);
+            }
+          });
+        }
+
+
+        // runs when user clicks on the largest forest stats
+        let highlight;
+        async function handleParkPopup() {
+          if (currentBiggestPark && factSection.open) {
+            if (!feature.visible) {
+              feature.visible = true;
+              feature.graphic = currentBiggestPark;
+              highlight = layerView.highlight(currentBiggestPark);
+            }
+
+            if (feature.graphic && feature.graphic.attributes.OBJECTID !== currentBiggestPark.attributes.OBJECTID){
+              highlight && highlight.remove();
+              feature.graphic = currentBiggestPark;
+              highlight = layerView.highlight(currentBiggestPark);
+            }
+          } else {
+            feature.visible = false;
+            highlight && highlight.remove();
+          }
+        }
+
+        // clear out region related graphics and stats when user is not hovering over the chart
+        function clearStatsInfo() {
+          layerView.featureEffect = null;
+          highlight && highlight.remove();
+          feature.visible = false;
+          view.graphics.removeAll();
+          resultBlock.heading = `No region selected`;
+          resultBlock.disabled = true;
+          resultBlock.open = false;
+          clearAction.icon = "blank";
+          clearAction.disabled = true;
+          clearAction.addEventListener("click", () => clearStatsInfo());
+          factSection.open = false;
+        }
+
+        // called when user hovers over the donut chart
+        async function getRegionFromChart(event) {
+          const activePoints = chart.getElementsAtEvent(event);
+          let selectedRegion = null;
+          if (activePoints[0]) {
+            const chartData = activePoints[0]["_chart"].config.data;
+            const idx = activePoints[0]["_index"];
+
+            const label = chartData.labels[idx];
+            myLabel = label;
+            const value = chartData.datasets[0].data[idx];
+
+            aggregateForestDataByRegions.forEach((data) => {
+              if (data.region === label) {
+                selectedRegion = data;
+              }
+            });
+          }
+          return selectedRegion;
+        }
+      })());
+    </script>
+</head>
+
+<body>
+  <calcite-shell>
+    <div id="viewDiv"></div>
+    <calcite-shell-panel slot="panel-end" width-scale="">
+      <calcite-panel heading="Total acreages of forests by region">
+        <calcite-block open loading id="chart-block">
+          <canvas id="chart" height="250" width="315" style="margin: 0 auto 1rem"></canvas>
+          <calcite-notice active width="full" scale="s">
+              <span slot="title">Instructions</span>
+              <div slot="message">
+                  Hover over the donut chart to see facts about forests in that
+                  region.
+              </div>
+          </calcite-notice>
+        </calcite-block>
+        <calcite-block disabled id="resultsHeading" heading="No region selected" summary="Forest facts">
+          <calcite-action disabled id="clearAction" slot="control" text="Clear" icon="blank">
+          </calcite-action>
+          <calcite-label layout="inline-space-between">Forests<span id="forestCount"></span></calcite-label>
+          <calcite-label layout="inline-space-between">Acres<span id="acreageCount"></span></calcite-label>
+          <calcite-block-section id="factSection" text="Highlight largest forest" toggle-display="switch">
+          </calcite-block-section>
+        </calcite-block>
+    </calcite-panel>
+    </calcite-shell-panel>
+  </calcite-shell>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/core/conversion/portalToEditorUtils/parsers/ImageParser",["../../ConversionUtil","./AlignParser","../../../annotations/supportClasses/DynamicBehaviors"],function(c,f,g){return{getElement:function(a,d){a=a.attributes;var e=d.processFileName(a.src),b={id:"img",fileName:e,circularMask:a.circularMask,scaleToCover:a.scaleToCover,style:{top:c.ptToPx(a.top)||0,left:c.ptToPx(a.left)||0,width:c.ptToPx(a.width),height:c.ptToPx(a.height),angle:Number(a.angle)||0,
+opacity:Math.min(1,Number(0===a.opacity?0:a.opacity||1)),zoom:a.zoom},dynamicBehavior:g.toSupportedValue(a.dynamicBehavior,a.isLogoPlaceholder)};b.isLogoPlaceholder=!!b.dynamicBehavior;f.parseAlign(a,b.style);1>d.revisionVersion&&(b.style.angle=c.ptToPx(b.style.angle),b.style.opacity=Math.min(1,c.ptToPx(b.style.opacity)));e&&d.putImageData(e,a.data);return b}}});

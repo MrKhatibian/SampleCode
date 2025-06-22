@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports"],function(b){function e(a,c,d){return null==a||a>=d&&(0===c||a<=c)}function f(a,c){return null!=a&&0<a||null!=c&&0<c}b.extractSafeScaleBounds=function(a){a=a.effectiveScaleRange;return{minScale:a?.minScale??0,maxScale:a?.maxScale??0}};b.highlightsSupported=function(a){return a&&"function"===typeof a.highlight};b.isInEffectiveScaleRange=function(a,c){if(c&&a){const {minScale:d,maxScale:g}=a;if(f(d,g))return e(c,d,g)}return!0};b.isScaleRangeActive=f;b.isSelectableLayerView2D=function(a){return null!=
+a&&"object"===typeof a&&"createQuery"in a&&"queryFeatures"in a&&"layer"in a&&"view"in a};b.occludeesSupported=function(a){return a&&"function"===typeof a.maskOccludee};b.scaleBoundsPredicate=e;b.validateScaleRange=function(a){return!a?.minScale||!a.maxScale||a.minScale>=a.maxScale};Object.defineProperty(b,Symbol.toStringTag,{value:"Module"})});

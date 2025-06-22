@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+
+    <title>LayerList widget with actions | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/core/reactiveUtils",
+        "esri/views/MapView",
+        "esri/layers/GroupLayer",
+        "esri/layers/MapImageLayer",
+        "esri/widgets/LayerList",
+        "esri/widgets/Slider"
+      ], (Map, reactiveUtils, MapView, GroupLayer, MapImageLayer, LayerList, Slider) => {
+        // Create layer showing sample data of the United States.
+        const USALayer = new MapImageLayer({
+          //url: "http://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer",
+          url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj_14030619/MapServer",
+          title: "US Sample Data"
+        });
+
+        // Create layer showing sample census data of the United States.
+        // Set visibility to false so it's not visible on startup.
+        const censusLayer = new MapImageLayer({
+          //url: "http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer",
+          url: "http://localhost:6080/arcgis/rest/services/SampleWorldCities/MapServer",          
+          title: "US Sample Census",
+          visible: false
+        });
+
+        // Create GroupLayer with the two MapImageLayers created above
+        // as children layers.
+        const demographicGroupLayer = new GroupLayer({
+          title: "US Demographics",
+          visible: true,
+          visibilityMode: "exclusive",
+          layers: [USALayer, censusLayer],
+          opacity: 0.75
+        });
+
+        // Create a map and add the group layer to it
+        const map = new Map({
+          basemap: "osm",
+          layers: [demographicGroupLayer]
+        });
+
+        // Add the map to a MapView
+        const view = new MapView({
+          center: [-98.5795, 39.8282],
+          zoom: 4,
+          container: "viewDiv",
+          map: map
+        });
+
+        // Creates actions in the LayerList.
+        async function defineActions(event) {
+          // The event object contains an item property.
+          // is is a ListItem referencing the associated layer
+          // and other properties. You can control the visibility of the
+          // item, its title, and actions using this object.
+          const { item } = event;
+
+          await item.layer.when();
+
+          if (item.title === "US Demographics") {
+            // An array of objects defining actions to place in the LayerList.
+            // By making this array two-dimensional, you can separate similar
+            // actions into separate groups with a breaking line.
+            item.actionsSections = [
+              [
+                {
+                  title: "Go to full extent",
+                  icon: "zoom-out-fixed",
+                  id: "full-extent"
+                },
+                {
+                  title: "Layer information",
+                  icon: "information",
+                  id: "information"
+                }
+              ],
+              [
+                {
+                  title: "Increase opacity",
+                  icon: "chevron-up",
+                  id: "increase-opacity"
+                },
+                {
+                  title: "Decrease opacity",
+                  icon: "chevron-down",
+                  id: "decrease-opacity"
+                }
+              ]
+            ];
+          }
+
+          // Adds a slider for updating a group layer's opacity
+          if (item.children.length > 1 && item.parent) {
+            const slider = new Slider({
+              min: 0,
+              max: 1,
+              precision: 2,
+              values: [1],
+              visibleElements: {
+                labels: true,
+                rangeLabels: true
+              }
+            });
+
+            item.panel = {
+              content: slider,
+              icon: "sliders-horizontal",
+              title: "Change layer opacity"
+            };
+
+            // Watch the slider's values array and update the layer's opacity
+            reactiveUtils.watch(
+              () => slider.values.map((value) => value),
+              (values) => (item.layer.opacity = values[0])
+            );
+          }
+        }
+
+        view.when(() => {
+          // Create the LayerList widget with the associated actions
+          // and add it to the top-right corner of the view.
+          const layerList = new LayerList({
+            view: view,
+            // executes for each ListItem in the LayerList
+            listItemCreatedFunction: defineActions
+          });
+
+          // Event listener that fires each time an action is triggered
+          layerList.on("trigger-action", (event) => {
+            // The layer visible in the view at the time of the trigger.
+            const visibleLayer = USALayer.visible ? USALayer : censusLayer;
+
+            // Capture the action id.
+            const id = event.action.id;
+
+            if (id === "full-extent") {
+              // If the full-extent action is triggered then navigate
+              // to the full extent of the visible layer
+              view.goTo(visibleLayer.fullExtent).catch((error) => {
+                if (error.name != "AbortError") {
+                  console.error(error);
+                }
+              });
+            } else if (id === "information") {
+              // If the information action is triggered, then
+              // open the item details page of the service layer
+              window.open(visibleLayer.url);
+            } else if (id === "increase-opacity") {
+              // If the increase-opacity action is triggered, then
+              // increase the opacity of the GroupLayer by 0.25
+              if (demographicGroupLayer.opacity < 1) {
+                demographicGroupLayer.opacity += 0.25;
+              }
+            } else if (id === "decrease-opacity") {
+              // If the decrease-opacity action is triggered, then
+              // decrease the opacity of the GroupLayer by 0.25
+              if (demographicGroupLayer.opacity > 0) {
+                demographicGroupLayer.opacity -= 0.25;
+              }
+            }
+          });
+
+          // Add widget to the top right corner of the view
+          view.ui.add(layerList, "top-right");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+  <title>Summarize intersecting points in a popup | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
+  <script type="text/arcgis-arcade" id="crimes-arcade">
+    // Query the number of crimes that intersect a selected polygon
+    var crimes = Intersects(
+      $feature,
+      FeatureSetByName($map,"San Diego crimes", ["desc_", "is_night"])
+    );
+
+    // Queries the count of crimes grouped by the "desc_" field
+    var stats = GroupBy(crimes, ["desc_"],
+      [ { name: "total", expression: "1", statistic: "count" },
+        { name: "night_avg", expression: "is_night", statistic: "avg" }
+      ]
+    );
+
+    // Orders the results in descending order by the total count
+    // excludes crimes that don't have a classification
+    var topCrimes = Top(OrderBy(Filter(stats, "desc_ <> ''"), "total desc"), 3);
+
+    var output = "";
+    if(Count(topCrimes) == 0){
+      return "No crimes committed in this area";
+    }
+    var num = 0;
+    // Format the results for display
+    for(var item in topCrimes){
+      num++;
+      var num_crimes = item.total;
+      var crimeType = item["desc_"];
+
+      // The isNight field has values of either 1 or 0.
+      // If the average value is high, then most crimes
+      // occurred at night. If the average is low, then
+      // the crimes typically occurred during daytime hours.
+      var timeOfDay = When(
+        item.night_avg >= 0.6, "at night",
+        item.night_avg <= 0.4, " during the daytime hours",
+      " at both night and day");
+
+      // Display crime type with count using template literals
+      output += `${num}. ${crimeType}
+        -- Total offenses: ${Text(num_crimes, "#,###")}
+        -- Most crimes were reported ${timeOfDay}
+
+        `;
+    }
+    return output;
+  </script>
+
+  <script type="text/javascript">
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Legend"
+    ], 
+    (
+      Map,
+      MapView,
+      FeatureLayer,
+      Legend
+    ) => {
+
+      const crimes = new FeatureLayer({
+        title: "San Diego crimes",
+        portalItem: {
+          id: "bc1959d9b378482091445ab89865bc42"
+        },
+        visible: false
+      })
+
+      const arcadeScript = document.getElementById("crimes-arcade").text;
+
+      const blockGroups = new FeatureLayer({
+        title: "U.S. Census Block Groups",
+        portalItem: {
+          id: "181b322639d44fcba6e37d8b82910daf"
+        },
+        popupTemplate: {
+          title: "Tract: {Tract}, Block Group: {BLKGRP}",
+          content: "Top 3 crimes: <br\><br\>" +
+            "{expression/top-crimes}",
+          expressionInfos: [{
+            name: "top-crimes",
+            title: "Top crimes",
+            expression: arcadeScript
+          }]
+        }
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: new Map({
+          basemap: "streets-night-vector",
+          layers: [ blockGroups, crimes]
+        }),
+        center: [ -117.139, 32.710 ],
+        zoom: 13,
+        highlightOptions: {
+          fillOpacity: 0.5,
+          haloColor: "white"
+        },
+        popup: {
+          dockEnabled: true,
+          dockOptions: {
+            breakpoint: false,
+            position: "top-right"
+          }
+        },
+        constraints: {
+          minZoom: 10
+        }
+      });
+
+      view.ui.add(new Legend({ view: view }), "bottom-left");
+    });
+  </script>
+
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
+

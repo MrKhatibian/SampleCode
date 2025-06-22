@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>FloorFilter widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/widgets/FloorFilter"
+      ], function(
+        WebMap,
+        MapView,
+        FloorFilter
+      ) {
+        const webmap = new WebMap({
+          portalItem: {
+            id: "f133a698536f44c8884ad81f80b6cfc7"
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: webmap
+        });
+
+        view.when(() => {
+          // Initialize the FloorFilter widget
+          const floorFilter = new FloorFilter({
+            view: view
+          });
+
+          // Add the FloorFilter to the view
+          view.ui.add(floorFilter, "top-trailing");
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+
+</html>
+

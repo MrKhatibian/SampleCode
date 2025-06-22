@@ -1,0 +1,6 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/core/annotations/shape/ShapeJsonUtil",["dojo/_base/lang"],function(d){function f(a){h.forEach(function(b){var c=a[b];void 0!==c&&("string"===typeof c&&g.test(c)&&(a[b]=c.replace(g,"")),a[b]=Number(a[b])||0)})}var e={},h="x y left top width height".split(" "),g=/px$/i;e.createShapeJsonFromShapeObj=function(a,b){if(a&&a.viewBox)return a={id:"shape",g:a.g,viewBox:d.mixin({},a.viewBox),preserveAspectRatio:a.preserveAspectRatio,isPlaceholder:a.isPlaceholder,
+style:d.mixin({top:a.x||0,left:a.y||0,width:a.viewBox.width||100,height:a.viewBox.height||100*a.viewBox.height/a.viewBox.width,zoom:void 0},a.style,b),showAsBar:a.showAsBar,bar_singleIcon:a.bar_singleIcon,bar_wholeIcons:a.bar_wholeIcons,bar_flowDirection:a.bar_flowDirection,bar_spaceBetween:a.bar_spaceBetween,scaleByValue:a.scaleByValue,scale_minScale:a.scale_minScale,scale_anchorPosition:a.scale_anchorPosition,useRange:a.useRange,rangeMin:a.rangeMin,rangeMax:a.rangeMax,showBackground:a.showBackground,
+backgroundStyle:d.mixin({},a.backgroundStyle)},f(a.viewBox),f(a.style),a};e.isEmptyShapeJson=function(a){return!a||!a.g||!a.g.length};return e});

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Adjust marker placement in polygon symbols | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #controls {
+        width: 350px;
+        overflow: scroll;
+        max-height: 90vh;
+      }
+
+      #styles {
+        display: inline-flex;
+        flex-wrap: wrap;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/widgets/Sketch/SketchViewModel",
+        "esri/symbols/WebStyleSymbol",
+        "esri/Map",
+        "esri/Graphic",
+        "esri/layers/GraphicsLayer",
+        "esri/views/MapView",
+        "esri/widgets/Expand",
+        "esri/request",
+        "esri/symbols/support/symbolUtils",
+        "esri/symbols/support/cimSymbolUtils"
+      ], (
+        SketchViewModel,
+        WebStyleSymbol,
+        Map,
+        Graphic,
+        GraphicsLayer,
+        MapView,
+        Expand,
+        esriRequest,
+        symbolUtils,
+        cimSymbolUtils,
+      ) => {
+        (async () => {
+          // global variables used to know which symbol/graphic is being updated
+          let currentSymbol, currentGraphic;
+          // define UI properties
+          const sizeSlider = document.getElementById("sizeSlider");
+          const colorInput = document.getElementById("colorInput");
+          const randomnessSlider = document.getElementById("randomness");
+          const stepXSlider = document.getElementById("stepX");
+          const stepYSlider = document.getElementById("stepY");
+          const shiftOddRows = document.getElementById("shiftOddRows");
+          const gridType = document.getElementById("gridType");
+
+          // define styleUrl for web styles
+          const styleUrl =
+            "https://arcgis.com/sharing/rest/content/items/c4d80992510449289edc5cc0db28d5c0";
+
+          const graphicsLayer = new GraphicsLayer(); // create graphics layer for sketch vm
+          // create initial graphic to be displayed on load
+          const initialGraphic = new Graphic({
+            geometry: {
+              type: "polygon",
+              spatialReference: {
+                latestWkid: 3857,
+                wkid: 102100
+              },
+              rings: [
+                [
+                  [-13380279.88905137, 4165960.8365862104],
+                  [-13288414.524338264, 4131424.3627700135],
+                  [-13293646.728499025, 4154121.6627771994],
+                  [-13242201.473350616, 4145964.454649043],
+                  [-13233925.373545896, 4130808.0145839285],
+                  [-13182077.778961495, 4121750.0027955296],
+                  [-13177349.282873845, 4095139.3546090256],
+                  [-13288521.416745005, 4081303.6739865094],
+                  [-13326481.80662606, 4091665.2020988218],
+                  [-13335721.729584312, 4115731.669178336],
+                  [-13380279.88905137, 4165960.8365862104]
+                ]
+              ]
+            },
+            symbol: await new WebStyleSymbol({
+              styleUrl: styleUrl + "/data",
+              name: "Mountains"
+            }).fetchCIMSymbol()
+          });
+          graphicsLayer.add(initialGraphic);
+
+          const map = new Map({
+            basemap: {
+              portalItem: {
+                id: "f35ef07c9ed24020aadd65c8a65d3754" // antique map
+              }
+            },
+            layers: [graphicsLayer]
+          });
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-118.43098, 33.80684],
+            zoom: 8
+          });
+
+          const graphicsLayerView = await view.whenLayerView(graphicsLayer);
+          graphicsLayerView.highlightOptions = {
+            fillOpacity: 0
+          };
+ 
+          // create the sketch view model to allow for drawing/updating graphics in the map
+          const sketchVM = new SketchViewModel({
+            view: view,
+            layer: graphicsLayer
+          });
+          sketchVM.on("update", (event) => {
+            currentGraphic = event.graphics[0]; // set the currentGraphic to the graphic being updated
+            currentSymbol = currentGraphic.symbol; // set the current symbol based on the graphic's symbol
+            if (event.state == "start") {
+              configureProperties(currentSymbol); // update the UI based on the current symbol
+            }
+            if (event.state == "complete") {
+              currentGraphic = null; // set the current graphic to null once update is complete
+            }
+          });
+          sketchVM.on("create", (event) => {
+            currentGraphic = event.graphic; // set the currentGraphic to the graphic being created
+            if (event.state == "complete" || event.state == "cancel") {
+              currentGraphic = null; // set graphic to null once create is complete or cancelled
+            }
+          });
+
+          // Connecting the calcite actions with their corresponding SketchViewModel tools
+          const polygonBtn = document.getElementById("polygonBtn");
+          const circleBtn = document.getElementById("circleBtn");
+          const rectangleBtn = document.getElementById("rectangleBtn");
+          const clearBtn = document.getElementById("clearBtn");
+          const codeBtn = document.getElementById("codeSnippet");
+          codeBtn.onclick = () => showCIMJSON(currentSymbol);
+          polygonBtn.onclick = () => {
+            sketchVM.create("polygon");
+          };
+          circleBtn.onclick = () => {
+            sketchVM.create("circle");
+          };
+          rectangleBtn.onclick = () => {
+            sketchVM.create("rectangle");
+          };
+          clearBtn.onclick = () => {
+            sketchVM.layer.removeAll();
+          };
+
+          // Add the calcite-panel for the styler to an Expand to hide/show the panel
+          const stylerExpand = new Expand({
+            view: view,
+            content: document.getElementById("controls"),
+            expanded: true,
+            expandIcon: "pencil",
+            expandTooltip: "Open symbol styler"
+          });
+          view.when(() => {
+            view.ui.add(stylerExpand, "top-right"); // Add the calcite panel
+            initializeWebStyles(); // create the gallery of web style symbols
+          });
+
+          const configureMarkerPlacement = (symbol) => {
+            symbol.data.symbol.symbolLayers.forEach((symLayer) => {
+              if (symLayer.markerPlacement) {
+                let mp = symLayer.markerPlacement;
+                gridType.value = mp.gridType;
+                randomnessSlider.disabled = mp.gridType !== "Random"
+                randomnessSlider.value = mp.randomness ? mp.randomness : 0;
+                stepXSlider.value = Math.round(mp.stepX);
+                stepYSlider.value = Math.round(mp.stepY);
+                shiftOddRows.disabled = mp.gridType == "Fixed" ? false : true;
+                shiftOddRows.checked = mp.shiftOddRows == true ? true : false;
+              }
+            });
+          };
+
+          // scales the cim symbol based on the slider value
+          sizeSlider.addEventListener("calciteSliderChange", () =>{
+            let clonedSym = currentSymbol.clone();
+            cimSymbolUtils.scaleCIMSymbolTo(clonedSym, sizeSlider.value);
+            configureMarkerPlacement(clonedSym); // need to update marker placement after changing the size
+            handleSymbolUpdate(clonedSym);
+          });
+
+          // updates all the non color locked symbol layers of the cim symbol
+          colorInput.addEventListener("calciteInputInput", ()=>{
+            let clonedSym = currentSymbol.clone();
+            cimSymbolUtils.applyCIMSymbolColor(clonedSym, colorInput.value);
+            handleSymbolUpdate(clonedSym);
+          });
+
+          // updates the marker placement on the symbol based on the UI components
+          function updateMarkerPlacement() {
+            let clonedSym = currentSymbol.clone();
+            // disable randomness slider if gridType is not Random
+            randomnessSlider.disabled = gridType.value !== "Random";
+            // disable shift odd rows checkbox if gridType is not Fixed
+            shiftOddRows.disabled = gridType.value == "Fixed" ? false : true;
+            // find the symbol layer that has marker placement set,
+            //    and update based on the current UI values
+            clonedSym.data.symbol.symbolLayers.forEach((symLayer, index) => {
+              if (symLayer.markerPlacement) {
+                let mp = symLayer.markerPlacement;
+                mp.gridType = gridType.value;
+                mp.randomness = randomnessSlider.value;
+                mp.stepX = stepXSlider.value;
+                mp.stepY = stepYSlider.value;
+                mp.shiftOddRows = shiftOddRows.checked;
+                clonedSym.data.symbol.symbolLayers[index].markerPlacement = mp;
+              }
+            });
+            handleSymbolUpdate(clonedSym);
+          }
+          randomnessSlider.addEventListener(
+            "calciteSliderChange",
+            updateMarkerPlacement
+          );
+          stepXSlider.addEventListener(
+            "calciteSliderChange",
+            updateMarkerPlacement
+          );
+          stepYSlider.addEventListener(
+            "calciteSliderChange",
+            updateMarkerPlacement
+          );
+          shiftOddRows.addEventListener(
+            "calciteCheckboxChange",
+            updateMarkerPlacement
+          );
+          gridType.addEventListener(
+            "calciteSegmentedControlChange",
+            updateMarkerPlacement
+          );
+
+          // request web styles and create symbol gallery
+          function initializeWebStyles() {
+            esriRequest(styleUrl + "/data", {
+              responseType: "json"
+            }).then(function (response) {
+              // The requested data
+              let json = response.data;
+              json.items.forEach((item, index) => {
+                if (item.itemType == "polygonSymbol") {
+                  let card = document.createElement("calcite-card");
+                  let cardImage = document.createElement("img");
+                  cardImage.src = styleUrl + item.thumbnail.href.substring(1);
+                  cardImage.width = 50;
+                  card.appendChild(cardImage);
+                  card.style.width = "75px";
+                  // update the symbol when the item is clicked
+                  card.addEventListener("click", () =>
+                    updateWebStyle(item.name)
+                  );
+                  document.getElementById("styles").appendChild(card);
+                  // set first item as initial symbol
+                  if (index == 0) {
+                    updateWebStyle(item.name);
+                  }
+                }
+              });
+            });
+          }
+
+          function updateWebStyle(name) {
+            // create web style symbol
+            const webstyle = new WebStyleSymbol({
+              styleUrl: styleUrl + "/data",
+              name: name
+            });
+            // convert to a cim symbol so you have access to symbol properties
+            webstyle.fetchCIMSymbol().then((symbol) => {
+              currentSymbol = symbol;
+              if (currentGraphic) {
+                currentGraphic.symbol = symbol;
+              }
+              sketchVM.polygonSymbol = symbol; // apply the cim symbol to sketch VM
+              configureProperties(currentSymbol); // configure UI for the cim symbol
+            });
+          }
+
+          // configures the UI for the styler based on the current symbol
+          function configureProperties(symbol) {
+            updateSymbolPreview(symbol);
+            sizeSlider.value = cimSymbolUtils.getCIMSymbolSize(symbol); // set slider value based on current size of the symbol
+            colorInput.value = cimSymbolUtils.getCIMSymbolColor(symbol).toHex(); // set color input value based on color of the symbol
+            // configure marker placement inputs
+            configureMarkerPlacement(symbol);
+          }
+
+          // updates the symbol preview based on the given symbol
+          function updateSymbolPreview(symbol) {
+            document.getElementById("symbolImg").innerHTML = "";
+            symbolUtils.renderPreviewHTML(symbol, {
+              node: document.getElementById("symbolImg"),
+              size: { width: 25, height: 25 },
+              symbolConfig: { isSquareFill: true }
+            });
+          }
+
+          // updates current symbol, graphic, and preview after a symbol has been updated
+          function handleSymbolUpdate(sym) {
+            currentSymbol = sym;
+            if (currentGraphic) {
+              // if a graphic is currently being created or edited, apply the changes to that graphic's symbol
+              currentGraphic.symbol = sym;
+            }
+            sketchVM.polygonSymbol = sym; // update the polygon symbol on the sketchVM
+            updateSymbolPreview(sym); // update the symbol preview
+          }
+
+          // shows the cim json for the current symbol in a modal
+          function showCIMJSON(symbol) {
+            document.getElementById("cimJsonSlot").innerHTML = JSON.stringify(
+              symbol.data
+            );
+            document.getElementById("cimModal").open = true;
+          }
+        })();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="controls">
+      <calcite-block id="headingBlock" heading="Current symbol">
+        <span id="symbolImg" slot="icon"></span>
+        <calcite-action icon="polygon" title="Draw a polygon" scale="s" slot="control" id="polygonBtn"></calcite-action>
+        <calcite-action icon="rectangle" title="Draw a rectangle" scale="s" slot="control" id="rectangleBtn">
+        </calcite-action>
+        <calcite-action icon="circle" title="Draw a circle" scale="s" slot="control" id="circleBtn"></calcite-action>
+        <calcite-action icon="trash" title="Clear graphics" scale="s" slot="control" id="clearBtn"></calcite-action>
+        <calcite-action icon="code" title="Show CIM JSON" scale="s" slot="control" id="codeSnippet"></calcite-action>
+      </calcite-block>
+      <calcite-accordion selection-mode="single">
+        <calcite-accordion-item description="Choose a polygon style" expanded>
+          <div id="styles"></div>
+        </calcite-accordion-item>
+        <calcite-accordion-item description="Basic symbol properties">
+          <calcite-label
+            >Size
+            <calcite-slider id="sizeSlider" max="150" min="1" label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label
+            >Color
+            <calcite-input id="colorInput" type="color"></calcite-input>
+          </calcite-label>
+        </calcite-accordion-item>
+        <calcite-accordion-item description="Marker placement properties">
+          <calcite-label
+            >Grid type
+            <calcite-segmented-control id="gridType">
+              <calcite-segmented-control-item value="Fixed">Fixed</calcite-segmented-control-item>
+              <calcite-segmented-control-item value="Random" checked>Random</calcite-segmented-control-item>
+            </calcite-segmented-control>
+          </calcite-label>
+          <calcite-label
+            >Randomness
+            <calcite-slider id="randomness" min="1" max="100" value="100" step="1" label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label
+            >StepX
+            <calcite-slider id="stepX" min="1" max="250" label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label
+            >StepY
+            <calcite-slider id="stepY" min="1" max="250" label-handles></calcite-slider>
+          </calcite-label>
+          <calcite-label
+            >Shift odd rows
+            <calcite-checkbox id="shiftOddRows"></calcite-checkbox>
+          </calcite-label>
+        </calcite-accordion-item>
+      </calcite-accordion>
+    </div>
+    <calcite-modal id="cimModal">
+      <div slot="header">CIMSymbol JSON</div>
+      <code slot="content" id="cimJsonSlot"> </code>
+    </calcite-modal>
+  </body>
+</html>
+

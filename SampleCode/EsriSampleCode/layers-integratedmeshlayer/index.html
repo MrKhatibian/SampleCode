@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>IntegratedMeshLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #menu {
+        padding: 1em;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/WebScene",
+        "esri/views/SceneView",
+        "esri/layers/IntegratedMeshLayer",
+        "esri/widgets/LayerList",
+        "esri/widgets/Legend"
+      ], (WebScene, SceneView, IntegratedMeshLayer, LayerList, Legend) => {
+        /*************************************
+         * Load webscene with other layers
+         * (lakes, points of interest, roads)
+         *************************************/
+        const webscene = new WebScene({
+          portalItem: {
+            id: "95d51825f62b4b738a3a12d5e518dea3"
+          }
+        });
+
+        /*************************************
+         * Create IntegratedMeshLayer layer
+         * and add it to the webscene
+         ***********************************/
+        const layer = new IntegratedMeshLayer({
+          url: "https://tiles.arcgis.com/tiles/cFEFS0EWrhfDeVw9/arcgis/rest/services/Buildings_Frankfurt_2021/SceneServer",
+          // Frankfurt integrated mesh data provided by Aerowest GmbH
+          copyright: "Aerowest GmbH",
+          title: "Integrated Mesh Frankfurt"
+        });
+
+        webscene.add(layer);
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webscene
+        });
+
+        const layerList = new LayerList({
+          view: view
+        });
+        view.ui.add(layerList, "top-right");
+
+        const legend = new Legend({
+          view,
+          style: {
+            type: "card",
+            layout: "side-by-side"
+          }
+        });
+        view.ui.add(legend, "bottom-right");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

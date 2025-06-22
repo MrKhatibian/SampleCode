@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>MediaLayer with animated gif | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script>
+      require([
+        "esri/Graphic",
+        "esri/Map",
+        "esri/geometry/Extent",
+        "esri/geometry/Polygon",
+        "esri/layers/FeatureLayer",
+        "esri/layers/MediaLayer",
+        "esri/layers/support/ExtentAndRotationGeoreference",
+        "esri/layers/support/ImageElement",
+        "esri/renderers/SimpleRenderer",
+        "esri/symbols/SimpleFillSymbol",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/views/MapView"
+      ], (
+        Graphic,
+        Map,
+        Extent,
+        Polygon,
+        FeatureLayer,
+        MediaLayer,
+        ExtentAndRotationGeoreference,
+        ImageElement,
+        SimpleRenderer,
+        SimpleFillSymbol,
+        SimpleLineSymbol,
+        MapView
+      ) => {
+
+        // a url to an animated gif from the GOES satellite available from NOAA
+        const imageUrl = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/CONUS/GEOCOLOR/GOES16-CONUS-GEOCOLOR-625x375.gif";
+
+        // create an image element with a georeference
+        const imageElement = new ImageElement({
+          image: imageUrl,
+          georeference: new ExtentAndRotationGeoreference({
+            extent: new Extent({
+              spatialReference: {
+                wkid: 102498
+              },
+              xmin: -3640000,
+              ymin: 1590000,
+              xmax: 1400000,
+              ymax: 4600000
+            })
+          })
+        });
+
+        // set the animation options
+        imageElement.animationOptions = {
+          playing: true,
+          duration: 4,
+          repeatType: "oscillate",
+          repeatDelay: 0
+        };
+
+
+        // create a media layer with the image element as the source
+        const mediaLayer = new MediaLayer({
+          source: [imageElement]
+        });
+
+
+        // create a simple renderer for the states feature layer
+        const statesRenderer = new SimpleRenderer({
+          symbol: new SimpleFillSymbol({
+            color: "#98816c",
+            style: "solid",
+            outline: new SimpleLineSymbol({
+              width: 0.5,
+              color: "white"
+            })
+          })
+        });
+
+        // create a feature layer to show state boundaries
+        const statesFeatureLayer = new FeatureLayer({
+          portalItem: {
+            id: "56633b40c1744109a265af1dba673535"
+          },
+          minScale: 0,
+          popupEnabled: false,
+          renderer: statesRenderer
+        });
+
+        // create a graphic to use as the background for the map
+        const backgroundPolygonGraphic = new Graphic({
+          geometry: new Polygon({
+            rings: [
+              [
+                [-180, -90],
+                [-180, 90],
+                [180, 90],
+                [180, -90],
+                [-180, -90]
+              ]
+            ]
+          })
+        });
+
+        // create a simple renderer for the background feature layer
+        const backgroundRenderer = new SimpleRenderer({
+          symbol: new SimpleFillSymbol({
+            color: "#0c2a3b",
+            style: "solid",
+            outline: new SimpleLineSymbol({
+              width: 0.5,
+              color: "white"
+            })
+          })
+        });
+
+        // create a feature layer to show the background
+        const backgroundFeatureLayer = new FeatureLayer({
+          source: [backgroundPolygonGraphic],
+          objectIdField: "OBJECTID",
+          fields: [
+            {
+              name: "OBJECTID",
+              type: "oid"
+            }
+          ],
+          renderer: backgroundRenderer
+        });
+
+
+        // create a map with the media layer and the feature layers
+        const map = new Map({
+          basemap: "topo-vector",
+          layers: [backgroundFeatureLayer, statesFeatureLayer, mediaLayer]
+        });
+
+
+        // create a map view
+        new MapView({
+          background: {
+            color: "black"
+          },
+          center: [-87, 30],
+          map,
+          container: "viewDiv",
+          scale: 25000000,
+          spatialReference: {
+            wkid: 102498
+          }
+        });
+
+
+        // get a reference to the duration input
+        const durationInput = document.getElementById("durationInput");
+
+        // get a reference to the playing switch
+        const playingSwitch = document.getElementById("playingSwitch");
+
+        // get a reference to the repeat delay input
+        const repeatDelayInput = document.getElementById("repeatDelayInput");
+
+        // get a reference to the repeat type select
+        const repeatTypeSelect = document.getElementById("repeatTypeSelect");
+
+
+        // update the image element animation options when the playing switch is toggled
+        playingSwitch.addEventListener("calciteSwitchChange", () => {
+          imageElement.animationOptions = {
+            ...imageElement.animationOptions,
+            playing: !imageElement.animationOptions.playing
+          };
+        });
+
+
+        // update the image element animation options when the duration input changes
+        durationInput.addEventListener("calciteInputNumberChange", (event) => {
+          const target = event.target;
+          imageElement.animationOptions = {
+            ...imageElement.animationOptions,
+            duration: Number(target.value)
+          };
+        });
+
+        // update the image element animation options when the repeat type select changes
+        repeatTypeSelect.addEventListener("calciteSelectChange", (event) => {
+          const target = event.target;
+          imageElement.animationOptions = {
+            ...imageElement.animationOptions,
+            repeatType: target.value
+          };
+        });
+
+        // update the image element animation options when the repeat delay input changes
+        repeatDelayInput.addEventListener("calciteInputNumberChange", (event) => {
+          const target = event.target;
+          imageElement.animationOptions = {
+            ...imageElement.animationOptions,
+            repeatDelay: Number(target.value)
+          };
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-shell>
+      <calcite-shell-panel slot="panel-end" position="end">
+        <calcite-block open heading="Animation Options">
+          <calcite-label layout="inline">
+            <calcite-switch id="playingSwitch" checked> </calcite-switch>
+            playing
+          </calcite-label>
+
+          <calcite-label>
+            duration
+            <calcite-input-number id="durationInput" value="4" min="0" suffix-text="seconds"> </calcite-input-number>
+          </calcite-label>
+
+          <calcite-label>
+            repeatType
+            <calcite-select id="repeatTypeSelect">
+              <calcite-option value="loop">loop</calcite-option>
+              <calcite-option value="none">none</calcite-option>
+              <calcite-option value="oscillate" selected>oscillate</calcite-option>
+            </calcite-select>
+          </calcite-label>
+
+          <calcite-label>
+            repeatDelay
+            <calcite-input-number id="repeatDelayInput" value="0" suffix-text="seconds"> </calcite-input-number>
+          </calcite-label>
+        </calcite-block>
+      </calcite-shell-panel>
+      <div id="viewDiv"></div>
+    </calcite-shell>
+  </body>
+</html>
+

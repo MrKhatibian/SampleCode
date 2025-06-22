@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>FeatureTable with a map | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #viewDiv {
+        height: 50%;
+        width: 100%;
+      }
+
+      .container {
+        height: 50%;
+        width: 100%;
+      }
+    </style>
+    <script>
+      require([
+        "esri/WebMap",
+        "esri/views/MapView",
+        "esri/core/reactiveUtils",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/FeatureTable"
+      ], (WebMap, MapView, reactiveUtils, FeatureLayer, FeatureTable) => {
+        let selectionIdCount = 0; // The filtered selection id count
+        let candidate; // The graphic accessed via the view.click event
+
+        const webmap = new WebMap({
+          portalItem: {
+            id: "56cb159275394410a2a928be9c6f5c2a"
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: webmap,
+          center: [-72.92, 43.28],
+          zoom: 10,
+          popupEnabled: false
+        });
+
+        view.when(() => {
+          const featureLayer = webmap.layers.getItemAt(0); // Grabs the first layer in the map
+          featureLayer.title = "USFS Recreational areas";
+
+          // Create the feature table
+          const featureTable = new FeatureTable({
+            view: view, // Required for feature highlight to work
+            layer: featureLayer,
+            visibleElements: {
+              // Autocast to VisibleElements
+              menuItems: {
+                clearSelection: true,
+                refreshData: true,
+                toggleColumns: true,
+                selectedRecordsShowAllToggle: true,
+                selectedRecordsShowSelectedToggle: true,
+                zoomToSelection: true
+              }
+            },
+            tableTemplate: {
+              // Autocast to TableTemplate
+              columnTemplates: [
+                // Takes an array of FieldColumnTemplate and GroupColumnTemplate
+                {
+                  // Autocast to FieldColumnTemplate.
+                  type: "field",
+                  fieldName: "Name",
+                  label: "Recreation area name",
+                  direction: "asc"
+                },
+                {
+                  type: "field",
+                  fieldName: "Forest_name",
+                  label: "Forest name"
+                },
+                {
+                  type: "field",
+                  fieldName: "Open_status",
+                  label: "Open status"
+                },
+                {
+                  type: "field",
+                  fieldName: "Season_starts",
+                  label: "Season begins"
+                },
+                {
+                  type: "field",
+                  fieldName: "URL",
+                  label: "Recreation URL"
+                }
+              ]
+            },
+            container: document.getElementById("tableDiv")
+          });
+
+          // Listen for when the view is stationary.
+          // If true, set the table to display only the attributes
+          // for the features falling within this extent.
+
+          reactiveUtils.when(
+            () => view.stationary,
+            () => {
+              // Filter out and show only the visible features in the feature table.
+              featureTable.filterGeometry = view.extent;
+            },
+            {
+              initial: true
+            }
+          );
+
+          // Listen for the view's click event and access the associated graphic.
+
+          view.on("immediate-click", async (event) => {
+            const response = await view.hitTest(event);
+
+            candidate = response.results.find((result) => {
+              return result.graphic && result.graphic.layer && result.graphic.layer === featureLayer;
+            });
+
+            // Add the graphic's ObjectId into the collection of highlightIds.
+            // Check that the featureTable.highlightIds collection
+            // does not include an already highlighted feature.
+            if (candidate) {
+              const objectId = candidate.graphic.getObjectId();
+
+              if (featureTable.highlightIds.includes(objectId)) {
+                // Remove feature from current selection if feature
+                // is already added to highlightIds collection
+                featureTable.highlightIds.remove(objectId);
+              } else {
+                // Add this feature to the featureTable highlightIds collection
+                featureTable.highlightIds.add(objectId);
+              }
+            }
+          });
+
+          // Watch the featureTable's highlightIds.length property,
+          // and get the count of highlighted features within
+          // the table.
+
+          reactiveUtils.watch(
+            () => featureTable.highlightIds.length,
+            (highlightIdsCount) => {
+              // Iterate through the filters within the table.
+              // If the active filter is "Show selection",
+              // changes made to highlightIds (adding/removing)
+              // are reflected.
+
+              featureTable.viewModel.activeFilters.forEach((filter) => {
+                if (filter.type === "selection") {
+                  selectionIdCount = filter.objectIds.length; // the filtered selection's id count
+                  // Check that the filter selection count is equal to the
+                  // highlightIds collection count. If not, update filter selection.
+                  if (selectionIdCount !== highlightIdsCount) {
+                    featureTable.filterBySelection();
+                  }
+                }
+              });
+            }
+          );
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div class="container">
+      <div id="tableDiv"></div>
+    </div>
+  </body>
+</html>
+

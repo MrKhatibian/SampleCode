@@ -1,0 +1,4 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["../core/ElevationSourceDefinitions","./updateElevationUtils"],function(f,b){return async function(c,a,e){const d="elevationSource"in a?a.elevationSource:void 0,g="extent"in a?a.extent:void 0;return"elevationSample"in a&&null!=a.elevationSample?b.updateUsingElevationSampler(c,a.elevationSample,e):f.isConstantElevation(d)?b.updateUsingConstant(c,d.constantElevation,!0,e):f.isElevationSource(d)?b.updateUsingElevationSource(c,{...d,extent:g},e):b.updateUsingCameraProperties(a,c)}});

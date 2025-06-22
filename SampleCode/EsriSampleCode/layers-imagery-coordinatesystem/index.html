@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ImageryLayer - image coordinate system | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #icsInfo {
+        width: 160px;
+        padding: 10px;
+        position: absolute;
+        bottom: 40px;
+        left: 20px;
+      }
+
+      #selectDiv {
+        width: 200px;
+        padding: 15px;
+      }
+    </style>
+    <script type="text/javascript">
+  require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/ImageryLayer",
+  ], (Map, MapView, ImageryLayer) => {
+
+    let view;
+    const url =
+      "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Oblique/WU_Oblique/ImageServer";
+
+    // imageId will be used to set the mosaic rule on the layer
+    // Initial value to be set when the app loads.
+    let imageId = 1599;
+
+    // new imagery layer
+    const layer = new ImageryLayer({
+      url: url,
+      mosaicRule: {
+        method: "lock-raster",
+        operation: "first",
+        lockRasterIds: [imageId]
+      }
+    });
+
+    /**************************
+     * Add imagery layer to map
+     *************************/
+    const map = new Map({
+      layers: [layer]
+    });
+
+    // get the image coordinate system of the specified
+    // image catalog.
+    setViewIcsInfo(imageId);
+
+    // itemIds dropdown lists hard coded raster ids so that users can
+    // display different images from the service.
+    // Raster ids for this service can be found using the link below.
+    // https://sampleserver6.arcgisonline.com/arcgis/rest/services/Oblique/WU_Oblique/ImageServer/query?where=1%3D1&outFields=OBJECTID&returnGeometry=false&f=pjson
+    const itemIds = document.getElementById("itemIds");
+    itemIds.addEventListener("change", (event) => {
+      imageId = itemIds.value;
+
+      // the layer's mosaic rule with the specified raster id
+      layer.mosaicRule = {
+        method: "lock-raster",
+        operation: "first",
+        lockRasterIds: [imageId]
+      };
+
+      // set the view using the ics info returned
+      // for the specified raster id
+      setViewIcsInfo(imageId);
+    });
+    const selectDiv = document.getElementById("selectDiv");
+
+    // this function is called when the app loads and
+    // when users makes a new selection for raster ids from
+    // the itemIds dropdown. It will recreate MapView using
+    // ics info returned for the specified raster
+    function setViewIcsInfo(imageId){
+     // get the image coordinate system of the item in an image service.
+     layer.getCatalogItemICSInfo(imageId).then((info) => {
+       const icsInfo = document.getElementById("icsInfo");
+       icsInfo.innerHTML = "Image id: <b>" + imageId
+      + "</b><br/> North direction: <b>"
+      + Math.round(info.northDirection) + "</b>";
+
+        // use the short-handed ics representation
+        // server will lookup the spatialReference for the raster
+        const spatialRef = {
+          imageCoordinateSystem: { id: imageId }
+        };
+
+        // create an extent for the map view using extent info
+        // returned in ics info
+        const viewRect =  document.getElementById("viewDiv");
+        const width = viewRect.getBoundingClientRect().width;
+        const height = viewRect.getBoundingClientRect().height;
+        const newExtent = info.icsExtent.clone();
+        const scaleFactor = 8;
+
+        newExtent.xmin = (newExtent.xmin + newExtent.xmax - width * scaleFactor) / 2;
+        newExtent.xmax = newExtent.xmin + width * scaleFactor;
+        newExtent.ymin = (newExtent.ymin + newExtent.ymax - height * scaleFactor) / 2;
+        newExtent.ymax = newExtent.ymin + height * scaleFactor;
+        newExtent.spatialReference = spatialRef;
+
+        // set the view container null so that we can display the selected raster
+        if (view){
+          view.container = null;
+        }
+        // set the view spatialReference and extent
+        view = new MapView({
+          container: "viewDiv",
+          map: map,
+          spatialReference: spatialRef,
+          extent: newExtent
+        });
+
+        view.ui.add(selectDiv, "top-right");
+      });
+    }
+  });
+</script>
+  </head>
+  <body>
+    <div id="viewDiv" class="view">
+      <div id="selectDiv" class="esri-widget">
+        <span> Images of St. Louis:</span><br/><br>
+        <select id="itemIds" class="esri-select">
+          <option value="1599">Charles A. Shaw Park</option>
+          <option value="883">St. Louis children's hospital</option>
+          <option value="379">St. Louis Galleria</option>
+          <option value="247">County court buildings</option>
+          <option value="500">Washington University</option>
+        </select>
+        </div>
+        <div id="icsInfo" class="esri-widget"></div>
+      </div>
+    </body>
+  </html>
+

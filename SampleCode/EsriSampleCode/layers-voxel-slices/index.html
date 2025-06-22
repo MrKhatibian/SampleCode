@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Create area of interest for VoxelLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .esri-legend {
+        width: 200px !important;
+      }
+      .displaynone {
+        display: none;
+      }
+      #infoDiv {
+        max-height: calc(100vh - 100px);
+        height: 100%;
+      }
+      #newSliceContent {
+        margin-top: 10px;
+      }
+    </style>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/VoxelLayer",
+        "esri/layers/voxel/VoxelSlice",
+        "esri/layers/voxel/VoxelDynamicSection",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend"
+      ], (SceneView, WebScene, VoxelLayer, VoxelSlice, VoxelDynamicSection, Expand, Legend) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "3a922ed0c7a8489ea4fbe8747ac560ba"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "bottom-left");
+        view.ui.add("infoDiv", "top-right");
+        map.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          view.whenLayerView(vxlLayer).then((layerView) => {
+            vxlLayer.renderMode = "volume";
+            const vxlVolume = vxlLayer.getVolume(null);
+            const volSize = vxlVolume.sizeInVoxels;
+            let xSlice;
+            const sliceXAxisSlider = document.getElementById("sliceXAxisSlider");
+            const customSliceButton = document.getElementById("customSliceButton");
+            let countSlice = vxlLayer.getVolumeStyle(null).slices.length;
+            const newSliceXAxisInput = document.getElementById("newSliceXAxisInput");
+            const newSliceYAxisInput = document.getElementById("newSliceYAxisInput");
+            const newSliceZAxisInput = document.getElementById("newSliceZAxisInput");
+            const newOrientationInput = document.getElementById("newOrientationInput");
+            const newTiltInput = document.getElementById("newTiltInput");
+            /**
+             * Modifying the point, orientation and tilt of a slice
+             **/
+            function updateNewSlice() {
+              const newPoint = [newSliceXAxisInput.value, newSliceYAxisInput.value, newSliceZAxisInput.value];
+              const nSlice = vxlLayer.getVolumeStyle(null).slices.getItemAt(countSlice - 1);
+              nSlice.point = newPoint;
+              nSlice.orientation = newOrientationInput.value;
+              nSlice.tilt = newTiltInput.value;
+            }
+            //A voxel layer can have multiple slices. Each slice is represented by orientation, tilt and point.
+            //A vertical slice from West to East
+            xSlice = new VoxelSlice({
+              orientation: 270,
+              tilt: 90,
+              point: [volSize[0] / 2, 0, 0]
+            });
+            vxlLayer.getVolumeStyle(null).slices = [xSlice];
+            sliceXAxisSlider.max = volSize[0];
+            sliceXAxisSlider.value = volSize[0] / 2;
+            sliceXAxisSlider.addEventListener("calciteSliderInput", function () {
+              const newPoint = [sliceXAxisSlider.value, 0, 0];
+              const xslc = vxlLayer.getVolumeStyle(null).slices.getItemAt(0);
+              xslc.point = newPoint;
+            });
+
+            newSliceXAxisInput.max = volSize[0];
+            newSliceYAxisInput.max = volSize[1];
+            newSliceZAxisInput.max = volSize[2];
+            customSliceButton.onclick = () => {
+              const newSliceContent = document.getElementById("newSliceContent");
+              let newSlice = null;
+              newSliceXAxisInput.value = Math.floor(volSize[0] / 2);
+              newSliceYAxisInput.value = Math.floor(volSize[1] / 2);
+              newSliceZAxisInput.value = Math.floor(volSize[2] / 2);
+              newOrientationInput.value = 210;
+              newTiltInput.value = 45;
+              if (countSlice <= 1) {
+                customSliceButton.innerHTML = "Delete Slice";
+                newSlice = new VoxelSlice({
+                  orientation: newOrientationInput.value,
+                  tilt: newTiltInput.value,
+                  point: [newSliceXAxisInput.value, newSliceYAxisInput.value, newSliceZAxisInput.value]
+                });
+                //Adding a new slice to the VoxelVolumeStyle
+                vxlLayer.getVolumeStyle(null).slices.add(newSlice);
+                newSliceContent.classList.remove("displaynone");
+              } else {
+                customSliceButton.innerHTML = "Add Slice";
+                //A slice can be deleted from the collection by using the removeAt method and passing it's index.
+                vxlLayer.getVolumeStyle(null).slices.removeAt(countSlice - 1);
+                newSliceContent.classList.add("displaynone");
+              }
+              countSlice = vxlLayer.getVolumeStyle(null).slices.length;
+            };
+            newSliceXAxisInput.addEventListener("calciteInputChange", function () {
+              updateNewSlice();
+            });
+            newSliceYAxisInput.addEventListener("calciteInputChange", function () {
+              updateNewSlice();
+            });
+            newSliceZAxisInput.addEventListener("calciteInputChange", function () {
+              updateNewSlice();
+            });
+            newOrientationInput.addEventListener("calciteInputChange", function () {
+              updateNewSlice();
+            });
+            newTiltInput.addEventListener("calciteInputChange", function () {
+              updateNewSlice();
+            });
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv">
+      <div id="content" style="padding: 10px; width: 270px; background-color: var(--calcite-color-foreground-1)">
+        <calcite-label>
+          Vertical Slice (West-East):
+          <calcite-slider id="sliceXAxisSlider" min="0" step="1" snap label-handles></calcite-slider>
+        </calcite-label>
+        <calcite-button label="Slice" id="customSliceButton" width="full">Add Slice</calcite-button>
+        <div id="newSliceContent" class="displaynone">
+          <calcite-label layout="inline-space-between"
+            >Point X
+            <calcite-input id="newSliceXAxisInput" placeholder=" Point X" value="0" min="0" type="number">
+            </calcite-input>
+          </calcite-label>
+          <calcite-label layout="inline-space-between"
+            >Point Y
+            <calcite-input id="newSliceYAxisInput" placeholder="Point Y" value="0" min="0" type="number">
+            </calcite-input>
+          </calcite-label>
+          <calcite-label layout="inline-space-between"
+            >Point Z
+            <calcite-input id="newSliceZAxisInput" placeholder="Point Z" value="0" min="0" type="number">
+            </calcite-input>
+          </calcite-label>
+          <calcite-label layout="inline-space-between"
+            >Orientation
+            <calcite-input
+              id="newOrientationInput"
+              placeholder="Orientation"
+              value="270"
+              min="0"
+              max="360"
+              type="number"
+            >
+            </calcite-input>
+          </calcite-label>
+          <calcite-label layout="inline-space-between"
+            >Tilt
+            <calcite-input id="newTiltInput" placeholder="Tilt" value="90" min="0" max="180" type="number">
+            </calcite-input>
+          </calcite-label>
+        </div>
+      </div>
+    </calcite-panel>
+  </body>
+</html>
+

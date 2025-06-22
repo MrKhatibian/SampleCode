@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Sketch update validation | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #instructions {
+        width: 300px;
+        background: #fff;
+        padding: 20px;
+      }
+    </style>
+    <script>
+      require([
+        "esri/widgets/Sketch/SketchViewModel",
+        "esri/Graphic",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/GraphicsLayer",
+        "esri/geometry/Polygon",
+        "esri/geometry/geometryEngine",
+        "esri/widgets/Expand"
+      ], (
+        SketchViewModel,
+        Graphic,
+        Map,
+        MapView,
+        FeatureLayer,
+        GraphicsLayer,
+        Polygon,
+        geometryEngine,
+        Expand
+      ) => {
+        let sketchViewModel,
+          instructionsExpand,
+          boundaryPolygon,
+          validSymbol,
+          invalidSymbol,
+          buffers,
+          newDevelopmentGraphic;
+
+        let intersects = false;
+        let contains = true;
+
+        const bufferLayer = new FeatureLayer({
+          portalItem: {
+            id: "a1fc918a654648eb833826d1c198922e"
+          }
+        });
+
+        const graphicsLayer = new GraphicsLayer();
+        const boundaryLayer = new GraphicsLayer();
+
+        const map = new Map({
+          basemap: "streets-night-vector",
+          layers: [
+            bufferLayer,
+            new FeatureLayer({
+              portalItem: {
+                id: "47f194aaa40d41be94fcdf1921801c57"
+              }
+            }),
+            boundaryLayer,
+            graphicsLayer
+          ]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 12,
+          center: [-117.1708, 34.0574]
+        });
+
+        setUpInstructions();
+        setUpGraphicClickHandler();
+
+        view.when(() => {
+          // Query all buffer features from the school buffers featurelayer
+          bufferLayer.queryFeatures().then((results) => {
+            buffers = results.features[0].geometry;
+          });
+
+          // Add the boundary polygon and new lot polygon graphics
+          addGraphics();
+
+          // Create a new instance of sketchViewModel
+          sketchViewModel = new SketchViewModel({
+            view: view,
+            layer: graphicsLayer,
+            updateOnGraphicClick: false,
+            defaultUpdateOptions: {
+              // set the default options for the update operations
+              toggleToolOnClick: false // only reshape operation will be enabled
+            }
+          });
+
+          // Listen to sketchViewModel's update event to do
+          // graphic reshape or move validation
+          sketchViewModel.on(["update", "undo", "redo"], onGraphicUpdate);
+        });
+
+        function onGraphicUpdate(event) {
+          // get the graphic as it is being updated
+          const graphic = event.graphics[0];
+          // check if the graphic is intersecting school buffers or is
+          // still contained by the boundary polygon as the graphic is being updated
+          intersects = geometryEngine.intersects(buffers, graphic.geometry);
+          contains = geometryEngine.contains(boundaryPolygon, graphic.geometry);
+
+          // change the graphic symbol to valid or invalid symbol
+          // depending the graphic location
+          graphic.symbol = intersects || !contains ? invalidSymbol : validSymbol;
+
+          // check if the update event's the toolEventInfo.type is move-stop or reshape-stop
+          // then it means user finished moving or reshaping the graphic, call complete method.
+          // this will change update event state to complete and we will check the validity of the graphic location.
+          if (
+            event.toolEventInfo &&
+            (event.toolEventInfo.type === "move-stop" || event.toolEventInfo.type === "reshape-stop")
+          ) {
+            if (contains && !intersects) {
+              sketchViewModel.complete();
+            }
+          } else if (event.state === "complete") {
+            // graphic moving or reshaping has been completed or cancelled (distinguish with aborted property)
+            // if the graphic is in an illegal spot, call sketchviewmodel's update method again
+            // giving user a chance to correct the location of the graphic
+            if (!contains || intersects) {
+              sketchViewModel.update([graphic], { tool: "reshape" });
+            }
+          }
+        }
+        // This function is called when a user clicks on the view.
+        function setUpGraphicClickHandler() {
+          view.on("click", (event) => {
+            // check if the sketch's state active if it is then that means
+            // the graphic is already being updated, no action required.
+            if (sketchViewModel.state === "active") {
+              return;
+            }
+            view.hitTest(event).then((response) => {
+              const results = response.results;
+              // Check if the new development graphic was clicked and pass
+              // the graphic to sketchViewModel.update() with reshape tool.
+              results.forEach((result) => {
+                if (
+                  result.graphic.layer === sketchViewModel.layer &&
+                  result.graphic.attributes &&
+                  result.graphic.attributes.newDevelopment
+                ) {
+                  sketchViewModel.update([result.graphic], { tool: "reshape" });
+                }
+              });
+            });
+          });
+        }
+
+        // Add new development polygon graphic and boundary polygon graphics
+        function addGraphics() {
+          const vertices = [
+            [-13040270.324055556, 4040357.7882640623],
+            [-13038653.725694647, 4040689.513023534],
+            [-13038063.204863824, 4038017.2028549737],
+            [-13040097.818223165, 4037990.629044359],
+            [-13040270.324055556, 4040357.7882640623]
+          ];
+
+          const polygon = createGeometry(vertices);
+          validSymbol = createSymbol([0, 170, 255, 0.8], "solid", 2, [255, 255, 255]);
+          newDevelopmentGraphic = new Graphic({
+            geometry: polygon,
+            symbol: validSymbol,
+            attributes: {
+              newDevelopment: "new store"
+            }
+          });
+
+          const boundaryVertices = [
+            [-13048353.166569024, 4041363.935436187],
+            [-13036929.861699322, 4041363.935436187],
+            [-13036929.861699322, 4030232.5692555667],
+            [-13048353.166569024, 4030232.5692555667],
+            [-13048353.166569024, 4041363.935436187]
+          ];
+
+          boundaryPolygon = createGeometry(boundaryVertices);
+          const boundarySymbol = createSymbol([255, 255, 255, 0], "solid", 2, [255, 255, 255]);
+          const boundaryGraphic = new Graphic({
+            geometry: boundaryPolygon,
+            symbol: boundarySymbol
+          });
+          graphicsLayer.addMany([newDevelopmentGraphic]);
+          boundaryLayer.add(boundaryGraphic);
+        }
+
+        function createGeometry(vertices) {
+          return new Polygon({
+            rings: vertices,
+            spatialReference: view.spatialReference
+          });
+        }
+
+        function createSymbol(color, style, width, outlineColor) {
+          return {
+            type: "simple-fill",
+            style: style,
+            color: color,
+            outline: {
+              color: outlineColor,
+              width: width
+            }
+          };
+        }
+
+        // Create new view, map and layers... set up the view
+        function setUpInstructions() {
+          // Instructions expand widget
+          const sampleInstructions = document.getElementById("instructions");
+          instructionsExpand = new Expand({
+            expandIcon: "question",
+            expandTooltip: "How to use this sample",
+            expanded: true,
+            view: view,
+            content: sampleInstructions
+          });
+          view.ui.add(instructionsExpand, "top-left");
+
+          // hide the instructions expand widget when user clicks on the view
+          view.on("click", () => {
+              instructionsExpand.expanded = false;
+          });
+          invalidSymbol = createSymbol([255, 0, 0], "diagonal-cross", 4, [255, 0, 0]);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="instructions" class="esri-widget">
+      <b>Instructions</b> <br />
+      <b>Click</b> the <b>blue polygon</b> graphic. <br />
+      Rotate, scale, move or reshape the graphic. <br />
+      <br />
+      Update operation can only be completed if the graphic does not intersect
+      school buffers and is inside the boundary
+      polygon.
+    </div>
+  </body>
+</html>
+

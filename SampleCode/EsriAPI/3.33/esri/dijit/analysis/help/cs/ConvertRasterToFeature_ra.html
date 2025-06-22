@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Převést rastr na prvek (Convert Raster To Feature)</h2><p/>
+        <h2><img src="../images/GUID-7BBBCE28-2FDA-46B8-99D7-65F560AB2F2B-web.png" alt="N&aacute;stroj Přev&eacute;st rastr na prvek"></h2>
+        <hr/>
+    <p>Tento n&aacute;stroj převede rastr na datovou sadu prvků ve formě bodů, lini&iacute; nebo polygonů.
+    </p>
+    <p>Parametr  <b>Zvolit pole</b> v&aacute;m umožňuje zvolit, kter&eacute; atributov&eacute; pole vstupn&iacute; rastrov&eacute; datov&eacute; sady se stane atributem ve v&yacute;stupn&iacute; tř&iacute;dě prvků. Tento parametr je k&nbsp;dispozici pouze pro celoč&iacute;seln&eacute; rastry, kter&eacute; maj&iacute; v připojen&eacute; tabulce dodatečn&eacute; atributy.
+    </p>
+    <p>Vstupn&iacute; rastr může m&iacute;t jakoukoli velikost buňky.
+    </p>
+    <p>Celoč&iacute;seln&eacute; rastry lze přev&eacute;st na bodov&eacute;, liniov&eacute; nebo polygonov&eacute; prvky, desetinn&eacute; rastry lze přev&eacute;st pouze na bodov&eacute; prvky.
+    </p>
+    <p>Pokud je za&scaron;krtnuto pole  <b>Použ&iacute;vat aktu&aacute;ln&iacute; rozsah mapy</b>, budou převedeny pouze rastrov&eacute; buňky viditeln&eacute; v&nbsp;aktu&aacute;ln&iacute;m rozsahu mapy. Pokud pole nen&iacute; za&scaron;krtnuto, budou převedeny v&scaron;echny buňky v rastrov&eacute; vrstvě, i když se nach&aacute;zej&iacute; mimo aktu&aacute;ln&iacute; rozsah mapy. Na toto je vhodn&eacute; br&aacute;t ohled, pokud je rastrov&aacute; vrstva velk&aacute; nebo m&aacute; velmi vysok&eacute; rozli&scaron;en&iacute;.
+    </p>
+    <p>Možnosti použit&iacute; tohoto n&aacute;stroje zahrnuj&iacute;:
+
+        <ul>
+            <li>Vytvořen&iacute; polygonov&yacute;ch prvků z&nbsp;klasifikačn&iacute;ho rastru využit&iacute; půdy.
+                
+
+            </li>
+            <li>Proudy identifikovan&eacute; v DEM lze přev&eacute;st na liniov&eacute; prvky.
+                
+
+            </li>
+            <li>DEM lze přev&eacute;st na bodov&eacute; prvky, kter&eacute; lze použ&iacute;t v pracovn&iacute;ch postupech nezaložen&yacute;ch na rastrech.
+                
+
+            </li>
+        </ul>
+        
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Zvolte rastrovou vrstvu, kterou chcete převést</h2></div>
+        <hr/>
+        <div>
+            <p>Vstupn&iacute; rastrov&aacute; vrstva, kter&aacute; bude převedena na vrstvy prvků.
+            </p>
+        </div>
+    </div>
+    <div id="field">
+        <div><h2>Zvolit pole</h2></div>
+        <hr/>
+        <div>
+            <p>Pole, kter&eacute; určuje hodnotu konverze.
+            </p>
+            <p>Může m&iacute;t jakoukoli celoč&iacute;selnou nebo textovou hodnotu.
+            </p>
+            <p>Pole obsahuj&iacute;c&iacute; desetinn&eacute; hodnoty lze použ&iacute;t, pouze pokud je v&yacute;stupem bodov&aacute; datov&aacute; sada.
+            </p>
+            <p>V&yacute;choz&iacute; volbou je pole  <i>Value</i>, kter&eacute; obsahuje hodnotu v každ&eacute; buňce rastru.
+            </p>
+        </div>
+    </div>
+    <div id="outputType">
+        <div><h2>Zvolit typ výstupu</h2></div>
+        <hr/>
+        <div>
+            <p>Určuje typ v&yacute;stupu.
+            </p>
+            <ul>
+                <li> <b>Bodov&yacute;</b>&mdash;Rastr bude převeden na bodovou datovou sadu. Jedn&aacute; se o v&yacute;choz&iacute; nastaven&iacute;.
+                    
+ 
+                </li>
+                <li> <b>Liniov&yacute;</b>&mdash;Rastr bude převeden na datovou sadu liniov&yacute;ch prvků.
+                    
+ 
+                </li>
+                <li> <b>Polygonov&yacute;</b>&mdash;Rastr bude převeden na datovou sadu polygonov&yacute;ch prvků.
+                    
+
+                </li>
+            </ul>
+            
+        </div>
+    </div>
+    <div id="simplifyLinesOrPolygons">
+        <div><h2>Zjednodušit linie či polygony</h2></div>
+        <hr/>
+        <div>
+            <p>Určuje, zda budou zjednodu&scaron;eny (vyhlazeny) linie nebo polygony. Vyhlazen&iacute; je prov&aacute;děno tak, aby linie obsahovala minim&aacute;ln&iacute; počet segmentů a z&aacute;roveň zůstala co nejbl&iacute;že původn&iacute;m okrajům buněk rastru.
+            </p>
+            <ul>
+                <li>Za&scaron;krtnuto&mdash;Liniov&eacute; nebo polygonov&eacute; prvky budou vyhlazeny, aby poskytovaly obecněj&scaron;&iacute; v&yacute;sledek. Jedn&aacute; se o v&yacute;choz&iacute; nastaven&iacute;.
+                    
+
+                </li>
+                <li>Neza&scaron;krtnuto &ndash; Liniov&eacute; nebo polygonov&eacute; prvky budou dodržovat hranice buněk rastrov&eacute; datov&eacute; sady.
+                    
+
+                </li>
+            </ul>
+            
+            <p>Tento parametr je podporov&aacute;n pouze, pokud je typ v&yacute;stupu linie nebo polygon.
+            </p>
+        </div>
+    </div>
+    <div id="createMultipartFeatures">
+        <div><h2>Vytvořit vícenásobné prvky</h2></div>
+        <hr/>
+        <div>
+            <p>Určuje, zda se budou v&yacute;stupn&iacute; polygony skl&aacute;dat z jednoduch&yacute;ch nebo v&iacute;cen&aacute;sobn&yacute;ch prvků.
+            </p>
+            <ul>
+                <li>Za&scaron;krtnuto&mdash;V&iacute;cen&aacute;sobn&eacute; prvky budou vytvořeny na z&aacute;kladě polygonů, kter&eacute; maj&iacute; stejnou hodnotu.
+                    
+
+                </li>
+                <li>Neza&scaron;krtnuto&mdash;Jednotliv&eacute; (jednoduch&eacute;) prvky budou vytvořeny pro každ&yacute; polygon. Jedn&aacute; se o v&yacute;choz&iacute; nastaven&iacute;.
+                    
+
+                </li>
+            </ul>
+            
+            <p>Tento parametr je podporov&aacute;n pouze, pokud je typ v&yacute;stupu polygon.
+            </p>
+        </div>
+    </div>
+    <div id="maxVerticesPerFeature">
+        <div><h2>Maximální počet lomových bodů na polygonový prvek</h2></div>
+        <hr/>
+        <div>
+            <p>Limit lomov&yacute;ch bodů se použ&iacute;v&aacute; k rozdělen&iacute; polygonu do men&scaron;&iacute;ch polygonů.
+            </p>
+            <p>Pokud zůstane pr&aacute;zdn&yacute;, v&yacute;stupn&iacute; polygon nebude rozdělen. Jedn&aacute; se o v&yacute;choz&iacute; nastaven&iacute;.
+            </p>
+            <p>Tento parametr je podporov&aacute;n pouze, pokud je typ v&yacute;stupu polygon.
+            </p>
+        </div>
+    </div>
+    <div id="outputName">
+        <div><h2>Název výsledné vrstvy</h2></div>
+        <hr/>
+        <div>
+            <p>N&aacute;zev vrstvy, kter&aacute; se vytvoř&iacute; ve složce  <b>Můj obsah</b> a přid&aacute; se do mapy. V&yacute;choz&iacute; n&aacute;zev se ř&iacute;d&iacute; n&aacute;zvem n&aacute;stroje a n&aacute;zvem vstupn&iacute; vrstvy. Pokud vrstva již existuje, budete pož&aacute;d&aacute;ni o zad&aacute;n&iacute; jin&eacute;ho n&aacute;zvu.
+            </p>
+            <p>Můžete zadat n&aacute;zev složky v  <b>Můj obsah</b>, kde bude v&yacute;sledek uložen pomoc&iacute; rozbalovac&iacute;ho seznamu <b>Uložit v&yacute;sledek do</b> .
+            </p>
+        </div>
+    </div>
+</div>
+</html>

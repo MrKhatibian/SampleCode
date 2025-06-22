@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Realistic water visualization in 3D | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <script>
+    require([
+      "esri/WebScene",
+      "esri/views/SceneView",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/Slider"
+    ], (WebScene, SceneView, FeatureLayer, Slider) => {
+
+      /***********************************
+       * Load webscene and create a SceneView
+       ***********************************/
+      const webscene = new WebScene({
+        portalItem: {
+          id: "8ede93ea9d8d48bc8cdcbea775936a13"
+        }
+      });
+
+      const view = new SceneView({
+        container: "viewDiv",
+        map: webscene
+      });
+
+      /***********************************
+       * Add polygon layer with water body
+       ***********************************/
+
+      const waterLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/Water_bodies/FeatureServer",
+        elevationInfo: {
+          mode: "absolute-height",
+          offset: 0,
+        },
+        renderer: {
+          type: "simple",
+          symbol: {
+            type: "polygon-3d",
+            symbolLayers: [{
+              type: "water",
+              waveDirection: 260,
+              color: "#25427c",
+              waveStrength: "moderate",
+              waterbodySize: "medium"
+            }]
+          }
+        }
+      });
+
+      webscene.add(waterLayer);
+
+      view.ui.add("menu", "top-right");
+
+      const slider = new Slider({
+        container: "waveSlider",
+        min: 0,
+        max: 360,
+        visibleElements: {
+          labels: true,
+        },
+        precision: 0,
+        values: [ 260 ]
+      });
+
+      slider.on("thumb-drag", (event) => {
+        const value = parseInt(event.value);
+        const renderer = waterLayer.renderer.clone();
+        renderer.symbol.symbolLayers.getItemAt(0).waveDirection = value;
+        waterLayer.renderer = renderer;
+      });
+
+      const waveStrengthRadio = document.getElementsByName("waveStrengthRadio");
+
+      for (let i = 0; i < waveStrengthRadio.length; i++) {
+        const element = waveStrengthRadio[i];
+        element.addEventListener("change", (event) => {
+          const renderer = waterLayer.renderer.clone();
+          renderer.symbol.symbolLayers.getItemAt(0).waveStrength = event.target.value;
+          waterLayer.renderer = renderer;
+        });
+      };
+
+      function setWaterColor(color) {
+        const renderer = waterLayer.renderer.clone();
+        renderer.symbol.symbolLayers.getItemAt(0).color = color;
+        waterLayer.renderer = renderer;
+      }
+
+      document.getElementById("navy").addEventListener("click", () => {
+        setWaterColor("#25427c");
+      });
+      document.getElementById("green").addEventListener("click", () => {
+        setWaterColor("#039962");
+      });
+      document.getElementById("turqoise").addEventListener("click", () => {
+        setWaterColor("#a2f9f5");
+      });
+    });
+
+  </script>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #menu {
+      padding: 1em;
+    }
+
+    #waveSlider {
+      height: 50px;
+      margin-top: 2em;
+    }
+
+    .color-btn {
+      border: 1px solid rgb(173, 172, 172);
+      width: 40px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    #navy {
+      background-color: #25427c;
+    }
+
+    #green {
+      background-color: #039962;
+    }
+
+    #turqoise {
+      background-color: #a2f9f5;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="menu" class="esri-widget">
+    <h4>Wave direction</h4>
+    <div id="waveSlider"></div>
+    <h4>Wave strength</h4>
+    <input type="radio" name="waveStrengthRadio" value="calm" id="calm"><label for="calm">Calm</label><br>
+    <input type="radio" name="waveStrengthRadio" value="rippled" id="rippled"><label for="rippled">Rippled</label><br>
+    <input type="radio" name="waveStrengthRadio" value="slight" id="slight"><label for="slight">Slight</label><br>
+    <input type="radio" name="waveStrengthRadio" value="moderate" id="moderate" checked><label
+      for="moderate">Moderate</label><br>
+    <h4> Dominant color</h4>
+    <button id="navy" class="color-btn"></button>
+    <button id="green" class="color-btn"></button>
+    <button id="turqoise" class="color-btn"></button>
+  </div>
+</body>
+
+</html>
+

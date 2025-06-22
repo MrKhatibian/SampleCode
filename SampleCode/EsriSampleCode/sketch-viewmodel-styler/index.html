@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>SketchViewModel Styler | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    .scrollSection {
+      overflow: scroll; 
+      width: inherit; 
+      height: 300px; 
+      overflow-x: hidden;
+      padding: 0.3em;
+    }
+    #sketchVM-controls {
+      width: 125%; 
+      height: 300px;
+    }
+    #headingBlock {
+      padding-right: 2em;
+    }
+  </style>
+  <script>
+    require([
+      "esri/widgets/Sketch/SketchViewModel",
+      "esri/widgets/support/SnappingControls",
+      "esri/Map",
+      "esri/layers/GraphicsLayer",
+      "esri/views/MapView",
+      "esri/widgets/Expand"
+    ], (
+      SketchViewModel,
+      SnappingControls,
+      Map,
+      GraphicsLayer,
+      MapView,
+      Expand
+    ) => {
+      const graphicsLayer = new GraphicsLayer({ title: "graphicsLayer" });
+
+      const map = new Map({
+        basemap: "gray-vector",
+        layers: [graphicsLayer]
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        zoom: 7,
+        center: [-65.82579570034679, -37.385467010889435]
+      });
+
+      const sketchVM = new SketchViewModel({
+        view: view,
+        layer: graphicsLayer
+      });
+
+      // Add the calcite-panel for the styler to an Expand to hide/show the panel
+      const stylerExpand = new Expand({
+        view: view,
+        content: document.getElementById("propPanel"),
+        expanded: true,
+        expandIcon: "pencil",
+        expandTooltip: "Open Styler"
+      });
+
+      // Add SnappingControls to handle snapping
+      const snappingControls = new SnappingControls({
+        view: view,
+        // Sets the widget to use the SketchViewModel's SnappingOptions
+        snappingOptions: sketchVM.snappingOptions
+      });
+
+      // Add the SnappingControls to an Expand widget to hide/show the widget
+      const snappingExpand = new Expand({
+        view: view,
+        content: snappingControls,
+        expanded: false,
+        expandIcon: "configure",
+        expandTooltip: "Snapping Controls"
+      });
+
+      // Add the shortcut key description panel to an Expand widget
+      const shortcutKeysExpand = new Expand({
+        view: view,
+        content: document.getElementById("sketchVM-controls"),
+        expanded: false,
+        expandIcon: "information",
+        expandTooltip: "Keyboard Shortcuts"
+      });
+
+      view.when(() => {
+        // Configure the UI to use the default property values from our SketchViewModel
+        setDefaultCreateOptions();
+        setDefaultUpdateOptions();
+        setDefaultPointSymbol();
+        setDefaultPolylineSymbol();
+        setDefaultPolygonSymbol();
+      });
+
+      view.ui.add(stylerExpand, "top-right"); // Add the calcite panel
+      view.ui.add(snappingExpand, "bottom-left"); // Add the Expand with SnappingControls widget
+      view.ui.add(shortcutKeysExpand, "top-left");
+
+      // Connecting the calcite actions with their corresponding SketchViewModel tools
+      const pointBtn = document.getElementById("pointBtn");
+      const polylineBtn = document.getElementById("polylineBtn");
+      const polygonBtn = document.getElementById("polygonBtn");
+      const circleBtn = document.getElementById("circleBtn");
+      const rectangleBtn = document.getElementById("rectangleBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const selectBtn = document.getElementById("selectBtn");
+
+      pointBtn.onclick = () => { sketchVM.create("point"); }
+      polylineBtn.onclick = () => { sketchVM.create("polyline"); }
+      polygonBtn.onclick = () => { sketchVM.create("polygon"); }
+      circleBtn.onclick = () => { sketchVM.create("circle"); }
+      rectangleBtn.onclick = () => { sketchVM.create("rectangle"); }
+      clearBtn.onclick = () => { sketchVM.layer.removeAll(); }
+      selectBtn.onclick = () => { sketchVM.cancel(); }
+
+      // Calcite UI logic
+      // Auto-populate UI with default SketchViewModel properties set.
+      // If no default values are set, UI will be set accordingly.
+      function setDefaultCreateOptions() {
+        const options = sketchVM.defaultCreateOptions;
+        const modeSelect = document.getElementById("mode-select");
+
+        // set default mode in the select element if defined
+        if (options?.mode) {
+          setDefaultOption(modeSelect, options.mode);
+        }
+
+        // handles mode select changes
+        modeSelect.addEventListener("calciteSelectChange", () => {
+          sketchVM.defaultCreateOptions["mode"] = modeSelect.selectedOption.value;
+        });
+      }
+
+      function setDefaultUpdateOptions() {
+        const options = sketchVM.defaultUpdateOptions;
+        const rotationSwitch = document.getElementById("rotationSwitch");
+        const scaleSwitch = document.getElementById("scaleSwitch");
+        const multipleSelectionSwitch = document.getElementById("multipleSelectionSwitch");
+        const aspectRatioSwitch = document.getElementById("aspectRatioSwitch");
+
+        // set the UI elements to the default property values
+        rotationSwitch.checked = options.enableRotation;
+        scaleSwitch.checked = options.enableScaling;
+        multipleSelectionSwitch.checked = options.multipleSelectionEnabled;
+        aspectRatioSwitch.checked = options.preserveAspectRatio;
+
+        // event listeners for UI interactions
+        rotationSwitch.addEventListener("calciteSwitchChange", (evt) => {
+          sketchVM.defaultUpdateOptions.enableRotation = evt.target.checked;
+        });
+        scaleSwitch.addEventListener("calciteSwitchChange", (evt) => {
+          sketchVM.defaultUpdateOptions.enableScaling = evt.target.checked;
+        });
+        multipleSelectionSwitch.addEventListener("calciteSwitchChange", (evt) => {
+          sketchVM.defaultUpdateOptions.multipleSelectionEnabled = evt.target.checked;
+        });
+        aspectRatioSwitch.addEventListener("calciteSwitchChange", (evt) => {
+          sketchVM.defaultUpdateOptions.preserveAspectRatio = evt.target.checked;
+        });
+      }
+
+      function setDefaultPointSymbol() {
+        const pointSymbol = sketchVM.pointSymbol;
+        const pointStyleSelect = document.getElementById("point-style-select");
+        const pointSymbolOutlineBtn = document.getElementById("point-outline-btn");
+        const pointSizeInput = document.getElementById("point-size-input");
+        const pointXOffsetInput = document.getElementById("point-xoffset-input");
+        const pointYOffsetInput = document.getElementById("point-yoffset-input");
+        const pointAngleInput = document.getElementById("point-angle-input");
+        const pointColorInput = document.getElementById("point-color-input");
+        const slsWidthInput = document.getElementById("point-sls-width-input");
+        const slsColorInput = document.getElementById("point-sls-color-input");
+
+        pointSizeInput.value = pointSymbol.size;
+        pointXOffsetInput.value = pointSymbol.xoffset;
+        pointYOffsetInput.value = pointSymbol.yoffset;
+        pointAngleInput.value = pointSymbol.angle;
+        slsWidthInput.value = pointSymbol.outline.width;
+
+        // set default style in the select element
+        setDefaultOption(pointStyleSelect, pointSymbol.style);
+
+        pointSizeInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.size = parseInt(evt.target.value);
+        });
+        pointXOffsetInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.xoffset = parseInt(evt.target.value);
+        });
+        pointYOffsetInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.yoffset = parseInt(evt.target.value);
+        });
+        pointAngleInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.angle = parseInt(evt.target.value);
+        });
+        pointStyleSelect.addEventListener("calciteSelectChange", () => {
+          pointSymbol.style = pointStyleSelect.selectedOption.value;
+        });
+        pointColorInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.color = evt.target.value;
+        });
+        pointSymbolOutlineBtn.onclick = () => {
+          openModal("point-outline-modal");
+        };
+        // point outline modal event listeners
+        slsWidthInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.outline.width = parseInt(evt.target.value);
+        });
+        slsColorInput.addEventListener("calciteInputInput", (evt) => {
+          pointSymbol.outline.color = evt.target.value;
+        });
+      }
+
+      function setDefaultPolylineSymbol() {
+        const lineSymbol = sketchVM.polylineSymbol;
+        const lineStyleSelect = document.getElementById("line-style-select");
+        const lineWidthInput = document.getElementById("line-width-input");
+        const lineColorInput = document.getElementById("line-color-input");
+
+        lineWidthInput.value = lineSymbol.width;
+
+        // set default style in the select element
+        setDefaultOption(lineStyleSelect, lineSymbol.style);
+
+        lineStyleSelect.addEventListener("calciteSelectChange", () => {
+          lineSymbol.style = lineStyleSelect.selectedOption.value;
+        });
+        lineWidthInput.addEventListener("calciteInputInput", (evt) => {
+          lineSymbol.width = parseInt(evt.target.value);
+        });
+        lineColorInput.addEventListener("calciteInputInput", (evt) => {
+          lineSymbol.color = evt.target.value;
+        });
+      }
+
+      function setDefaultPolygonSymbol() {
+        const polygonSymbol = sketchVM.polygonSymbol;
+        const polygonStyleSelect = document.getElementById("polygon-style-select");
+        const polygonSymbolOutlineBtn = document.getElementById("polygon-outline-btn");
+        const polygonColorInput = document.getElementById("polygon-color-input");
+        const slsStyleSelect = document.getElementById("polygon-sls-style-select");
+        const slsWidthInput = document.getElementById("polygon-sls-width-input");
+        const slsColorInput = document.getElementById("polygon-sls-color-input");
+
+        slsWidthInput.value = polygonSymbol.outline.width;
+
+        // set default style in the select element
+        setDefaultOption(polygonStyleSelect, polygonSymbol.style);
+        setDefaultOption(slsStyleSelect, polygonSymbol.outline.style);
+
+        polygonStyleSelect.addEventListener("calciteSelectChange", () => {
+          polygonSymbol.style = polygonStyleSelect.selectedOption.value;
+        });
+        polygonColorInput.addEventListener("calciteInputInput", (evt) => {
+          polygonSymbol.color = evt.target.value;
+        });
+        polygonSymbolOutlineBtn.onclick = () => {
+          openModal("polygon-outline-modal");
+        };
+        // polygon outline modal event listeners
+        slsStyleSelect.addEventListener("calciteSelectChange", () => {
+          polygonSymbol.outline.style = slsStyleSelect.selectedOption.value;
+        });
+        slsWidthInput.addEventListener("calciteInputInput", (evt) => {
+          polygonSymbol.outline.width = parseInt(evt.target.value);
+        });
+        slsColorInput.addEventListener("calciteInputInput", (evt) => {
+          polygonSymbol.outline.color = evt.target.value;
+        });
+      }
+
+      // function to auto-populate calcite select components
+      function setDefaultOption(selectElement, value) {
+        for (let i = 0; i < selectElement.children.length; i++) {
+          let option = selectElement.children[i];
+          if (option.value === value) {
+            option.selected = true;
+          }
+        }
+      }
+
+      // displays the appropriate modals
+      function openModal(id) {
+        document.getElementById(id).open = true;
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <calcite-panel heading="SketchViewModel Styler" id="propPanel">
+    <calcite-block id="headingBlock">
+      <calcite-action icon="cursor" title="Select graphic" scale="s" slot="control" id="selectBtn"></calcite-action>
+      <calcite-action icon="pin" title="Draw a point" scale="s" slot="control" id="pointBtn"></calcite-action>
+      <calcite-action icon="line" title="Draw a polyline" scale="s" slot="control" id="polylineBtn"></calcite-action>
+      <calcite-action icon="polygon" title="Draw a polygon" scale="s" slot="control" id="polygonBtn"></calcite-action>
+      <calcite-action icon="rectangle" title="Draw a rectangle" scale="s" slot="control" id="rectangleBtn">
+      </calcite-action>
+      <calcite-action icon="circle" title="Draw a circle" scale="s" slot="control" id="circleBtn"></calcite-action>
+      <calcite-action icon="trash" title="Clear graphics" scale="s" slot="control" id="clearBtn"></calcite-action>
+    </calcite-block>
+    <calcite-accordion selection-mode="single">
+      <!--- defaultCreateOptions -->
+      <calcite-accordion-item heading="defaultCreateOptions">
+        <calcite-label>mode
+          <calcite-select scale="s" id="mode-select">
+            <calcite-option value="" selected disabled>choose mode</calcite-option>
+            <calcite-option value="click">click</calcite-option>
+            <calcite-option value="freehand">freehand</calcite-option>
+            <calcite-option value="hybrid">hybrid</calcite-option>
+          </calcite-select>
+        </calcite-label>
+      </calcite-accordion-item>
+      <!--- defaulteUpdateOptions -->
+      <calcite-accordion-item heading="defaultUpdateOptions">
+        <calcite-label>enableRotation
+          <calcite-label layout="inline">
+            True
+            <calcite-switch scale="s" dir="rtl" id="rotationSwitch"></calcite-switch>
+            False
+          </calcite-label>
+        </calcite-label>
+        <calcite-label>enableScaling
+          <calcite-label layout="inline">
+            True
+            <calcite-switch scale="s" dir="rtl" id="scaleSwitch"></calcite-switch>
+            False
+          </calcite-label>
+        </calcite-label>
+        <calcite-label>preserveAspectRatio
+          <calcite-label layout="inline">
+            True
+            <calcite-switch scale="s" dir="rtl" id="aspectRatioSwitch"></calcite-switch>
+            False
+          </calcite-label>
+        </calcite-label>
+        <calcite-label>multipleSelectionEnabled
+          <calcite-label layout="inline">
+            True
+            <calcite-switch scale="s" dir="rtl" id="multipleSelectionSwitch"></calcite-switch>
+            False
+          </calcite-label>
+        </calcite-label>
+      </calcite-accordion-item>
+      <!--- pointSymbol -->
+      <calcite-accordion-item heading="pointSymbol">
+        <div class="scrollSection">
+          <calcite-label>style
+            <calcite-select scale="s" id="point-style-select">
+              <calcite-option value="circle" selected>circle</calcite-option>
+              <calcite-option value="cross">cross</calcite-option>
+              <calcite-option value="diamond">diamond</calcite-option>
+              <calcite-option value="square">square</calcite-option>
+              <calcite-option value="x">x</calcite-option>
+            </calcite-select>
+          </calcite-label>
+          <calcite-label>color
+            <calcite-input placeholder="Placeholder" type="color" scale="s" id="point-color-input">
+            </calcite-input>
+          </calcite-label>
+          <calcite-label>outline
+            <calcite-button id="point-outline-btn" scale="s">Set Outline</calcite-button>
+          </calcite-label>
+          <calcite-label>size
+            <calcite-input id="point-size-input" placeholder="Placeholder" type="number" scale="s" min=0></calcite-input>
+          </calcite-label>
+          <calcite-label>xoffset
+            <calcite-input id="point-xoffset-input" placeholder="Placeholder" type="number" scale="s"></calcite-input>
+          </calcite-label>
+          <calcite-label>yoffset
+            <calcite-input id="point-yoffset-input" placeholder="Placeholder" type="number" scale="s"></calcite-input>
+          </calcite-label>
+          <calcite-label>angle
+            <calcite-input id="point-angle-input" placeholder="Placeholder" type="number" scale="s" min=-360 max=360>
+            </calcite-input>
+          </calcite-label>
+        </div>
+      </calcite-accordion-item>
+      <!--- polygonSymbol -->
+      <calcite-accordion-item heading="polygonSymbol">
+        <calcite-label>style
+          <calcite-select scale="s" id="polygon-style-select">
+            <calcite-option disabled selected id="blankOption">choose a style</calcite-option>
+            <calcite-option value="backward-diagonal">backward-diagonal</calcite-option>
+            <calcite-option value="cross">cross</calcite-option>
+            <calcite-option value="diagonal-cross">diagonal-cross</calcite-option>
+            <calcite-option value="forward-diagonal">forward-diagonal</calcite-option>
+            <calcite-option value="horizontal">horizontal</calcite-option>
+            <calcite-option value="none">none</calcite-option>
+            <calcite-option value="vertical">vertical</calcite-option>
+            <calcite-option value="solid">solid</calcite-option>
+          </calcite-select>
+        </calcite-label>
+        <calcite-label>outline
+          <calcite-button id="polygon-outline-btn" scale="s">Set Outline</calcite-button>
+        </calcite-label>
+        <calcite-label>color
+          <calcite-input placeholder="Placeholder" type="color" scale="s" id="polygon-color-input" format="rgb">
+          </calcite-input>
+        </calcite-label>
+      </calcite-accordion-item>
+      <!--- polylineSymbol -->
+      <calcite-accordion-item heading="polylineSymbol">
+        <calcite-label>style
+          <calcite-select scale="s" id="line-style-select">
+            <calcite-option disabled selected id="blankOption">choose a style</calcite-option>
+            <calcite-option value="dash">dash</calcite-option>
+            <calcite-option value="dash-dot">dash-dot</calcite-option>
+            <calcite-option value="dot">dot</calcite-option>
+            <calcite-option value="long-dash">long-dash</calcite-option>
+            <calcite-option value="long-dash-dot">long-dash-dot</calcite-option>
+            <calcite-option value="long-dash-dot-dot">long-dash-dot-dot</calcite-option>
+            <calcite-option value="none">none</calcite-option>
+            <calcite-option value="short-dash">short-dash</calcite-option>
+            <calcite-option value="short-dash-dot">short-dash-dot</calcite-option>
+            <calcite-option value="short-dash-dot-dot">short-dash-dot-dot</calcite-option>
+            <calcite-option value="short-dot">short-dot</calcite-option>
+            <calcite-option value="solid">solid</calcite-option>
+          </calcite-select>
+        </calcite-label>
+        <calcite-label>width
+          <calcite-input min="0" placeholder="Placeholder" type="number" scale="s" id="line-width-input"></calcite-input>
+        </calcite-label>
+        <calcite-label>color
+          <calcite-input placeholder="Placeholder" type="color" scale="s" id="line-color-input" format="rgb">
+          </calcite-input>
+        </calcite-label>
+      </calcite-accordion-item>
+    </calcite-accordion>
+  </calcite-panel>
+  
+  <!-- sketchViewModel shortcut keys-->
+  <calcite-panel heading="SketchViewModel Shortcut Keys" id="sketchVM-controls">
+    <calcite-value-list>
+      <calcite-value-list-item label="F" disabled
+        description="Adds a vertex to the polyline or polygon graphic. Completes the rectangle or circle polygon graphic in click mode.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="Enter"
+        description="Completes the polyline or polygon graphic sketch. Adds a point graphic at the pointer location.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="Z" description="Incrementally undo actions recorded in the stack.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="R" description="Incrementally redo actions recorded in the stack.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="Ctrl"
+        description="Toggle snapping dependent on the configuration in snappingOptions.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="Delete" description="Remove the selected graphic(s) from the layer.">
+      </calcite-value-list-item>
+      <calcite-value-list-item label="Shift+Left-click" description="Select multiple graphics."></calcite-value-list-item>
+    </calcite-value-list>
+  </calcite-panel>
+  
+  <!-- modal point outline -->
+  <calcite-modal id="point-outline-modal" width="300">
+    <h3 slot="header">SimpleLineSymbol</h3>
+    <div slot="content">
+      <calcite-label>width
+        <calcite-input min="0" placeholder="Placeholder" type="number" scale="s" id="point-sls-width-input">
+        </calcite-input>
+      </calcite-label>
+      <calcite-label>color
+        <calcite-input placeholder="Placeholder" type="color" scale="s" id="point-sls-color-input" format="rgb">
+        </calcite-input>
+      </calcite-label>
+    </div>
+  </calcite-modal>
+  
+  <!-- modal polygon outline -->
+  <calcite-modal id="polygon-outline-modal" width="300">
+    <h3 slot="header">SimpleLineSymbol</h3>
+    <div slot="content">
+      <calcite-label>style
+        <calcite-select scale="s" id="polygon-sls-style-select">
+          <calcite-option disabled selected id="blankOption">choose a style</calcite-option>
+          <calcite-option value="dash">dash</calcite-option>
+          <calcite-option value="dash-dot">dash-dot</calcite-option>
+          <calcite-option value="dot">dot</calcite-option>
+          <calcite-option value="long-dash">long-dash</calcite-option>
+          <calcite-option value="long-dash-dot">long-dash-dot</calcite-option>
+          <calcite-option value="long-dash-dot-dot">long-dash-dot-dot</calcite-option>
+          <calcite-option value="none">none</calcite-option>
+          <calcite-option value="short-dash">short-dash</calcite-option>
+          <calcite-option value="short-dash-dot">short-dash-dot</calcite-option>
+          <calcite-option value="short-dash-dot-dot">short-dash-dot-dot</calcite-option>
+          <calcite-option value="short-dot">short-dot</calcite-option>
+          <calcite-option value="solid">solid</calcite-option>
+        </calcite-select>
+      </calcite-label>
+      <calcite-label>width
+        <calcite-input min="0" placeholder="Placeholder" type="number" scale="s" id="polygon-sls-width-input">
+        </calcite-input>
+      </calcite-label>
+      <calcite-label>color
+        <calcite-input placeholder="Placeholder" type="color" scale="s" id="polygon-sls-color-input" format="rgb">
+        </calcite-input>
+      </calcite-label>
+    </div>
+  </calcite-modal>
+</body>
+</html>

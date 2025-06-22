@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Realistic buildings with SceneLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/layers/SceneLayer"], (Map, SceneView, SceneLayer) => {
+        // Create SceneLayer and add to the map
+        const sceneLayer = new SceneLayer({
+          portalItem: {
+            id: "b66b02861afa4e8dbf9655d05bc89afc"
+          },
+          elevationInfo: {
+            mode: "absolute-height",
+            offset: 6
+          }
+        });
+
+        // Create Map
+        const map = new Map({
+          basemap: "hybrid",
+          ground: "world-elevation",
+          layers: [sceneLayer]
+        });
+
+        // Create the SceneView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            position: [4.84361, 45.75561, 270],
+            tilt: 82,
+            heading: 304
+          },
+          environment: {
+            lighting: {
+              date: new Date("July 15, 2015 8:00:00 PDT"),
+              directShadowsEnabled: true
+            }
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

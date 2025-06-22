@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to MapImageLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/Map", "esri/views/SceneView", "esri/layers/MapImageLayer"], (
+        Map,
+        SceneView,
+        MapImageLayer
+      ) => {
+        /*****************************************************************
+         * Create a MapImageLayer instance pointing to a Map Service
+         * containing data about pool permits in Southern California
+         *****************************************************************/
+        const permitsLayer = new MapImageLayer({
+          portalItem: {
+            // autocasts as new PortalItem()
+            id: "d7892b3c13b44391992ecd42bfa92d01"
+          }
+        });
+
+        /*****************************************************************
+         * Add the layer to a map
+         *****************************************************************/
+        const map = new Map({
+          basemap: "dark-gray-vector",
+          layers: [permitsLayer]
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+
+        /*****************************************************************
+         * Animate to the layer's full extent when the view loads
+         *****************************************************************/
+        view.when(() => {
+          view.goTo(permitsLayer.fullExtent)
+          .catch((error) => {
+              if (error.name != "AbortError"){
+                console.error(error);
+              }
+            });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

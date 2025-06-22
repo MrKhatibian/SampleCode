@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>VoxelLayer variable and render mode | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .esri-legend {
+        width: 200px !important;
+      }
+    </style>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/VoxelLayer",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend"
+      ], (SceneView, WebScene, VoxelLayer, Expand, Legend) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "2fd98698a4fa4b88ae81dda09a682a2c"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+            position: [-51.38584192, -4.68031927, -701095.56541],
+            heading: 314.62,
+            tilt: 97.46
+          }
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: true
+        });
+        view.ui.add(legendExpand, "bottom-left");
+        view.ui.add("infoDiv", "bottom-right");
+        view.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          // initialize vertical exaggeration slider value
+          const exaggerationSlider = document.getElementById("exaggerationSlider");
+          const volStyle = vxlLayer.volumeStyles.getItemAt(0);
+          exaggerationSlider.value = volStyle.verticalExaggeration;
+          exaggerationSlider.addEventListener("calciteSliderInput", function () {
+            // Update vertical exaggeration by cloning the volumeStyles
+            // and modifying the first volumeStyle's verticalExaggeration.
+            // Only 1 volume, and therefore only 1 volumeStyle, is
+            // currently supported so there should always be exactly
+            // 1 volumeStyle in the volumeStyles array.
+            const newVolStyles = vxlLayer.volumeStyles.clone();
+            const newVolStyle0 = newVolStyles.getItemAt(0);
+            newVolStyle0.verticalExaggeration = exaggerationSlider.value;
+            vxlLayer.volumeStyles = newVolStyles;
+          });
+          //initialize verticalOffset slider value
+          const offsetInput = document.getElementById("offsetInput");
+          offsetInput.value = volStyle.verticalOffset;
+          offsetInput.addEventListener("calciteInputChange", function () {
+            const newVolOffsetStyles = vxlLayer.volumeStyles.clone();
+            const newVolOffsetStyle0 = newVolOffsetStyles.getItemAt(0);
+            newVolOffsetStyle0.verticalOffset = offsetInput.value;
+            vxlLayer.volumeStyles = newVolOffsetStyles;
+          });
+          // initialize variables
+          const variableSelect = document.getElementById("variableSelect");
+          for (let i = 0; i < vxlLayer.variables.length; ++i) {
+            const vxlVariable = vxlLayer.variables.getItemAt(i);
+            const item = document.createElement("calcite-option");
+            item.setAttribute("label", vxlLayer.variableStyles.getItemAt(i).label);
+            item.setAttribute("value", vxlVariable.id);
+            if (vxlVariable.id === vxlLayer.currentVariableId) {
+              item.selected = true;
+            }
+            variableSelect.appendChild(item);
+          }
+          variableSelect.addEventListener("calciteSelectChange", function () {
+            // change current variable
+            vxlLayer.currentVariableId = variableSelect.selectedOption.value;
+          });
+          const renderModeSelection = document.getElementById("renderModeSelection");
+          renderModeSelection.addEventListener("calciteSegmentedControlChange", function () {
+            // change to renderMode to "surfaces" or "volume"
+            vxlLayer.renderMode = renderModeSelection.selectedItem.value;
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv">
+      <div id="content" style="padding: 5px">
+        <label>
+          Render Mode:
+          <calcite-segmented-control
+            id="renderModeSelection"
+            layout="horizontal"
+            appearance="solid"
+            scale="m"
+            width="auto"
+          >
+            <calcite-segmented-control-item value="volume" checked="">Volume</calcite-segmented-control-item>
+            <calcite-segmented-control-item value="surfaces">Surfaces</calcite-segmented-control-item>
+          </calcite-segmented-control> </label
+        ><br />
+        <label>
+          Current Variable:
+          <calcite-select id="variableSelect" label="Current Variable" scale="s" width="auto"> </calcite-select> </label
+        ><br />
+        <label>
+          Vertical Exaggeration:
+          <calcite-slider id="exaggerationSlider" max="200" scale="s" label-handles width="auto">
+          </calcite-slider> </label
+        ><br />
+        <label>
+          Vertical Offset (m):
+          <calcite-input id="offsetInput" width="auto" type="number"></calcite-input>
+        </label>
+      </div>
+    </calcite-panel>
+  </body>
+</html>
+

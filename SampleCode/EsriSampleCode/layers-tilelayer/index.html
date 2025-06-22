@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Intro to TileLayer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/views/MapView", "esri/WebMap", "esri/layers/TileLayer", "esri/PopupTemplate"], (MapView, WebMap, TileLayer, PopupTemplate) => {
+
+        const map = new WebMap({
+          basemap: "topo-vector",
+          layers: [
+            (layer = new TileLayer({
+              portalItem: { // autocasts as new PortalItem()
+                id: "382e5ab1c3e940bfbf470c4e6c64134c"
+              }
+            }))
+          ]
+        });
+
+        layer.load().then(() => {
+          const sublayer = layer.allSublayers.find((sublayer) => sublayer.title === "Eugene_OR_Zoning");
+          sublayer.popupTemplate = new PopupTemplate({
+            title: "{zonename}",
+            content: [{
+              type: "fields",
+              fieldInfos: [{
+                  fieldName: "zonejuris",
+                  label: "Juristiction"
+                },
+                {
+                  fieldName: "zonecode",
+                  label: "Code"
+                }
+              ]
+            }]
+          });
+        })
+
+        let view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-123.08837, 44.04997],
+          zoom: 12
+        });
+      });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
+

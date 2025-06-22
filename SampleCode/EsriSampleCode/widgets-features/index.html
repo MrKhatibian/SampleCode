@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>Features Widget | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require(["esri/views/MapView", "esri/WebMap", "esri/widgets/Features", "esri/core/reactiveUtils"], (
+        MapView,
+        WebMap,
+        Features,
+        reactiveUtils
+      ) => {
+        const webmap = new WebMap({
+          portalItem: {
+            id: "f3a9e5cb35104adca280623db2da3cbe"
+          }
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: webmap,
+          popupEnabled: false
+        });
+
+
+        // Create a new instance of the Features widget and set
+        // it's container to a div residing in a shell panel.
+        const featuresWidget = new Features({
+          container: "features-widget",
+          viewModel: {
+            // Add a custom action to the widget that will open a
+            // website when it's selected.
+            actions: [
+              {
+                type: "button",
+                title: "Visitation Highlights (2022)",
+                id: "more-info",
+                icon: "information-letter"
+              }
+            ],
+            view: view
+          }
+        });
+
+
+
+        // Open the Features widget with features fetched from
+        // the view click event location.
+        reactiveUtils.on(
+          () => view,
+          "click",
+          (event) => {
+            featuresWidget.open({
+              location: event.mapPoint,
+              fetchFeatures: true
+            });
+          }
+        );
+
+
+        // Use reactiveUtils to watch the Features widget trigger-action
+        // and open a website if the specific action is clicked.
+        reactiveUtils.on(
+          () => featuresWidget,
+          "trigger-action",
+          (event) => {
+            if (event.action.id === "more-info") {
+              window.open("https://www.nps.gov/subjects/socialscience/annual-visitation-highlights.htm");
+            }
+          }
+        );
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-shell>
+      <calcite-shell-panel slot="panel-start" position="start" width-scale="l">
+        <calcite-block heading="Select National Park trails and boundaries."></calcite-block>
+        <div id="features-widget" class="calcite-match-height"></div>
+      </calcite-shell-panel>
+      <div id="viewDiv"></div>
+    </calcite-shell>
+  </body>
+</html>
+

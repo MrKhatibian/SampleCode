@@ -1,0 +1,56 @@
+import * as locator from "@arcgis/core/rest/locator.js";
+import Map from "@arcgis/core/Map.js";
+import MapView from "@arcgis/core/views/MapView.js";
+import "./style.css";
+
+// Set up a locator url using the world geocoding service
+const locatorUrl = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
+// Create the Map
+const map = new Map({
+  basemap: "streets-navigation-vector"
+});
+
+// Create the MapView
+const view = new MapView({
+  container: "viewDiv",
+  map: map,
+  center: [-71.6899, 43.7598],
+  zoom: 12
+});
+
+/*******************************************************************
+ * This click event sets generic content on the popup not tied to
+ * a layer, graphic, or popupTemplate. The location of the point is
+ * used as input to a reverse geocode method and the resulting
+ * address is printed to the popup content.
+ *******************************************************************/
+view.popupEnabled = false;
+view.on("click", (event) => {
+  // Get the coordinates of the click on the view
+  const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+  const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+  view.openPopup({
+    // Set the popup's title to the coordinates of the location
+    title: "Reverse geocode: [" + lon + ", " + lat + "]",
+    location: event.mapPoint // Set the location of the popup to the clicked location
+  });
+
+  const params = {
+    location: event.mapPoint
+  };
+
+  // Display the popup
+  // Execute a reverse geocode using the clicked location
+  locator
+    .locationToAddress(locatorUrl, params)
+    .then((response) => {
+      // If an address is successfully found, show it in the popup's content
+      view.popup.content = response.address;
+    })
+    .catch(() => {
+      // If the promise fails and no result is found, show a generic message
+      view.popup.content = "No address was found for this location";
+    });
+});

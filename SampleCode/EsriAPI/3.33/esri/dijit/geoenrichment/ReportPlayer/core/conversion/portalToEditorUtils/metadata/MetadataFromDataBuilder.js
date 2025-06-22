@@ -1,0 +1,5 @@
+// All material copyright ESRI, All Rights Reserved, unless otherwise specified.
+// See http://js.arcgis.com/3.33/esri/copyright.txt for details.
+//>>built
+define("esri/dijit/geoenrichment/ReportPlayer/core/conversion/portalToEditorUtils/metadata/MetadataFromDataBuilder",["esri/dijit/geoenrichment/utils/JsonXmlConverter"],function(p){return{recoverMetadataFromAreaData:function(b,g){b=b[0];var h={name:"DataCollection",tags:[{name:"Calculators",tags:[]}]},a;for(a in b){var k=b[a].data,e=b[a].comparisonLevels,l=g.map[a],c=g.locator[a],c={name:l?"Maps":c?"Locator":"DataCollections",attributes:{Name:a},tags:[]};h.tags[0].tags.push(c);var m=[],d;for(d in k)m.push({name:l?
+"Map":"Field",attributes:{Name:d,Alias:d,MapTo:"DC."+d,Type:"number"===typeof k[d]?"Double":"String"}});c.tags.push({name:"Fields",tags:m});if(e&&e.length){var f=[],n={};e.forEach(function(a){a.StdGeographyLevel&&!n[a.StdGeographyLevel]&&(n[a.StdGeographyLevel]=1,f.push(a.StdGeographyLevel))});f.length&&c.tags.push({name:"ComparisonLevels",tags:f.map(function(a){return{name:"ComparisonLevel",attributes:{Name:a}}})})}}return p.parseJson(h)}}});

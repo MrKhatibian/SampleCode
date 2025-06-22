@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Perdengti sluoksnius</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Perdengti sluoksnius"></h2>
+        <hr/>
+    <p>Perdengti sluoksnius apjungia dviejų ar daugiau sluoksnių informaciją į vieną sluoksnį.  Sluoksnių perdengimą galite įsivaizduoti kaip vienas ant kito sudėtų sluoksnių pervėrimo metu gautą informaciją. Perdengimas &ndash; tai ne tik ribų apjungimas. Perdengtame sluoksnyje visi elementų atributai įtraukiami į galutinį produktą. Perdengimas naudojamas atsakyti į vieną pagrindinių geografijos klausimų &bdquo;kas yra ant ko?&ldquo; 
+    </p>
+    <p>Toliau pateikiami pavyzdžiai:
+        <ul>
+            <li>Kurie sklypai patenka į per paskutinius 100 metų potvynių užliejamą teritoriją? (Patenka yra kitas būdas pasakyti &bdquo;yra ant&ldquo;)
+                  
+            </li>
+            <li>Kokios žemėnaudos yra vir&scaron; kokio dirvožemio tipo?
+                 
+            </li>
+            <li>Kurie &scaron;uliniai patenka į apleistas karines bazes?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Jei  <b>Naudoti esamą žemėlapio aprėptį</b> pažymėta, bus perdengiami tik įvesties ta&scaron;kų ir perdengimo sluoksnių elementai, patenkantys į esamo žemėlapio aprėptį Jei nepažymėta, bus perdengiami visi įvesties ir perdengimo sluoksnių elementai, net jei jie nepatenka į esamo žemėlapio aprėpties ribas.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Pasirinkite įvesties sluoksnį</h2></div>
+        <hr/>
+        <div>
+            <p>Ta&scaron;kų, linijų arba plotų sluoksnis, kuris bus perdengiamas.
+            </p>
+            <p>Pasirinkę sluoksnį žemėlapyje, galite pasirinkti  <b>Pasirinkite analizės sluoksnį</b>, kurį rasite i&scaron;plečiamo sąra&scaron;o apačioje. &Scaron;i parinktis atidaro galeriją, kurioje galite ie&scaron;koti duomenų rinkinių i&scaron; įvairių &scaron;altinių ir juos pasirinkti naudoti savo analizėje. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Pasirinkite perdangos sluoksnį</h2></div>
+        <hr/>
+        <div>
+            <p>Sluoksnis, kuris bus perdengtas su įvesties sluoksniu.  
+            </p>
+            <p>Galite ne tik nurodyti sluoksnį i&scaron; žemėlapio, bet ir apačioje pasirinkti  <b>Pasirinkti analizės sluoksnį</b>, kad galėtumėte turinyje ie&scaron;koti didelių duomenų rinkinio arba elemento sluoksnio. Jei norite, įvesties sluoksnyje galite pritaikyti filtrą arba vykdyti pasirinkimą talpinamiems sluoksniams, įtrauktiems į jūsų žemėlapį. Filtrai ir pasirinkimai pritaikomi tik analizei. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Pasirinkite perdangos būdą</h2></div>
+        <hr/>
+        <div>
+            <p>Nurodo perdangos būdą, kurį naudojant bus sujungtas įvesties sluoksnis ir perdengimo sluoksnis.  
+
+                <ul>
+                    <li> <b>Sankirta</b> &ndash; bus sujungti tik tie perdengimo sluoksnio elementai arba jų dalys, kurias turi ir įvesties sluoksnis.
+                    </li>
+                    <li> <b>I&scaron;trynimas</b> &ndash; bus sujungti tik tie perdengimo sluoksnio elementai arba jų dalys, kurios nepersidengia su plotais įvesties sluoksnyje.
+                    </li>
+                    <li> <b>Sąjunga</b> &ndash; bus sujungti visi elementai i&scaron; abiejų sluoksnių, sukuriant įvesties sluoksnio ir perdengimo sluoksnio geometrinę sąjungą.  Visi sluoksniai ir jų atributai bus įra&scaron;yti į sluoksnį.
+                    </li>
+                    <li> <b>Tapatybė</b> &ndash; įvesties sluoksnio ir perdengimo sluoksnio elementai arba jų dalys bus sujungti. Elementai arba jų dalys, kurie persidengia abiejuose (įvesties ir perdengimo ) sluoksniuose bus įra&scaron;yti į perdangos sluoksnį.
+                    </li>
+                    <li> <b>Simetrinis skirtumas</b> &ndash; įvesties sluoksnio ir perdengimo sluoksnio elementai arba jų dalys, kurie nepersidengia, bus sujungti.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Rezultatų sluoksnio pavadinimas</h2></div>
+        <hr/>
+        <div>
+            <p>Sluoksnio, kuris bus sukurtas puslapyje  <b>Turinys</b> ir įtrauktas į žemėlapį, pavadinimas. Sluoksnio tipas (ta&scaron;kai, linijos, poligonai) bus toks pats kaip įvesties ir perdengimo sluoksnių. Pagal nutylėjimą  pavadinimas sudaromas pagal perdengimo tipą ir analizuojamo sluoksnio pavadinimą. Jei toks sluoksnis jau egzistuoja, būsite papra&scaron;yti pateikti kitą pavadinimą.
+            </p>
+            <p>Naudodami i&scaron;plečiamo meniu parinktį  <b>Rezultatą įra&scaron;yti į</b>, galite nurodyti puslapyje <b>Turinys</b> esančio aplanko, kur bus įra&scaron;yti rezultatai, pavadinimą.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>ImageryTileLayer - shaded relief renderer | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #rightPanel {
+        max-height: 98%;
+        overflow: hidden;
+      }
+      calcite-shell-panel {
+        --calcite-shell-panel-min-width: 320px;
+        --calcite-shell-panel-width: 320px;
+        --calcite-shell-panel-max-width: 60%;
+      }
+      #rendererPanel {
+        padding: 5px;
+        overflow: hidden;
+      }
+    </style>
+
+<script>
+  require([
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/layers/ImageryTileLayer",
+    "esri/renderers/RasterShadedReliefRenderer",
+    "esri/smartMapping/raster/support/colorRamps"
+  ], (Map, MapView,
+      ImageryTileLayer,
+      RasterShadedReliefRenderer,
+      colorRamps
+  ) => {
+
+    // set the hillshade type for the shaded relief renderer
+    let hillshadeType = "traditional";
+    const url = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer";
+
+    // create a multi part color ramp based on Elevation #1 color ramp name
+    let colorRamp = changeColorRamp("Elevation #1");
+
+    // set the shaded relief renderer parameters
+    const renderer = new RasterShadedReliefRenderer({
+      altitude: 45,
+      azimuth: 315,
+      hillshadeType,
+      zFactor: 1,
+      scalingType: "adjusted",
+      colorRamp
+    });
+
+    // create the imagery tile layer with shaded relief renderer
+    const layer = new ImageryTileLayer({
+      url,
+      renderer
+    });
+
+    const map = new Map({
+      basemap: "gray-vector",
+      layers: [layer]
+    });
+
+    const view = new MapView({
+      container: "viewDiv",
+      map: map,
+      zoom: 7,
+      center: [-111.819, 37.111]
+    });
+
+    // this function will be called as user adjusts the renderer parameters via UI
+    function updateRenderer() {
+      if (!layer.loaded) {
+        return;
+      }
+      const renderer = layer.renderer.clone();
+      renderer.scalingType = adjustCheckBox.checked ? "adjusted" : "none";
+      renderer.hillshadeType = hillshadeType;
+      switch (hillshadeType) {
+        case "traditional":
+          renderer.zFactor = zFactorSlider.value;
+          renderer.altitude = altitudeSlider.value;
+          renderer.azimuth = azimuthSlider.value;
+          break;
+        case "multi-directional":
+          renderer.zFactor = zFactorSlider.value;
+          break;
+      }
+      renderer.colorRamp = tintedCheckBox.checked ? colorRamp : null;
+      layer.renderer = renderer;
+    }
+
+    // Get names of all available colorRamps and populate color ramp select
+    // when the application loads
+    const colorRampSelect = document.getElementById("colorRampSelect");
+    colorRamps.names().forEach((name) => {
+      const colorItem = document.createElement("calcite-option");
+      colorItem.setAttribute("label", name);
+      colorItem.setAttribute("value", name);
+      if (name === "Elevation #1") {
+        colorItem.selected = true;
+      }
+      colorRampSelect.appendChild(colorItem);
+    });
+
+    // Create a multi part color ramp based on user selected color ramp name
+    colorRampSelect.addEventListener("calciteSelectChange", (event) =>{
+      colorRamp = changeColorRamp(colorRampSelect.value);
+      updateRenderer();
+    });
+
+    // this function creates a multi part color ramp based on a color ramp name
+    // colorRamps.createColorRamp method makes it easier to create a color ramp
+    function changeColorRamp(name) {
+      const colors = colorRamps.byName(name);
+      return colorRamps.createColorRamp(colors);
+    }
+
+    // update the renderer to reflect hillshadeType user picked from select
+    const hillshadeTypeSelect = document.getElementById("hillshadeTypeSelect");
+    hillshadeTypeSelect.addEventListener("calciteSelectChange", (event) =>{
+      hillshadeType = hillshadeTypeSelect.value;
+      switch (hillshadeType) {
+        case "traditional":
+          altitudeSlider.disabled = false;
+          azimuthSlider.disabled = false;
+          break;
+        case "multi-directional":
+          altitudeSlider.disabled = true;
+          azimuthSlider.disabled = true;
+          break;
+      }
+      updateRenderer();
+    });
+
+    // listen to z factor slider's value change event and update renderer
+    const zFactorSlider = document.getElementById("zFactorSlider");
+    zFactorSlider.addEventListener("calciteSliderInput", updateRenderer);
+
+    // listen to altitude slider's value change event and update renderer
+    const altitudeSlider = document.getElementById("altitudeSlider");
+    altitudeSlider.addEventListener("calciteSliderInput", updateRenderer);
+
+    // listen to azimuth slider's value change event and update renderer
+    const azimuthSlider = document.getElementById("azimuthSlider");
+    azimuthSlider.addEventListener("calciteSliderInput", updateRenderer)
+
+    // make the renderer grayscale or use the colorramp
+    const tintedCheckBox = document.getElementById("tinted");
+    tintedCheckBox.addEventListener("calciteCheckboxChange", updateRenderer);
+
+    // adjust the renderer to large or smaller scales
+    const adjustCheckBox = document.getElementById("adjust");
+    adjustCheckBox.addEventListener("calciteCheckboxChange", updateRenderer);
+  });
+</script>
+  </head>
+
+  <body>
+    <calcite-shell content-behind>
+      <div id="viewDiv"></div>
+      <calcite-shell-panel slot="panel-end" display-mode="float">
+        <calcite-panel id="rendererPanel" heading="Shaded Relief Parameters">
+          <calcite-label> Select Type:
+            <calcite-select id="hillshadeTypeSelect">
+              <calcite-option value="traditional">traditional</calcite-option>
+              <calcite-option value="multi-directional">multi-directional</calcite-option>
+            </calcite-select>
+          </calcite-label>
+          <calcite-label> Select Color Ramp:
+            <calcite-select id="colorRampSelect"></calcite-select>
+          </calcite-label>
+          <calcite-label> Exaggeration Factor:
+            <calcite-slider id="zFactorSlider" value="1" label-handles label-ticks max="10" min="1" ticks="1"></calcite-slider>
+          </calcite-label>
+          <calcite-label> Sun Altitude:
+            <calcite-slider id="altitudeSlider" value="45" label-handles label-ticks max="90" min="0" max-label="90" min-label="0" ticks="90"></calcite-slider>
+          </calcite-label>
+          <calcite-label> Sun Azimuth:
+            <calcite-slider id="azimuthSlider" value="315" label-handles max="360" min="0"></calcite-slider>
+          </calcite-label>
+          <calcite-label layout="inline">
+              <calcite-checkbox id="tinted" checked></calcite-checkbox>
+              Tinted hillshade
+          </calcite-label>
+           <calcite-label layout="inline">
+              <calcite-checkbox id="adjust" checked></calcite-checkbox>
+              Adjust for large scale
+          </calcite-label>
+        </calcite-panel>
+      </calcite-shell-panel>
+    </calcite-shell>
+  </body>
+</html>
+

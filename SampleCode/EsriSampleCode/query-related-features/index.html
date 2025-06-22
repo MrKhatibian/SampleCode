@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>Query Related Features | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #gridDiv {
+        padding: 10px;
+        max-width: 300px;
+      }
+      #queryResults {
+        max-height: 250px;
+        overflow: auto;
+      }
+      #clearButton {
+        margin-top: 5px;
+        display: none;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/Basemap",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/Expand"
+      ], (Map, Basemap, MapView, FeatureLayer, Legend, Expand) => {
+        // Create the layer
+        const layer = new FeatureLayer({
+          portalItem: {
+            id: "7a301e848a7c4bfcaefdac4fe98a7f99"
+          },
+          outFields: ["*"]
+        });
+
+        // Setup the map
+        const basemap = new Basemap({
+          portalItem: {
+            id: "00c8181753cd4673810a1ede1f52a922"
+          }
+        });
+
+        const map = new Map({
+          basemap: basemap,
+          layers: [layer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-98.5795, 39.8282],
+          zoom: 3,
+          popupEnabled: false
+        });
+
+        const legend = new Legend({ view: view });
+        // Expand widget to expand and contract the legend widget
+        const legendExpand = new Expand({
+          expandTooltip: "Show Legend",
+          expanded: false,
+          view: view,
+          content: legend
+        });
+
+        // Add widgets to the view
+        view.ui.add(document.getElementById("gridDiv"), "bottom-left");
+        view.ui.add(legendExpand, "top-right");
+
+        // Initialize variables
+        let highlight;
+        const results = document.getElementById("queryResults");
+
+        // call clearMap method when clear is clicked
+        const clearbutton = document.getElementById("clearButton");
+        clearbutton.addEventListener("click", clearMap);
+
+        view.on("click", (event) => {
+          clearMap();
+          queryFeatures(event);
+        });
+
+        function queryFeatures(screenPoint) {
+          const point = view.toMap(screenPoint);
+
+          // Query the for the feature ids where the user clicked
+          layer
+            .queryObjectIds({
+              geometry: point,
+              spatialRelationship: "intersects",
+              returnGeometry: false,
+              outFields: ["*"]
+            })
+
+            .then((objectIds) => {
+              if (!objectIds.length) {
+                return;
+              }
+
+              // Highlight the area returned from the first query
+              view.whenLayerView(layer).then((layerView) => {
+                if (highlight) {
+                  highlight.remove();
+                }
+                highlight = layerView.highlight(objectIds);
+              });
+
+              // Query the for the related features for the features ids found
+              return layer.queryRelatedFeatures({
+                outFields: ["NAME", "SUM_POPULATION"],
+                relationshipId: layer.relationships[0].id,
+                objectIds: objectIds
+              });
+            })
+
+            .then((relatedFeatureSetByObjectId) => {
+              if (!relatedFeatureSetByObjectId) {
+                return;
+              }
+              // Create a table that will be populated with the related records
+              const tableDiv = document.createElement("table");
+              const thead = tableDiv.createTHead();
+              const headerRow = tableDiv.insertRow();
+              Object.keys(relatedFeatureSetByObjectId).forEach((objectId) => {
+                // get the attributes of the FeatureSet
+                const relatedFeatureSet = relatedFeatureSetByObjectId[objectId];
+                relatedFeatureSet.features.map((feature, index) => {
+                  let row = tableDiv.insertRow();
+                  Object.keys(feature.attributes).forEach((key) => {
+                    // at the first index, create the header for the table
+                    if (index == 0) {
+                      let headerCell = headerRow.insertCell();
+                      let headerText = document.createTextNode(key);
+                      headerCell.appendChild(headerText);
+                    }
+                    // populate the table with attribute values
+                    let cell = row.insertCell();
+                    let text = document.createTextNode(feature.attributes[key]);
+                    cell.appendChild(text);
+                  });
+                });
+                // append the table to the resultsDiv
+                results.appendChild(tableDiv);
+              });
+              clearbutton.style.display = "inline";
+            })
+            .catch((error) => {
+              console.error(error);
+            });
+        }
+
+        function clearMap() {
+          if (highlight) {
+            highlight.remove();
+          }
+          results.innerHTML = "";
+          clearbutton.style.display = "none";
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="gridDiv" class="esri-widget">
+      <h2>US Cities</h2>
+      <p>Click on a hexagon in the map to view the US cities located in that area.</p>
+      <div id="queryResults"></div>
+      <button id="clearButton" class="esri-widget">Clear Query</button>
+    </div>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

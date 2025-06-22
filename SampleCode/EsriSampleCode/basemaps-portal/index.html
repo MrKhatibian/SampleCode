@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Basemaps with different projections | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #srDiv{
+        height: 40px;
+        padding: 10px;
+      }
+    </style>
+
+    <script>
+      require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/portal/Portal",
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/BasemapGallery/support/PortalBasemapsSource",
+      "esri/widgets/Expand",
+      "esri/core/reactiveUtils"
+    ], function(
+      Map,
+      MapView,
+      Portal,
+      BasemapGallery,
+      PortalBasemapsSource,
+      Expand,
+      reactiveUtils
+    ) {
+
+
+      const portal = new Portal();
+
+      // source for basemaps from a portal group
+      // containing basemaps with different projections
+      const source = new PortalBasemapsSource({
+        portal,
+        query: {
+          id: "bdb9d65e0b5c480c8dcc6916e7f4e099"
+        }
+      });
+
+
+      const map = new Map({
+        basemap: {
+          portalItem: {
+            id: "8d91bd39e873417ea21673e0fee87604" // nova basemap
+          }
+        }
+      });
+
+      // center the view over 48 states
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-100, 35],
+        zoom: 2,
+        constraints: {
+          snapToZoom: false
+        }
+      });
+      view.ui.add("srDiv", "top-right");
+
+      const bgExpand = new Expand({
+        view,
+        content: new BasemapGallery({ source, view }),
+        expandIcon: "basemap"
+      });
+      view.ui.add(bgExpand, "top-right");
+
+      reactiveUtils.watch(() => view.spatialReference, (spatialReference)=> {
+        document.getElementById("srDiv").innerHTML = `view.spatialReference.wkid = <b>${spatialReference.wkid}</b>`;
+      });
+    });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="srDiv" class="esri-widget"></div>
+  </body>
+</html>
+

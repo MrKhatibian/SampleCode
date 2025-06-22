@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>MediaLayer with images | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css"/>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #infoDiv {
+        padding: 10px;
+        width: 320px;
+      }
+
+      .esri-slider {
+        height: 40px;
+        background: none;
+        width: 75%;
+      }
+
+      .leftPadding{
+        padding-left: 5px;
+      }
+
+      .rightPadding{
+        padding-right: 5px;
+        font-weight: bold;
+      }
+    </style>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/MediaLayer",
+        "esri/layers/support/ImageElement",
+        "esri/layers/support/ExtentAndRotationGeoreference",
+        "esri/geometry/Extent",
+        "esri/widgets/Slider",
+        "esri/widgets/Expand"
+      ], (
+        Map,
+        MapView,
+        MediaLayer,
+        ImageElement,
+        ExtentAndRotationGeoreference,
+        Extent,
+        Slider,
+        Expand
+      ) => {
+          // image information used to create image elements to be
+          // added to the media layer
+          const imageInfos = [
+            {
+              name: "neworleans1891",
+              title: "New Orleans 1891",
+              extent: {
+                xmin: -10047456.27662979,
+                ymin: 3486722.2723874687,
+                xmax: -10006982.870152846,
+                ymax: 3514468.91365495
+              }
+            },
+            {
+              name: "spanish-fort1891",
+              title: "Spanish Fort 1891",
+              extent: {
+                xmax: -10008215.143195309,
+                xmin: -10061466.93004702,
+                ymax: 3514418.4006159767,
+                ymin: 3486794.2321162825
+              }
+            },
+            {
+              name: "st-bernard1892",
+              title: "St Bernard 1892",
+              extent: {
+                xmax: -10001415.789436923,
+                xmin: -10046739.695935503,
+                ymax: 3514979.040597104,
+                ymin: 3486942.691935667
+              }
+            },
+            {
+              name: "chef-menteur1892",
+              title: "Chef Menteur 1892",
+              extent: {
+                xmax: -10003257.6023701,
+                xmin: -10043731.008847024,
+                ymax: 3513936.582106864,
+                ymin: 3486773.1082574953
+              }
+            }
+          ];
+
+
+          // create image elements for each image
+          function createImageElement(name, box) {
+            const imageElement = new ImageElement({
+              image: `https://arcgis.github.io/arcgis-samples-javascript/sample-data/media-layer/new-orleans/${name}.png`,
+              georeference: new ExtentAndRotationGeoreference({
+                extent: new Extent({
+                  spatialReference: {
+                    wkid: 102100
+                  },
+                  xmin: box.xmin,
+                  ymin: box.ymin,
+                  xmax: box.xmax,
+                  ymax: box.ymax
+                })
+              })
+            });
+            return imageElement;
+          }
+
+
+          let imageElements = [];
+          // loop through images and set up ImageElement object for MediaLayer.
+          imageInfos.forEach((image, i) => {
+            const elementDiv = document.createElement("div");
+            elementDiv.classList.add("elementDiv");
+
+            const imageElement = {
+              name: image.name,
+              title: image.title,
+              element: createImageElement(image.name, image.extent)
+            };
+            imageElements.push(imageElement);
+
+            // create calcite checkboxes to allow users to add and remove
+            // image elements from the MediaLayer.
+            const label = document.createElement("calcite-label");
+            label.layout = "inline-space-between";
+            label.disableSpacing = true;
+            label.innerHTML = image.title;
+            const checkBox = document.createElement("calcite-checkbox");
+            checkBox.name = image.name;
+            checkBox.value = image.name;
+            checkBox.checked = true;
+
+
+            // Remove the image element from the MediaLayer if it exists
+            // Add the image element to the layer if it does not exist in the layer.source.elements. 
+            checkBox.addEventListener("calciteCheckboxChange", (event) => {
+              const selectedImageElement = imageElements.find(
+                (item) => item.name === event.target.name
+              );
+              if (checkBox.checked) {
+                layer.source.elements.add(selectedImageElement.element);
+              } else {
+                layer.source.elements.remove(selectedImageElement.element);
+              }
+            });
+
+
+            label.appendChild(checkBox);
+            const visibleDiv = document.createElement("div");
+            visibleDiv.classList.add("leftPadding", "rightPadding");
+            visibleDiv.appendChild(label);
+            document.getElementById("elementsDiv").appendChild(visibleDiv);
+
+            const slider = new Slider({
+              min: 0,
+              max: 1,
+              precision: 2,
+              container: document.createElement("div"),
+              values: [1],
+              label: image.name
+            });
+
+
+            slider.on("thumb-drag", (event) => {
+              const selectedImageElement = imageElements.find(
+                (item) => item.name === slider.label
+              );
+              selectedImageElement.element.opacity = slider.values[0];
+            });
+
+
+            const sliderLabel = document.createElement("calcite-label");
+            sliderLabel.layout = "inline";
+            sliderLabel.innerHTML = "opacity";
+            sliderLabel.appendChild(slider.container);
+
+            const sliderDiv = document.createElement("div");
+            sliderDiv.classList.add("leftPadding");
+            sliderDiv.appendChild(sliderLabel);
+            document.getElementById("elementsDiv").appendChild(sliderDiv);
+          });
+
+
+          // MediaLayer - add imageElements
+          const layer = new MediaLayer({
+            source: [
+              imageElements[0].element,
+              imageElements[1].element,
+              imageElements[2].element,
+              imageElements[3].element
+            ],
+            opacity: 0.9,
+            title: "New Orleans",
+            blendMode: "normal"
+          });
+
+
+          const map = new Map({
+            basemap: {
+              portalItem: {
+                id: "3582b744bba84668b52a16b0b6942544"
+              }
+            },
+            layers: [layer]
+          });
+
+          const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            zoom: 10,
+            center: [-89.93307, 29.973197296501905],
+            constraints: {
+              snapToZoom: false,
+              minScale: 1155582
+            }
+          });
+
+          view.ui.add(
+            new Expand({
+              view: view,
+              expanded: true,
+              content: document.getElementById("infoDiv")
+            }),
+            "top-right"
+          );
+
+          document
+            .getElementById("layerBlending")
+            .addEventListener("calciteSwitchChange", () => {
+              layer.blendMode = layer.blendMode === "normal" ? "luminosity" : "normal";
+            });
+        });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel
+      slot="contextual-panel"
+      id="infoDiv"
+      heading="Historic images of New Orleans"
+    >
+      <br />
+      <div id="elementsDiv"></div>
+      <br />
+      <calcite-label layout="inline-space-between"
+        >Toggle layer blending<calcite-switch
+          unchecked
+          id="layerBlending"
+        ></calcite-switch>
+      </calcite-label>
+    </calcite-panel>
+  </body>
+</html>
+

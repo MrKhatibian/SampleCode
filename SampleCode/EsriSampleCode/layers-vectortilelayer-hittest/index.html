@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>VectorTileLayer hitTest | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        transition: opacity 200ms;
+      }
+
+      .tooltip>div {
+        margin: 0 auto;
+        padding: 12px;
+        border-radius: 4px;
+        box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.75);
+        transform: translate3d(-50%, -125%, 0);
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/VectorTileLayer",
+        "esri/core/promiseUtils",
+        "esri/widgets/Search",
+        "esri/layers/GraphicsLayer",
+        "esri/Graphic"
+      ], (
+        Map,
+        MapView,
+        VectorTileLayer,
+        promiseUtils,
+        Search,
+        GraphicsLayer,
+        Graphic
+      ) => (async () => {
+        const layer = new VectorTileLayer({
+          url: "https://basemaps.arcgis.com/arcgis/rest/services/World_Contours_v2/VectorTileServer",
+          blendMode: "multiply"
+        });
+
+        // a graphic in this layer will show a location of the pointer when the hittest
+        // returns contour info from contours vector tile layer
+        const graphicsLayer = new GraphicsLayer({
+          blendMode: "overlay"
+        });
+        let graphic = new Graphic({
+          symbol: {
+            type: "simple-marker",
+            color: [239, 170, 10, 0.8],
+            size: "40px"
+          }
+        });
+        graphicsLayer.add(graphic);
+
+        const map = new Map({
+          basemap: "streets-relief-vector",
+          layers: [layer, graphicsLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 14,
+          center: [86.925993, 27.989],
+          constraints: {
+            minScale: 72223.819286,
+            maxScale: 1128.497176
+          }
+        });
+
+        await view.whenLayerView(layer);
+
+        // setup a tooltip to show contours info from vector tile layer as user moves the pointer over the map
+        vtlTooltip = createTooltip();
+
+        // debounce the hittest as user moves the mouse over the map to improve performance
+        const hitTest = promiseUtils.debounce(async (event) => {
+          // get hit test results only from the vector tile layer
+          const hit = await view.hitTest(event, {include: layer});
+          if (hit.results.length) {
+            // check if the hit test results from the vector tile layer contains
+            // results for label layers defined in styleLayerIds
+            const results = hit.results.filter((result) => {
+              return result.graphic;
+            });
+            results.screenPoint = hit.screenPoint;
+            if (!results.length) {
+              return null;
+            }
+            return results;
+          } else {
+            return null;
+          }
+        });
+
+        // Listen to MapView's pointer move event and call hittest
+        // Display the contours info if the hittest result
+        // contains contours information from vector tile layer
+        view.on("pointer-move", async (event) => {
+          let hits;
+          try {
+            hits = await hitTest(event);
+            if (hits) {
+              let displayContent;
+              for (let hit of hits) {
+                displayContent = hits.map((hit) => {
+                  const styleLayer = layer.getStyleLayer(hit.graphic.origin.layerId);
+                  const mapPoint = view.toMap({x: event.x, y: event.y});
+                  graphic.geometry = mapPoint;
+
+                  let depressionValue;
+                  // check the values returned in depression attributes and assign descriptive info
+                  switch (hit.graphic.attributes["DEPRESSION"]) {
+                    case 0:
+                      depressionValue = "Depression status is indeterminate";
+                      break;
+                    case 1:
+                      depressionValue = "Depression contour";
+                      break;
+                    case 2:
+                      depressionValue = "Feature is a normal contour";
+                      break;
+                    default:
+                      depressionValue = hit.graphic.attributes["DEPRESSION"];
+                  }
+                  const content = {
+                    "Contour": hit.graphic.attributes["Contour"],
+                    "Depression": depressionValue,
+                    "Unit": hit.graphic.attributes["Unit"]
+                  }
+                  return content;
+                });
+              }
+              // clean up the tooltip content to show contours info
+              displayContent[0] = JSON.stringify(displayContent[0])?.replace(/[{}]/g, '');
+              displayContent[0] = displayContent[0].replace(/\"/g, "").replace(/:/g, ": ");;
+              displayContent[0] = displayContent[0].split(",").join("<br />")
+              const screenPoint = hits.screenPoint;
+              vtlTooltip.show(screenPoint, displayContent[0]);
+            } else {
+              vtlTooltip.hide();
+            }
+          } catch {}
+        });
+
+        // create and set up a tool tip to show contours info from the vector tiles from mouse over
+        function createTooltip() {
+          const tooltip = document.createElement("div");
+          const style = tooltip.style;
+          tooltip.setAttribute("role", "tooltip");
+          tooltip.classList.add("tooltip");
+          const textElement = document.createElement("div");
+          textElement.classList.add("esri-widget");
+          tooltip.appendChild(textElement);
+          view.container.appendChild(tooltip);
+          let x = 0;
+          let y = 0;
+          let targetX = 0;
+          let targetY = 0;
+          let visible = false;
+          // move the tooltip progressively
+          function move() {
+            x += (targetX - x) * 0.1;
+            y += (targetY - y) * 0.1;
+            if (Math.abs(targetX - x) < 1 && Math.abs(targetY - y) < 1) {
+              x = targetX;
+              y = targetY;
+            } else {
+              requestAnimationFrame(move);
+            }
+            style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px, 0)";
+          }
+          return {
+            show: (point, text) => {
+              if (!visible) {
+                x = point.x;
+                y = point.y;
+              }
+              targetX = point.x;
+              targetY = point.y;
+              style.opacity = 1;
+              visible = true;
+              textElement.innerHTML = text;
+              move();
+            },
+            hide: () => {
+              style.opacity = 0;
+              visible = false;
+            }
+          };
+        }
+
+        // Displays instructions to the user for understanding the sample
+        const sampleInstructions = document.createElement("div");
+        sampleInstructions.style.padding = "10px";
+        sampleInstructions.classList.add("esri-widget");
+        sampleInstructions.style.width = "300px";
+        sampleInstructions.innerHTML = [
+          "<b>Move</b> the pointer over the contour lines in a VectorTileLayer",
+          "to see a height, a measure unit and a depression of a contour."
+        ].join(" ");
+        view.ui.add(sampleInstructions, "top-left");
+        setTimeout(() => {
+          sampleInstructions.style.visibility = "hidden";
+          sampleInstructions.style.transition = "all 8s ease-out";
+          sampleInstructions.style.opacity = 0;
+        }, 3000)
+
+        // add search widget
+        const search = new Search({
+          view: view
+        });
+        view.ui.add(search, "top-right");
+        view.watch("stationary", () => {
+          if (view.stationary) {
+            search.clear();
+          }
+        });
+      })());
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

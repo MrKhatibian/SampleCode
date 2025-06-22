@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Editing with coordinate inputs | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.30/"></script>
+  <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .notice {
+      max-width: 25rem;
+    }
+
+    .notice p {
+      padding: 0;
+      margin: 0.1rem;
+    }
+
+    .notice>div[slot="message"] {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    em {
+      font-size: 0.8em;
+    }
+
+    #stickyNote {
+      gap: 1rem;
+      font-family: monospace;
+      font-weight: 400;
+      font-style: normal;
+      background: #ffc;
+      box-shadow: 5px 5px 7px rgba(33, 33, 33, .7);
+      transform: rotate(-2deg);
+      padding: 0 1rem;
+      font-size: 1rem;
+    }
+
+    .sticky-note p {
+      margin: 0;
+      margin-top: 0.1rem;
+    }
+
+    .units {
+      user-select: none;
+    }
+  </style>
+  <script>
+    require([
+      "esri/WebScene",
+      "esri/views/SceneView",
+      "esri/geometry/SpatialReference",
+      "esri/layers/MediaLayer",
+      "esri/layers/support/ControlPointsGeoreference",
+      "esri/layers/support/ImageElement",
+      "esri/widgets/Sketch/SketchViewModel",
+      "esri/layers/GraphicsLayer",
+      "esri/geometry/Point",
+      "esri/geometry/Mesh"
+    ], (
+      WebScene,
+      SceneView,
+      SpatialReference,
+      MediaLayer,
+      ControlPointsGeoreference,
+      ImageElement,
+      SketchViewModel,
+      GraphicsLayer,
+      Point,
+      Mesh
+    ) => {
+
+      const spatialReference = SpatialReference.WebMercator;
+
+      const view = new SceneView({
+        container: "viewDiv",
+        map: new WebScene({
+          portalItem: {
+            id: "2892dc3da43241f88cbc71d9f636fc80"
+          }
+        }),
+        spatialReference: spatialReference
+      });
+
+      // Create a media layer with the site plan.
+      view.map.add(createSitePlanOverlay());
+
+      // Create a client-side graphics layer for the SketchViewModel we use for uploading the 3D model to.
+      const graphics = new GraphicsLayer();
+      view.map.add(graphics);
+
+      const sketchViewModel = new SketchViewModel({
+        view: view,
+        layer: graphics,
+        //Show the tooltips
+        tooltipOptions: { enabled: true }
+      });
+
+      sketchViewModel.on("create", (event) => {
+        if (event.state === "complete") {
+          sketchViewModel.update(event.graphic);
+        }
+      });
+
+      // Place the UI eleements.
+      view.ui.add(document.getElementById("placingComponent"), "top-right");
+      view.ui.add(document.getElementById("stickyNote"), "bottom-left");
+
+      // Add interactivity to the UI.
+      const placeModelButton = document.getElementById("placeModelButton");
+      // Create a new abort controller for the new operation.
+      let placeModelAbortController = null;
+
+      placeModelButton.addEventListener("click", async () => {
+        // Cancel any pending placing operation.
+        placeModelAbortController?.abort();
+
+        // Reflect that the loading of the model is in process.
+        updateUI(true);
+
+        const { signal } = (placeModelAbortController = new AbortController());
+
+        // Create mesh from the 3D building model.
+        const mesh = await Mesh.createFromGLTF(
+          new Point(), // Origin of the model.
+          "https://developers.arcgis.com/javascript/latest/sample-code/editing-coordinate-inputs/live/model.glb", // Url pointing to the 3D model file.
+          { vertexSpace: "local" } // In case of scenes in geographic or WebMercator spatial references, the vertexSpace needs to be set to "local".
+        );
+
+        await mesh.load();
+
+        // Reflect that the loading of the model has finished.
+        updateUI(false);
+
+        if (signal.aborted) {
+          return;
+        }
+        // Add the mesh to the SketchViewModel.
+        sketchViewModel.place(mesh);
+      });
+
+      // Helper functions:
+
+      // Updating buttons in UI.
+      function updateUI(creating) {
+        placeModelButton.loading = creating;
+        placeModelButton.disabled = creating;
+        placeModelButton.textContent = creating ? "Loading..." : "Place model";
+        placeModelButton.iconStart = creating ? null : "pin-tear";
+      }
+
+      // Creating the media layer.
+      function createSitePlanOverlay() {
+        const controlPoint1 = {
+          sourcePoint: { x: 1156.38, y: 1256.56 },
+          mapPoint: new Point({ x: -7910111.620737527, y: 5210929.298513735, spatialReference })
+        };
+        const controlPoint2 = {
+          sourcePoint: { x: 882.12, y: 242.61 },
+          mapPoint: new Point({ x: -7910088.6006461745, y: 5210848.494256951, spatialReference })
+        };
+        const controlPoint3 = {
+          sourcePoint: { x: 1112.1, y: 242.85 },
+          mapPoint: new Point({ x: -7910106.995112711, y: 5210848.267338414, spatialReference })
+        };
+
+        const georeference = new ControlPointsGeoreference({
+          controlPoints: [controlPoint1, controlPoint2, controlPoint3],
+          width: 2000,
+          height: 1500
+        });
+
+        const imageElement = new ImageElement({
+          image: "https://developers.arcgis.com/javascript/latest/sample-code/editing-coordinate-inputs/live/site-plan.png",
+          georeference: georeference
+        });
+
+        // Create a MediaLayer using the georeferenced ImageElement.
+        return new MediaLayer({
+          source: [imageElement],
+          title: "Site plan",
+          opacity: 0.8,
+          spatialReference: spatialReference
+        });
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+
+  <calcite-notice id="placingComponent" class="notice" open>
+    <div slot="title">3D Model Georeferencing
+
+    </div>
+    <div slot="message" style="margin:0">
+      <div>
+        <p>
+          Place a building model by specifying the coordinates of its pivot point and its
+          orientation relative to north. <calcite-icon icon="information" id="info-icon" scale="s"></calcite-icon>
+        </p>
+        <calcite-tooltip label="Info" reference-element="info-icon">
+          <span>Click the button below to load and place the building model. You can position it manually, type in the coordinates
+            and orientation from the site plan, or Copy+Paste the values from the sticky note.<br><br>
+          The coordinates can be entered as a latitude+longitude pair in DMS, DDM, or DD format, or as separate longitude and latitude values. </span>
+        </calcite-tooltip>
+      </div>
+      <calcite-button id="placeModelButton" icon-start="pin-tear">Place model</calcite-button>
+      <div>
+        <em>Building model by André Wisén from
+          <a href="https://github.com/andrewisen/bim-whale-ifc-samples/tree/main/AdvancedProject" target="_blank">BIM
+            Whale Sample Files</a>.</em>
+      </div>
+    </div>
+  </calcite-notice>
+
+
+  <div id="stickyNote">
+    <p>
+      Building origin:<br>
+       &emsp;DMS: 42°19'57.3" N, 71°3'26.86" W<br>
+       &emsp;Longitude: -71.057461<br>
+       &emsp;Latitude: 42.332583<br>
+      Z: 2.8<span class="units">m</span> / 9.2<span class="units">ft</span><br>
+      Orientation: 179.28<span class="units">°</span>
+    </p>
+  </div>
+</body>
+
+</html>

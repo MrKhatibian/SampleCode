@@ -1,0 +1,213 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>VoxelLayer with discrete variable | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      .esri-legend {
+        width: 200px !important;
+      }
+      .blockItem {
+        margin: 0px;
+      }
+      #infoDiv {
+        max-height: calc(100vh - 100px);
+        height: 100%;
+      }
+      .btn-color-picker {
+        border: 1px solid var(--calcite-color-border-1);
+        width: 30px;
+        height: 15px;
+        cursor: pointer;
+        margin-left: 14px;
+      }
+      .div-color-picker {
+        font-size: 12px;
+      }
+      #existingUniqueValuesList {
+        padding: 0px;
+      }
+    </style>
+    <script type="module" src="https://js.arcgis.com/calcite-components/2.11.1/calcite.esm.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.arcgis.com/calcite-components/2.11.1/calcite.css" />
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30"></script>
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/VoxelLayer",
+        "esri/layers/voxel/VoxelVariableStyle",
+        "esri/widgets/Expand",
+        "esri/widgets/Legend",
+        "esri/Color"
+      ], (SceneView, WebScene, VoxelLayer, VoxelVariableStyle, Expand, Legend, Color) => {
+        const map = new WebScene({
+          portalItem: {
+            id: "6c5eeb4e22e748faa660f11f936ab851"
+          }
+        });
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: new Legend({
+            view: view
+          }),
+          expanded: false
+        });
+        view.ui.add(legendExpand, "bottom-left");
+        view.ui.add("infoDiv", "top-right");
+        map.when(function () {
+          const vxlLayer = map.allLayers.find((layer) => layer.type === "voxel");
+          vxlLayer.popupEnabled = true;
+          view.whenLayerView(vxlLayer).then((layerView) => {
+            const infoDiv = document.getElementById("infoDiv");
+            const existingUniqueValuesList = document.getElementById("existingUniqueValuesList");
+            const colorPickerContainer = document.getElementById("colorPickerContainer");
+            const colorPicker = document.getElementById("colorPicker");
+            vxlLayer.renderMode = "volume";
+            let contItem = 0;
+            let uniqueValuesCount = 0;
+            let currentVariableStyle = null;
+            let selectedIndexColor = 0;
+            vxlLayer.currentVariableId = 0;
+            currentVariableStyle = vxlLayer.getVariableStyle(null);
+            uniqueValuesCount = currentVariableStyle.uniqueValues.length;
+            /**
+             * Replace special characters that are reserverd characters in HTML.
+             **/
+            const replaceSpecialCharacters = function (stringToChange) {
+              let escapedString = stringToChange
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+              return escapedString;
+            };
+            const createUniqueValuesItem = function (uniqueValueIndex, uniqueValue) {
+              let escapedLabel = replaceSpecialCharacters(uniqueValue.label);
+              const itemBlock = document.createElement("calcite-block");
+              itemBlock.collapsible = false;
+              itemBlock.open = true;
+              itemBlock.heading = "";
+              itemBlock.classList.add("blockItem");
+
+              const itemLabel = document.createElement("calcite-label");
+              const itemSwitch = document.createElement("calcite-switch");
+              itemLabel.layout = "inline-space-between";
+              itemLabel.innerHTML = escapedLabel;
+              itemSwitch.checked = uniqueValue.enabled;
+
+              const itemLabelInput = document.createElement("calcite-label");
+              itemLabelInput.layout = "inline";
+              itemLabelInput.innerHTML = "Label:";
+              const itemInput = document.createElement("calcite-input");
+              const divColor = document.createElement("div");
+              const btnColor = document.createElement("button");
+              itemInput.placeholder = "Label";
+              itemInput.value = uniqueValue.label;
+              itemInput.type = "text";
+              itemInput.id = "label_" + uniqueValueIndex.toString();
+              btnColor.classList.add("btn-color-picker");
+              btnColor.id = "btnColor_" + uniqueValueIndex.toString();
+              btnColor.style.background = uniqueValue.color;
+              divColor.innerHTML = "Color:&nbsp;";
+              divColor.classList.add("div-color-picker");
+              existingUniqueValuesList.appendChild(itemBlock);
+              itemBlock.appendChild(itemLabel);
+              itemBlock.appendChild(itemLabelInput);
+              itemLabel.appendChild(itemSwitch);
+              /**
+               * Updating the label of a unique value
+               **/
+              itemInput.addEventListener("calciteInputChange", function () {
+                uniqueValue.label = itemInput.value;
+                itemLabel.childNodes[0].textContent = itemInput.value;
+              });
+
+              itemSwitch.addEventListener("calciteSwitchChange", function () {
+                //Whether or not to render the unique value.
+                uniqueValue.enabled = !uniqueValue.enabled;
+              });
+
+              itemLabelInput.appendChild(itemInput);
+
+              itemBlock.appendChild(divColor);
+              divColor.appendChild(btnColor);
+
+              /**
+               * Updating the color of a unique value by clicking on the color box
+               **/
+              btnColor.onclick = function () {
+                let escapedLabel = replaceSpecialCharacters(uniqueValue.label);
+                let rect = this.getBoundingClientRect();
+                colorPickerContainer.style = `position:absolute;top:${rect.bottom}px;right:${
+                  window.innerWidth - rect.right
+                }px;z-index:999`;
+                colorPicker.value = uniqueValue.color.toHex();
+                selectedIndexColor = uniqueValueIndex;
+              };
+            };
+            const resetUniqueValues = function () {
+              while (existingUniqueValuesList.hasChildNodes()) {
+                existingUniqueValuesList.removeChild(existingUniqueValuesList.firstChild);
+              }
+              colorPickerContainer.style.display = "none";
+              for (let i = 0; i < uniqueValuesCount; i++) {
+                createUniqueValuesItem(i, currentVariableStyle.uniqueValues.getItemAt(i));
+              }
+            };
+            resetUniqueValues();
+            colorPicker.addEventListener("calciteColorPickerChange", function (e) {
+              const uniqueValue = currentVariableStyle.uniqueValues.getItemAt(selectedIndexColor);
+              const btnColor = document.getElementById("btnColor_" + selectedIndexColor.toString());
+              btnColor.style.background = colorPicker.value;
+              uniqueValue.color = colorPicker.value;
+            });
+            /**
+             * Color picker window will close when clicking or scrolling outside the window.
+             **/
+            document.addEventListener("click", (e) => {
+              if (e.target !== colorPicker && !e.target.classList.contains("btn-color-picker")) {
+                colorPickerContainer.style = "display:none";
+              }
+            });
+            document.addEventListener(
+              "scroll",
+              (e) => {
+                if (e.target !== colorPicker && !e.target.classList.contains("btn-color-picker")) {
+                  colorPickerContainer.style = "display:none";
+                }
+              },
+              true
+            );
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <calcite-panel id="infoDiv" heading="Most likely lithoclass">
+      <div id="content">
+        <div id="existingUniqueValuesList"></div>
+      </div>
+    </calcite-panel>
+    <div id="colorPickerContainer" style="display: none">
+      <calcite-color-picker id="colorPicker" allow-empty hide-channels hide-saved scale="s"></calcite-color-picker>
+    </div>
+  </body>
+</html>
+

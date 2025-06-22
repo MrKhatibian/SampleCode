@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="Stylesheet" href="../css/analysis.css" />
+    <script type="text/javascript">
+        function init() {
+            if (window.location.hash) {
+                var parentDiv, nodes, i, helpInfo, helpId, helpInfoArr, helpEnvFilter, envContent, hideEnvClass, hideNodes;
+                helpInfo = window.location.hash.substring(1);
+                    if(helpInfo.indexOf("-")) {
+                        helpInfoArr = helpInfo.split("-");
+                        helpId = helpInfoArr[0];
+                        helpEnvFilter = helpInfoArr[1];
+                    }
+                    else {
+                        helpId = helpInfo;
+                    }
+                parentDiv = document.getElementById("topics");
+                nodes = parentDiv.children;
+                    hideEnvClass = (helpEnvFilter === "OnlineOnly"? "PortalOnly": "OnlineOnly");
+                    if(document.getElementsByClassName) {
+                        hideNodes = document.getElementsByClassName(hideEnvClass);
+                    }
+                    else {
+                        hideNodes = document.querySelectorAll(hideEnvClass);
+                    }
+                for(i=0; i < nodes.length; i++) {
+                    if(nodes[i].id !== helpId) {
+                        nodes[i].style.display ="none";
+                    }
+                    }
+                    for(i=0; i < hideNodes.length; i++) {
+                        hideNodes[i].style.display ="none";
+                    }
+                }
+            }
+    </script>
+</head>
+<body onload="init()">
+<div id="topics">
+    <div id="toolDescription" class="largesize">
+        <h2>Legg lag oppå</h2><p/>
+        <h2><img src="../images/GUID-00A64703-4E97-4398-AE5C-F1885375BC30-web.png" alt="Legg lag opp&aring;"></h2>
+        <hr/>
+    <p>Overleggslag kombinerer to eller flere lag til ett lag. Et overlegg blir som om du ser ned gjennom en stabel med kart som ligger opp&aring; hverandre, og oppretter et enkelt kart som inneholder all den informasjonen som finnes i hele kartstabelen. Overlegg er mer enn en sammensl&aring;ing av streker. Alle attributtene for geoobjektene i overlegget inkluderes i det endelige produktet. Overlegg brukes til &aring; besvare et av de mest grunnleggende geografiske sp&oslash;rsm&aring;lene: Hva ligger opp&aring; hva? 
+    </p>
+    <p>Her f&oslash;lger noen eksempler:
+        <ul>
+            <li>Hvilke tomter ligger innenfor flomsonen for hundre&aring;rsflom? (Innenfor betyr det samme som opp&aring;.)
+                  
+            </li>
+            <li>Hvilken arealbruk er det opp&aring; hvilken jordart?
+                 
+            </li>
+            <li>Hvilke br&oslash;nner befinner seg p&aring; nedlagte milit&aelig;rbaser?
+            </li>
+        </ul>
+        
+    </p>
+    <p>Hvis det er merket av for  <b>Bruk gjeldende kartutstrekning</b>, er det bare geoobjektene i inndata- og overleggslaget som er synlige innenfor gjeldende kartutstrekning, som legges over. Hvis det ikke er merket av for dette alternativet, legges alle geoobjektene i b&aring;de inndatalaget og overleggslaget over, selv om de befinner seg utenfor gjeldende kartutstrekning.
+    </p>
+    </div>
+    <!--Parameter divs for each param-->
+    <div id="inputLayer">
+        <div><h2>Velg inndatalag</h2></div>
+        <hr/>
+        <div>
+            <p>Punkt-, linje- eller polygonlag som det skal legges over.
+            </p>
+            <p>I tillegg til &aring; velge et lag fra kartet kan du velge  <b>Velg analyselag</b> som du finner nederst i rullegardinlisten. Dette alternativet &aring;pner et galleri der du kan bla til og velge datasett fra ulike kilder som du vil bruke i analysen. 
+            </p>
+        </div>
+    </div>
+    <div id="overlayLayer">
+        <div><h2>Velg overleggslag</h2></div>
+        <hr/>
+        <div>
+            <p>Laget som skal legges over inndatalaget.  
+            </p>
+            <p>I tillegg til &aring; velge et lag fra kartet kan du velge  <b>Velg analyselag</b> nederst i rullegardinlisten for &aring; g&aring; til innholdet ditt og finne et fildelingsomr&aring;de for stordata eller et geoobjektlag. Du kan velge om du vil bruke et filter p&aring; inndatalaget eller bruke et utvalg p&aring; hostede lag som er lagt til kartet. Filtre og utvalg brukes kun til analyser. 
+            </p>
+        </div>
+    </div>
+    <div id="OverlayType">
+        <div><h2>Velg overleggsmetode</h2></div>
+        <hr/>
+        <div>
+            <p>Angir overleggsmetoden som kombinerer inndatalaget og overleggslaget.  
+
+                <ul>
+                    <li> <b>Kryss</b> &ndash; Bare de geoobjektene eller delene av geoobjektene i overleggslaget som overlapper geoobjekter i inndatalaget, kombineres.
+                    </li>
+                    <li> <b>Slett</b> &ndash; Geoobjekter eller deler av geoobjekter i overleggslaget som ikke overlapper med omr&aring;dene i inndatalaget, kombineres.
+                    </li>
+                    <li> <b>Sammenslutning</b> &ndash; Alle geoobjekt fra begge lagene kombineres og skaper en geometrisk sammenslutning av inndatalaget og overleggslaget. Alle geoobjekter og attributtene deres skrives til laget.
+                    </li>
+                    <li> <b>Identitet</b> &ndash; Geobjekter eller deler av geoobjekter i inndatalaget og overleggslaget kombineres. Geoobjekter eller deler av geoobjekter som overlapper i b&aring;de inndatalaget og overleggslaget, skrives til utdatalaget.
+                    </li>
+                    <li> <b>Symmetrisk differanse</b> &ndash; Geoobjekter eller deler av geeobjekter i inndatalaget og overleggslaget som ikke overlapper, kombineres.
+                    </li>
+                </ul>
+                
+            </p> 
+        </div>
+    </div>
+    <div id="outputLayer">
+        <div><h2>Navn på resultatlag</h2></div>
+        <hr/>
+        <div>
+            <p>Navnet p&aring; laget som opprettes i  <b>Mitt innhold</b> og legges til kartet. Det har samme geoobjekttype (polygoner, linjer eller punkter) som inndata- og overleggslagene. Standardnavnet er basert p&aring; overleggsmetoden og navnet p&aring; inndatalaget. Hvis laget finnes allerede, blir du bedt om &aring; oppgi et annet navn.
+            </p>
+            <p>Bruk rullegardinlisten  <b>Lagre resultat i</b> til &aring; angi navnet p&aring; en mappe i <b>Mitt innhold</b> som resultatene skal lagres i.
+            </p>
+        </div>
+    </div>
+</div>
+</html>

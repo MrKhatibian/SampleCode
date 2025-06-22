@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Identify | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .esri-popup .esri-popup-header .esri-title {
+        font-size: 18px;
+        font-weight: bolder;
+      }
+
+      .esri-popup .esri-popup-body .esri-popup-content {
+        font-size: 14px;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/MapImageLayer",
+        "esri/rest/identify",
+        "esri/rest/support/IdentifyParameters"
+      ], function (Map, MapView, MapImageLayer, identify, IdentifyParameters) {
+        let params;
+
+        // URL to the map service where the identify will be performed
+        const identifyURL = "https://sampleserver6.arcgisonline.com/arcgis/rest/services/MtBaldy_BaseMap/MapServer";
+
+        // Add the map service as a MapImageLayer
+        // use identify to query the service to add interactivity to the app
+        const identifyLayer = new MapImageLayer({
+          url: identifyURL,
+          opacity: 0.5
+        });
+
+        const map = new Map({
+          basemap: "osm"
+        });
+        map.add(identifyLayer);
+
+        const view = new MapView({
+          map: map,
+          container: "viewDiv",
+          center: [-117.23502, 34.23911],
+          zoom: 13
+        });
+
+        view.when(function () {
+          // executeIdentify() is called each time the view is clicked
+          view.on("click", executeIdentify);
+
+          // Set the parameters for the identify
+          params = new IdentifyParameters();
+          params.tolerance = 3;
+          params.layerIds = [0, 1, 2, 3, 4];
+          params.layerOption = "top";
+          params.width = view.width;
+          params.height = view.height;
+        });
+
+        // Executes each time the view is clicked
+        function executeIdentify(event) {
+          // Set the geometry to the location of the view click
+          params.geometry = event.mapPoint;
+          params.mapExtent = view.extent;
+          document.getElementById("viewDiv").style.cursor = "wait";
+
+          // This function returns a promise that resolves to an array of features
+          // A custom popupTemplate is set for each feature based on the layer it
+          // originates from
+          identify
+            .identify(identifyURL, params)
+            .then(function (response) {
+              const results = response.results;
+
+              return results.map(function (result) {
+                let feature = result.feature;
+                let layerName = result.layerName;
+
+                feature.attributes.layerName = layerName;
+                if (layerName === "Roads") {
+                  feature.popupTemplate = {
+                    // autocasts as new PopupTemplate()
+                    title: layerName,
+                    content:
+                      "<b>Block ID:</b> {BLOCK_ID} " +
+                      "<br><b>Geometry Type:</b> {Shape}" +
+                      "<br><b>Road Length:</b> {Shape_Length}"
+                  };
+                } else if (layerName === "water") {
+                  feature.popupTemplate = {
+                    // autocasts as new PopupTemplate()
+                    title: "{LABEL_LOCAL}",
+                    content:
+                      "<b>Block ID:</b> {BLOCK_ID} " +
+                      "<br><b>Geometry Type:</b> {Shape}" +
+                      "<br><b>Water Area:</b> {Shape_Area}"
+                  };
+                } else if (layerName === "Urban") {
+                  feature.popupTemplate = {
+                    // autocasts as new PopupTemplate()
+                    title: layerName,
+                    content:
+                      "<b>Block ID:</b> {BLOCK_ID} " +
+                      "<br><b>Geometry Type:</b> {Shape}" +
+                      "<br><b>Urban Area:</b> {Shape_Area}"
+                  };
+                } else if (layerName === "Landuse") {
+                  feature.popupTemplate = {
+                    // autocasts as new PopupTemplate()
+                    title: layerName,
+                    content:
+                      "<b>Block ID:</b> {BLOCK_ID} " +
+                      "<br><b>Geometry Type:</b> {Shape}" +
+                      "<br><b>Landuse Area:</b> {Shape_Area}"
+                  };
+                } else if (layerName === "Counties") {
+                  feature.popupTemplate = {
+                    // autocasts as new PopupTemplate()
+                    title: layerName,
+                    content:
+                      "<b>ObjectID:</b> {OBJECTID} " +
+                      "<br><b>Geometry Type:</b> {SHAPE}" +
+                      "<br><b>Landuse Area:</b> {SHAPE_Area}"
+                  };
+                }
+                return feature;
+              });
+            })
+            .then(showPopup); // Send the array of features to showPopup()
+
+          // Shows the results of the identify in a popup once the promise is resolved
+          function showPopup(response) {
+            if (response.length > 0) {
+              view.openPopup({
+                features: response,
+                location: event.mapPoint
+              });
+            }
+            document.getElementById("viewDiv").style.cursor = "auto";
+          }
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
+

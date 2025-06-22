@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define(["exports","../../../../core/Accessor","../core/shaderLibrary/ShaderOutput"],function(a,f,d){const e={required:[]};d={required:[d.ShaderOutput.Depth]};class b extends f{consumes(){return e}get usedMemory(){return 0}get isDecoration(){return!1}get running(){return!1}get materialReference(){return null}modify(c){}get numGeometries(){return 0}get hasOccludees(){return!1}queryRenderOccludedState(c){return!1}}class g extends b{}class h extends b{constructor(){super(...arguments);this.drapedPriority=
+0}}class k extends b{}class l extends b{}class m extends b{}a.ASyncPreparesRenderPlugin=m;a.AsyncRenderPlugin=l;a.ConsumesDepth=d;a.ConsumesNone=e;a.SyncPrepareRenderPlugin=h;a.SyncPreparesRenderPlugin=k;a.SyncRenderPlugin=g;a.isPrepareRenderPlugin=function(c){return"prepareTechnique"in c};a.isPreparesRenderPlugin=function(c){return"prepareTechniques"in c};Object.defineProperty(a,Symbol.toStringTag,{value:"Module"})});

@@ -1,0 +1,5 @@
+// All material copyright Esri, All Rights Reserved, unless otherwise specified.
+// See https://js.arcgis.com/4.30/esri/copyright.txt for details.
+//>>built
+define("require exports ../icons ../../../chunks/componentsUtils ../../support/widgetUtils ../../support/jsxFactory".split(" "),function(g,d,h,k,l,a){function e({message:b,...c}){return a.tsx("calcite-notice",{class:f.notice,open:!0,scale:"s",...c},a.tsx("div",{slot:"message"},b))}const f={notice:"esri-editor__notice"};d.Notice=e;d.Notices=function({workflow:b,messages:c}){return a.tsx(a.tsxFragment,null,b?.reliesOnOwnerAdminPrivileges?a.tsx(e,{message:c.ownerAdminNotice}):void 0,b?.hasInvalidFormTemplate?
+a.tsx(e,{icon:h.warningIcon,message:c.formFieldUpdateError}):void 0)};d.css=f;d.loadNoticesComponents=()=>k.loadCalciteComponents({notice:()=>new Promise((b,c)=>g(["../../../chunks/calcite-notice"],b,c))});Object.defineProperty(d,Symbol.toStringTag,{value:"Module"})});

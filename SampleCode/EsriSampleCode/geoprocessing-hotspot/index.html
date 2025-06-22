@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Geoprocessing - hotspot analysis | Sample | ArcGIS Maps SDK for JavaScript 4.30</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #sidebar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 85%;
+        width: 320px;
+        overflow-y: auto;
+      }
+
+      .label {
+        color: white;
+      }
+
+      #hotspotButton {
+        border: none;
+        background-color: rgba(229, 89, 52, 0.75);
+        color: #fff;
+        margin: 1px;
+        width: 50%;
+        padding: 10px;
+        overflow: auto;
+        text-align: center;
+        cursor: pointer;
+        font-size: 1em;
+      }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.30/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/rest/geoprocessor",
+        "esri/widgets/Legend"
+      ], (Map, MapView, geoprocessor, Legend) => {
+
+        document.getElementById("hotspotButton").addEventListener("click", findHotspot);
+
+        const message = document.getElementById("message");
+
+        const map = new Map({
+          basemap: "dark-gray-vector"
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-122.812, 45.474],
+          zoom: 12
+        });
+
+        // create geoprocessor URL
+        const gpUrl =
+          "https://sampleserver6.arcgisonline.com/arcgis/rest/services/911CallsHotspot/GPServer/911%20Calls%20Hotspot";
+
+        function findHotspot() {
+          const params = {
+            Query: buildDefinitionQuery()
+          };
+
+          // clean up previous results
+          cleanup();
+          // geoprocessor submitJob, returns a JobInfo object
+          geoprocessor.submitJob(gpUrl, params).then((jobInfo) => {
+            const options = {
+              statusCallback: (jobInfo1) => {
+                progTest(jobInfo1);
+              }
+            };
+            // once the job completes, add resulting layer to map
+            jobInfo.waitForJobCompletion(options).then((jobInfo2) => {
+              drawResultData(jobInfo2);
+            });
+          }).catch((error) => {
+            message.innerText = `Failed to successfully submitJob:\n
+              ${error}`
+          });
+        }
+
+        function buildDefinitionQuery() {
+          let defQuery;
+          // get dates and build definition expression
+
+          const startDate = '1998-01-01 00:00:00';
+          const endDate = '1998-05-31 00:00:00';
+          const def = [];
+          def.push("(Date >= date '" + startDate + "' and Date <= date '" + endDate + "')");
+
+          if (def.length > 1) {
+            defQuery = def.join(" AND ");
+          }
+          return defQuery;
+        }
+
+        function cleanup() {
+          // remove the geoprocessing result layer from the map
+          map.layers.forEach((layer, i) => {
+            if (layer.title === "HotspotLayer") {
+              map.layers.remove(layer);
+            }
+          });
+        }
+
+        function drawResultData(result) {
+          // add wait message
+          message.innerText = "Adding MapImageLayer to the map...";
+
+          // use the result (JobInfo object) to fetch a MapImageLayer
+          result.fetchResultMapImageLayer(result.jobId).then((resultLayer) => {
+            resultLayer.opacity = 0.7;
+            resultLayer.title = "HotspotLayer";
+
+            // add the result layer to the map
+            map.layers.add(resultLayer);
+
+            // once the MapImageLayer is added to the map,
+            // update the message and add the legend
+            resultLayer.on("layerview-create", () => {
+              message.innerText = "Job status: 'job-succeeded'";
+              // initialize a legend widget for the geoprocessing service result
+              const legend = new Legend({
+                view: view,
+                container: "legendDiv"
+              });
+            });
+            
+            // if an error is produced when adding the MapImageLayer to the map,
+            // update the message
+            resultLayer.on("layerview-create-error", (event) => {
+              message.innerText = `Failed to add the MapImageLayer geoprocessing service output:\n
+                ${event.error.message}\n ${event.error.details.url}`;
+            });
+          }).catch((error) => {
+            // if an error is produced when fetching the MapImageLayer from the geoprocessing service
+            // display an error.
+            message.innerText = `Failed to fetch the MapImageLayer geoprocessing service output:\n
+              ${error}`
+          });
+        }
+
+        function progTest(value) {
+          message.innerText = "Job status: " + "'" + value.jobStatus +"'";
+        }
+
+        function errBack(error) {
+          message.innerText = "";
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv">
+      <div id="sidebar" class="esri-widget" >
+        <div id="text">
+          <div id="info">
+            <div style="padding-bottom:20px; padding-left:10px;">
+              <br/>
+              <label class="label">From: 01/01/1998</label><br/>
+              <br/><br/>
+              <label class="label">To: 05/31/1998</label><br/>
+            </div>
+            <div align="center">
+              <br/>
+              <button id="hotspotButton" class="esri-widget">Analyze 911 Calls</button>
+            </div>
+            <div style="padding-bottom:20px; padding-left:10px;">
+              <br/><br/>
+              <label id="message" class="label"></label>
+            </div>
+            <div id="legendDiv" class="esri-widget"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
