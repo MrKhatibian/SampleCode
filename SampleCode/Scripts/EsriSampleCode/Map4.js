@@ -1,7 +1,6 @@
-﻿import Map from "../../EsriAPI/arcgis_js_v430_api/arcgis_js_api/javascript/4.30/@arcgis/core/Map.js";
-import MapView from "../../EsriAPI/arcgis_js_v430_api/arcgis_js_api/javascript/4.30/@arcgis/core/views/MapView.js";
-import FeatureLayer from "../../EsriAPI/arcgis_js_v430_api/arcgis_js_api/javascript/4.30/@arcgis/core/layers/FeatureLayer.js";
-const map = new Map({
+﻿import Map from "../../esriapi/4.30/@arcgis/core/map.js";
+import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
+import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
     basemap: "osm"
 });
 
