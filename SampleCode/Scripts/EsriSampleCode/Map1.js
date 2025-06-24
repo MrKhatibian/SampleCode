@@ -41,11 +41,11 @@ const renderer = {
             // featureReudction.popupTemplate to
             // display the average temperature of all
             // features within the cluster
-            field: "POP_RANK",
+            field: "POP",
             minDataValue: 362400,
             maxDataValue: 601951,
-            minSize: 15,
-            maxSize: 40
+            minSize: 10,
+            maxSize: 30
         },
         {
             type: "color",
@@ -81,7 +81,7 @@ const clusterConfig = {
         }, {
             type: "fields",
             fieldInfos: [{
-                fieldName: "cluster_avg_WIND_SPEED",
+                fieldName: "POP",
                 label: "Average wind speed (km/h)",
                 format: {
                     places: 0
@@ -93,7 +93,7 @@ const clusterConfig = {
                     places: 0
                 }
             }, {
-                fieldName: "cluster_avg_TEMP",
+                fieldName: "POP_RANK",
                 label: "Average temperature (°F)",
                 format: {
                     places: 0
