@@ -11,13 +11,27 @@ const clusteredLayer = new FeatureLayer({
     featureReduction: {
         type: "cluster",
         clusterRadius: "100px",
+        //clusterminSize: "20px",
+        //clusterMaxSize: "40px",        
+        renderer: {
+            type: "simple",            
+            symbol: {
+                type: "simple-marker",
+                size: 20,
+                color: "#004DA8",
+                outline: {
+                    color: "rgba(0, 139, 174, 0.5)",
+                    width: 5,
+                },
+            },
+        },
         popupTemplate: {
             title: "myCluster",
             content: "testttt"
         },
-        lablelingInfo: [{
+        labelingInfo: [{
             deconflictionStrategy: "none",
-            lableExpressionInfo: {
+            labelExpressionInfo: {
                 expression: "$feature.cluster_count"
             },
             symbol: {
@@ -26,13 +40,14 @@ const clusteredLayer = new FeatureLayer({
                 haloColor: "black",
                 haloSize: "1px",
                 font: {
-                    size: "12px",
-                    wight: "bold",
+                    family:"Arial",
+                    size: 10,
+                    weight: "bold"
                 }
             },
-            lablePlacement: "center-center"
+            labelPlacement: "center-center"
         }]
-    },
+    },    
     popupTemplate: {
         title: "{name}",
         content: "Naghshe Info"
@@ -51,3 +66,4 @@ const view = new MapView({
     zoom: 15, // Zoom level
     center: [48.464869, 34.834155], // Longitude, latitude 48.464869  34.834155
 });
+
