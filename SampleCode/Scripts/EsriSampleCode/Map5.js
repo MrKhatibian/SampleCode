@@ -1,4 +1,4 @@
-﻿import Map from "../../esriapi/4.30/@arcgis/core/map.js";
+﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
 import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 const map = new Map({

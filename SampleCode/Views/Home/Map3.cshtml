@@ -1,23 +1,21 @@
 ﻿@{
     ViewBag.Title = "Map";
 }
-<style>
-    #viewDiv {
-        padding: 0;
-        margin: 0;
-        height: 75vh;
-        width: 100%;
-    }
+<head>
+    <title> ArcGIS api 4.30</title>
 
-    #infoDiv {
-        padding: 10px;
-    }
-</style>
+    <style>
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 75vh;
+            width: 100%;
+        }
+    </style>
+    <script type="module" src="~/Scripts/EsriSampleCode/Map3.js"></script>
+</head>
 
 <body>
     <div id="viewDiv"></div>
-    <div id="infoDiv" class="esri-widget">
-        <button id="cluster" class="esri-button">Disable Clustering</button>
-        <div id="legendDiv"></div>
-    </div>
 </body>
+

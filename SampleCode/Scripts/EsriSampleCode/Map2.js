@@ -1,4 +1,4 @@
-﻿import Map from "../../esriapi/4.30/@arcgis/core/map.js";
+﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
 import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 
@@ -10,24 +10,38 @@ const clusteredLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/FeatureServer/1",
     featureReduction: {
         type: "cluster",
-        clusterRadius: "100px",
-        //clusterminSize: "20px",
-        //clusterMaxSize: "40px",        
+        clusterRadius: "100px",        
         renderer: {
             type: "simple",            
             symbol: {
-                type: "simple-marker",
-                size: 20,
-                color: "#004DA8",
+                type: "simple-marker", 
                 outline: {
-                    color: "rgba(0, 139, 174, 0.5)",
-                    width: 5,
+                    type: "simple-line", // optional, usually autocast
+                    color: [0,77,158,0.5],
+                    width: 3,
+                    style: "solid"
                 },
             },
-        },
-        popupTemplate: {
-            title: "myCluster",
-            content: "testttt"
+            visualVariables: [
+                {
+                    type: "size",
+                    field: "cluster_count",
+                    stops: [
+                        { value: 10, size: 15 },
+                        { value: 100, size: 30 },
+                        { value: 1000, size: 50 }
+                    ]
+                },
+                {
+                    type: "color",
+                    field: "cluster_count",
+                    stops: [
+                        { value: 1, color: "#4CAF50" },     // Green
+                        { value: 50, color: "#FFC107" },    // Yellow
+                        { value: 100, color: "#F44336" }    // Red
+                    ]
+                }
+            ]
         },
         labelingInfo: [{
             deconflictionStrategy: "none",
@@ -48,6 +62,10 @@ const clusteredLayer = new FeatureLayer({
             labelPlacement: "center-center"
         }]
     },    
+    featureReductionPopupTemplate: {
+        title: "Cluster of {cluster_count} features",
+        content: "Click individual features for more details."
+    },
     popupTemplate: {
         title: "{name}",
         content: "Naghshe Info"
@@ -66,4 +84,3 @@ const view = new MapView({
     zoom: 15, // Zoom level
     center: [48.464869, 34.834155], // Longitude, latitude 48.464869  34.834155
 });
-
