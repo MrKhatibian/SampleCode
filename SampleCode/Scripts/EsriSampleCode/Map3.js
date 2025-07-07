@@ -21,7 +21,7 @@ const mapImageLayer = new MapImageLayer({
     }]
 });
 const clusteredLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajN/FeatureServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -103,7 +103,7 @@ clusteredLayer.featureReduction = {
 //});
 document.getElementById("inFilter").addEventListener("input", function () {
     const value = this.value;
-    clusteredLayer.definitionExpression = value ? `ShoD > ${value}` : "";
+    clusteredLayer.definitionExpression = value ? `c_noedarkhast = ${value}` : "";
 });
 const map = new Map({
     basemap: "osm",
