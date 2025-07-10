@@ -11,8 +11,8 @@
             font-family: 'Tahoma', sans-serif;
             background-color: #f8f9fa;
             height: 100vh;
+            direction: rtl;
         }
-
 
         #map {
             height: 50vh;
@@ -25,56 +25,13 @@
         #attributeTable {
             margin-top: 5vh;
             height: 50vh;
-        }
-
-        .esri-feature-table__header {
-            text-align: right;
-        }
-
-        .esri-feature-table__cell {
-            text-align: right;
-        }
-
-        .esri-feature-table,
-        .esri-widget {
-            direction: rtl;
-            text-align: right;
-        }
-
-        #map, #attributeTable {
-            direction: rtl;
-        }
-
-        html, body {
-            direction: rtl;
-        }
-
-        /* جهت کلی جدول */
-        .esri-feature-table {
-            direction: rtl;
-        }
-
-        /* سلول‌های داده */
-        .esri-feature-table__cell {
-            text-align: right !important;
-            padding-left: 8px !important; /* برای اینکه متن نچسبه به خط */
-            padding-right: 0 !important;
-        }
-
-        /* هدر جدول */
-        .esri-feature-table__header-cell {
-            text-align: right !important;
-        }
-
-        /* اگر هنوز جدول کشیده به چپ هست، اینم اضافه کن */
-        .esri-feature-table__row {
-            justify-content: flex-end !important;
+            direction: ltr;
         }
     </style>
     <script>
-    // Must be at the very top, before imports
+        // Must be at the very top, before imports
         window.dojoConfig = {
-            locale: "ar"  // or "ar" for Arabic
+            locale: "en"  // or "ar" for Arabic
         };
     </script>
     <script type="module" src="~/Scripts/EsriSampleCode/Map4.js"></script>
