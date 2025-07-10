@@ -3,19 +3,174 @@
 }
 <head>
     <title> ArcGIS api 4.30</title>
-
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet" type="text/css" />
+    <!-- Bootstrap RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <style>
-        #viewDiv {
-            padding: 0;
-            margin: 0;
-            height: 75vh;
-            width: 100%;
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+        }
+
+
+        #map {
+            height: 50vh;
+        }
+
+        #divAttr {
+            margin-top: 5vh;
+        }
+
+        #attributeTable {
+            margin-top: 5vh;
+            height: 50vh;
+        }
+
+        .esri-feature-table__header {
+            text-align: right;
+        }
+
+        .esri-feature-table__cell {
+            text-align: right;
+        }
+
+        .esri-feature-table,
+        .esri-widget {
+            direction: rtl;
+            text-align: right;
+        }
+
+        #map, #attributeTable {
+            direction: rtl;
+        }
+
+        html, body {
+            direction: rtl;
+        }
+
+        /* جهت کلی جدول */
+        .esri-feature-table {
+            direction: rtl;
+        }
+
+        /* سلول‌های داده */
+        .esri-feature-table__cell {
+            text-align: right !important;
+            padding-left: 8px !important; /* برای اینکه متن نچسبه به خط */
+            padding-right: 0 !important;
+        }
+
+        /* هدر جدول */
+        .esri-feature-table__header-cell {
+            text-align: right !important;
+        }
+
+        /* اگر هنوز جدول کشیده به چپ هست، اینم اضافه کن */
+        .esri-feature-table__row {
+            justify-content: flex-end !important;
         }
     </style>
+    <script>
+    // Must be at the very top, before imports
+        window.dojoConfig = {
+            locale: "ar"  // or "ar" for Arabic
+        };
+    </script>
     <script type="module" src="~/Scripts/EsriSampleCode/Map4.js"></script>
 </head>
 
-<body>
-    <div id="viewDiv"></div>
+<body class="p-4">
+
+    <div id="divFilter" class="container">
+        <h4 class="mb-4">فیلتر اطلاعات</h4>
+
+        <!-- فیلترها -->
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <label class="form-label">تاریخ شروع</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">تاریخ پایان</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">مقدار (عدد)</label>
+                <input type="number" id="inFilter" class="form-control" placeholder="مثلاً 1000">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">دسته‌بندی</label>
+                <select class="form-select">
+                    <option selected>انتخاب کنید</option>
+                    <option>دسته ۱</option>
+                    <option>دسته ۲</option>
+                    <option>دسته ۳</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- چک‌باکس‌ها -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <label class="form-label d-block mb-2">انتخاب ویژگی‌ها:</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="check1">
+                    <label class="form-check-label" for="check1">ویژگی ۱</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="check2">
+                    <label class="form-check-label" for="check2">ویژگی ۲</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="check3">
+                    <label class="form-check-label" for="check3">ویژگی ۳</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- دکمه جستجو -->
+        <div class="mt-4">
+            <button class="btn btn-primary">اعمال فیلتر</button>
+        </div>
+
+        <!-- نقشه و جدول -->
+        <div class="row mt-5">
+            <div class="col-md-12">
+                <h5>نقشه</h5>
+                <div id="map" class="rounded shadow-sm"></div>
+            </div>
+            <div id="divAttr" class="col-md-12">
+                <h5>جدول اطلاعات</h5>
+                <div id="attributeTable" class="table table-bordered"></div>
+                @*<table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ردیف</th>
+                                <th>نام</th>
+                                <th>مقدار</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>۱</td>
+                                <td>آیتم ۱</td>
+                                <td>۱۰۰۰</td>
+                                <td>۱۴۰۳/۰۴/۱۵</td>
+                            </tr>
+                            <tr>
+                                <td>۲</td>
+                                <td>آیتم ۲</td>
+                                <td>۱۵۰۰</td>
+                                <td>۱۴۰۳/۰۴/۱۶</td>
+                            </tr>
+                        </tbody>
+                    </table>*@
+            </div>
+        </div>
+
+    </div>
+
 </body>
 
