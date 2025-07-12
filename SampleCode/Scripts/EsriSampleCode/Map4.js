@@ -2,9 +2,7 @@
 import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
-//import promiseutils from "../../esriapi/4.30/esri/core/promiseutils.js"
-
-
+import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
 
 // Initialize map
 const map = new Map({ basemap: "osm" });
@@ -15,7 +13,7 @@ const view = new MapView({
     center: [48.464869, 34.834155], // Longitude, latitude 48.464869  34.834155
 });
 
-// Sample FeatureLayer (replace with your own)
+//FeatureLayer
 const layer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
     renderer: {
@@ -33,7 +31,6 @@ const layer = new FeatureLayer({
     },
     outFields: ["*"]
 });
-
 layer.featureReduction = {
     type: "cluster",
     clusterRadius: "100px",
@@ -94,11 +91,47 @@ layer.featureReduction = {
         labelPlacement: "center-center"
     }]
 };
-
-
 map.add(layer);
+// Create the combo box (HTML <select> element)
+const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 
-debugger;
+
+layer.on(()=>{
+    // Query unique values from the layer
+    const queryParams = new Query();
+    queryParams.outFields = ["*"];
+    layer.queryFeatures(queryParams).then(function (results) {
+        // prints the array of result graphics to the console
+        console.log(results.features);
+    });
+});
+//const query = layer.createQuery();
+//query.returnDistinctValues = true;
+//query.outFields = ["*"];
+//query.orderByFields = ["shodarkhast"];
+// query the layer with the modified params object
+
+//layer.queryFeatures(query).then((results) => {
+//    debugger;
+//    const features = results.features;
+//    const uniqueValues = features.map(f => f.attributes.noedarkhast).filter(v => v !== null);
+//    console.log("Returned values:", features[0].attributes);
+
+//    uniqueValues.forEach(value => {
+//        const option = document.createElement("option");
+//        option.value = value;
+//        option.text = value;
+//        comboNoeDarkhast.appendChild(option);
+//    });
+//});
+
+//Optional: Filter the layer when a value is selected
+comboNoeDarkhast.addEventListener("change", function () {
+    debugger;
+    const selected = this.value;
+    layer.definitionExpression = selected ? `noedarkhast = '${selected}'` : "";
+});
+//FeatureTable
 const featureTable = new FeatureTable({
     view: view,
     layer: layer,
@@ -124,7 +157,9 @@ const featureTable = new FeatureTable({
     container: "attributeTable"
 });
 
+//Change Event
 document.getElementById("inFilter").addEventListener("input", function () {
     const value = this.value;
     layer.definitionExpression = value ? `c_noedarkhast = ${value}` : "";
 });
+

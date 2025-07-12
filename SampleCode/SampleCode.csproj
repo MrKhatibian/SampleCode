@@ -50426,6 +50426,8 @@
     <Content Include="EsriAPI\4.30\esri\widgets\Zoom\t9n\Zoom_zh-CN.json" />
     <Content Include="EsriAPI\4.30\esri\widgets\Zoom\t9n\Zoom_zh-HK.json" />
     <Content Include="EsriAPI\4.30\esri\widgets\Zoom\t9n\Zoom_zh-TW.json" />
+    <Content Include="Content\fonts\arial-bold\0-255.pbf" />
+    <Content Include="Content\fonts\arial-unicode-ms-regular\0-255.pbf" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\EsriSampleCode\Map5.js" />
     <Content Include="Scripts\EsriSampleCode\Map4.js" />
