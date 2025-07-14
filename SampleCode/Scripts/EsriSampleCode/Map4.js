@@ -9,7 +9,7 @@ const map = new Map({ basemap: "osm" });
 const view = new MapView({
     container: "map",
     map: map,
-    zoom: 15, // Zoom level
+    zoom: 14, // Zoom level
     center: [48.464869, 34.834155],
 });
 
@@ -132,14 +132,15 @@ layer.load().then(() => {
 });
 
 // Utility: Update combo box with unique values
-function updateComboBox(combo, values) {
-    combo.innerHTML = "";// Clear
+function updateComboBox(combo, values, selectValue) {
+    combo.innerHTML = "";
     values.forEach(value => {
         const option = document.createElement("option");
         option.value = value;
         option.text = value;
         combo.appendChild(option);
     });
+    combo.value = selectValue;
 }
 
 // Global filter state
@@ -177,16 +178,18 @@ function updateFeatures() {
         query.where = where;
         layer.definitionExpression = where;
     } else {
+        query.where = where;
         layer.definitionExpression = "";
     }
-
+    featureTable.filterGeometry = query.geometry;
+    //featureTable.refresh();
     layer.queryFeatures(query).then(featureSet => {
         const features = featureSet.features;
 
         //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
         const seen = new Set();
         const noedarkhastValues = [];
-
+        noedarkhastValues.push("");
         for (const f of features) {
             const val = f.attributes?.noedarkhast;
             if (val && !seen.has(val)) {
@@ -194,8 +197,8 @@ function updateFeatures() {
                 noedarkhastValues.push(val);
             }
         }
-
-        updateComboBox(comboNoeDarkhast, noedarkhastValues);
+        const comboSelectValue = filterState.noeDarkhast;
+        updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
 
         //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
         //updateComboBox(comboOther, otherValues);
@@ -228,4 +231,3 @@ comboNoeDarkhast.addEventListener("change", function () {
     filterState.noeDarkhast = this.value;
     updateFeatures();
 });
-  
