@@ -10,7 +10,7 @@ const view = new MapView({
     container: "map",
     map: map,
     zoom: 15, // Zoom level
-    center: [48.464869, 34.834155], // Longitude, latitude 48.464869  34.834155
+    center: [48.464869, 34.834155],
 });
 
 //FeatureLayer
@@ -29,8 +29,11 @@ const layer = new FeatureLayer({
         title: "درخواست",
         content: "شماره: {shodarkhast}"
     },
+    //definitionExpression : `Ebtal != 0`,
     outFields: ["*"]
 });
+//let layer = new FeatureLayer();
+//layer = featureLayer;
 layer.featureReduction = {
     type: "cluster",
     clusterRadius: "100px",
@@ -92,45 +95,7 @@ layer.featureReduction = {
     }]
 };
 map.add(layer);
-// Create the combo box (HTML <select> element)
-const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 
-
-layer.on(()=>{
-    // Query unique values from the layer
-    const queryParams = new Query();
-    queryParams.outFields = ["*"];
-    layer.queryFeatures(queryParams).then(function (results) {
-        // prints the array of result graphics to the console
-        console.log(results.features);
-    });
-});
-//const query = layer.createQuery();
-//query.returnDistinctValues = true;
-//query.outFields = ["*"];
-//query.orderByFields = ["shodarkhast"];
-// query the layer with the modified params object
-
-//layer.queryFeatures(query).then((results) => {
-//    debugger;
-//    const features = results.features;
-//    const uniqueValues = features.map(f => f.attributes.noedarkhast).filter(v => v !== null);
-//    console.log("Returned values:", features[0].attributes);
-
-//    uniqueValues.forEach(value => {
-//        const option = document.createElement("option");
-//        option.value = value;
-//        option.text = value;
-//        comboNoeDarkhast.appendChild(option);
-//    });
-//});
-
-//Optional: Filter the layer when a value is selected
-comboNoeDarkhast.addEventListener("change", function () {
-    debugger;
-    const selected = this.value;
-    layer.definitionExpression = selected ? `noedarkhast = '${selected}'` : "";
-});
 //FeatureTable
 const featureTable = new FeatureTable({
     view: view,
@@ -157,9 +122,110 @@ const featureTable = new FeatureTable({
     container: "attributeTable"
 });
 
-//Change Event
-document.getElementById("inFilter").addEventListener("input", function () {
-    const value = this.value;
-    layer.definitionExpression = value ? `c_noedarkhast = ${value}` : "";
+// Create the combo box (HTML <select> element)
+const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
+const inputFilter = document.getElementById("inFilter");
+
+
+layer.load().then(() => {
+    console.log("layer loaded");
 });
 
+// Utility: Update combo box with unique values
+function updateComboBox(combo, values) {
+    combo.innerHTML = "";// Clear
+    values.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.text = value;
+        combo.appendChild(option);
+    });
+}
+
+// Global filter state
+let filterState = {
+    extent: null,
+    noeDarkhast: "",
+    codDarkhast: null
+};
+
+// Build WHERE clause for filtering
+function buildWhereClause() {
+    const clauses = [];
+
+    if (filterState.noeDarkhast) {
+        clauses.push(`noedarkhast = N'${filterState.noeDarkhast}'`);
+    }
+    if (filterState.codDarkhast) {
+        clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
+    }
+
+    return clauses.join(" AND ");
+}
+
+// Main update function: apply extent and definitionExpression
+function updateFeatures() {
+    const query = layer.createQuery();
+    query.geometry = filterState.extent;
+    query.spatialRelationship = "intersects";
+    query.returnGeometry = false;
+    //query.outFields = ["noedarkhast", "shodarkhast"];
+    query.outFields = ["*"];
+
+    const where = buildWhereClause();
+    if (where) {
+        query.where = where;
+        layer.definitionExpression = where;
+    } else {
+        layer.definitionExpression = "";
+    }
+
+    layer.queryFeatures(query).then(featureSet => {
+        const features = featureSet.features;
+
+        //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
+        const seen = new Set();
+        const noedarkhastValues = [];
+
+        for (const f of features) {
+            const val = f.attributes?.noedarkhast;
+            if (val && !seen.has(val)) {
+                seen.add(val);
+                noedarkhastValues.push(val);
+            }
+        }
+
+        updateComboBox(comboNoeDarkhast, noedarkhastValues);
+
+        //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
+        //updateComboBox(comboOther, otherValues);
+    });
+}
+
+// Event: map extent changed
+view.watch("stationary", function (isStationary) {
+    if (isStationary) {
+        filterState.extent = view.extent;
+        updateFeatures();
+    }
+});
+
+// Event: input text filter
+inputFilter.addEventListener("input", function () {
+    const value = this.value?.trim();
+    value = parseInt(value);
+    if (!value || isNaN(value)) {
+        console.warn("مقدار ورودی نامعتیر است");
+        return;
+    }
+
+    filterState.codDarkhast = value;
+    updateFeatures();
+});
+
+// Event: comboNoeDarkhast changed
+comboNoeDarkhast.addEventListener("change", function () {
+    filterState.noeDarkhast = this.value;
+    updateFeatures();
+});
+  
