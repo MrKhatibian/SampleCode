@@ -2,18 +2,17 @@
 import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
+import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
 
-// Initialize map
-const map = new Map({ basemap: "osm" });
-const view = new MapView({
-    container: "map",
-    map: map,
-    zoom: 14, // Zoom level
-    center: [48.464869, 34.834155],
+// ImageLayers
+const imageLayer = new MapImageLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajN/MapServer",
+    sublayers: [{
+        id: 1
+    }]
 });
-
-//FeatureLayer
+//FeatureLayers
 const layer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
     renderer: {
@@ -32,8 +31,6 @@ const layer = new FeatureLayer({
     //definitionExpression : `Ebtal != 0`,
     outFields: ["*"]
 });
-//let layer = new FeatureLayer();
-//layer = featureLayer;
 layer.featureReduction = {
     type: "cluster",
     clusterRadius: "100px",
@@ -94,8 +91,17 @@ layer.featureReduction = {
         labelPlacement: "center-center"
     }]
 };
-map.add(layer);
-
+// Initialize map
+const map = new Map({
+    basemap: "osm"
+});
+const view = new MapView({
+    container: "map",
+    map: map,
+    zoom: 14, // Zoom level
+    center: [48.464869, 34.834155],
+});
+map.addMany([imageLayer, layer]);
 //FeatureTable
 const featureTable = new FeatureTable({
     view: view,
@@ -124,12 +130,8 @@ const featureTable = new FeatureTable({
 
 // Create the combo box (HTML <select> element)
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
-const inputFilter = document.getElementById("inFilter");
+//const inputFilter = document.getElementById("inFilter");
 
-
-layer.load().then(() => {
-    console.log("layer loaded");
-});
 
 // Utility: Update combo box with unique values
 function updateComboBox(combo, values, selectValue) {
@@ -145,6 +147,7 @@ function updateComboBox(combo, values, selectValue) {
 
 // Global filter state
 let filterState = {
+    //ebtal: 0,
     extent: null,
     noeDarkhast: "",
     codDarkhast: null
@@ -153,14 +156,13 @@ let filterState = {
 // Build WHERE clause for filtering
 function buildWhereClause() {
     const clauses = [];
-
+    //clauses.push(`Ebtal = 0`);
     if (filterState.noeDarkhast) {
         clauses.push(`noedarkhast = N'${filterState.noeDarkhast}'`);
     }
     if (filterState.codDarkhast) {
         clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
     }
-
     return clauses.join(" AND ");
 }
 
@@ -199,7 +201,7 @@ function updateFeatures() {
         }
         const comboSelectValue = filterState.noeDarkhast;
         updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
-
+        
         //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
         //updateComboBox(comboOther, otherValues);
     });
@@ -214,17 +216,16 @@ view.watch("stationary", function (isStationary) {
 });
 
 // Event: input text filter
-inputFilter.addEventListener("input", function () {
-    const value = this.value?.trim();
-    value = parseInt(value);
-    if (!value || isNaN(value)) {
-        console.warn("مقدار ورودی نامعتیر است");
-        return;
-    }
-
-    filterState.codDarkhast = value;
-    updateFeatures();
-});
+//inputFilter.addEventListener("input", function () {
+//    let value = this.value?.trim();
+//    value = parseInt(value);
+//    if (!value || isNaN(value)) {
+//        console.warn("مقدار ورودی نامعتیر است");
+//        return;
+//    }
+//    filterState.codDarkhast = value;
+//    updateFeatures();
+//});
 
 // Event: comboNoeDarkhast changed
 comboNoeDarkhast.addEventListener("change", function () {

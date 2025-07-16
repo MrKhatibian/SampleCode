@@ -3,27 +3,16 @@
 }
 <head>
     <title> ArcGIS api 4.30</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet" type="text/css" />
-    <!-- Bootstrap RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-   <style>
-        body {
-            font-family: 'Tahoma', sans-serif;
-            background-color: #f8f9fa;
-            height: 100vh;
+    <style>
+        #contFilter {
             direction: rtl;
         }
 
         #map {
-            height: 50vh;
-        }
-
-        #divAttr {
-            margin-top: 5vh;
+            height: 100%;
         }
 
         #attributeTable {
-            margin-top: 5vh;
             height: 50vh;
             direction: ltr;
         }
@@ -38,102 +27,92 @@
 </head>
 
 <body class="p-4">
+    <div id="contFilter" class="container">
+        <div class="row h-25">
+            <div class="col-4">
+                <!-- فیلترها -->
+                <h5>فیلترها</h5>
+                <div class="row align-items-start">
+                    <div class="row">
+                        <div class="col">
+                            <div class="row">
+                                <label class="form-label">براساس تاریخ:</label>
+                            </div>
+                            <div class="row">
+                                <div class="form-check form-check-inline col">
+                                    <input class="form-check-input" type="checkbox" id="checKartabl" checked>
+                                    <label class="form-check-label" for="checKartabl">ارسال به کارتابل</label>
+                                </div>
+                                <div class="form-check form-check-inline col">
+                                    <input class="form-check-input" type="checkbox" id="checDarkhast">
+                                    <label class="form-check-label" for="checDarkhast">درخواست</label>
+                                </div>
+                            </div>
 
-    <div id="divFilter" class="container">
-        <h4 class="mb-4">فیلتر اطلاعات</h4>
-
-        <!-- فیلترها -->
-        <div class="row g-3 align-items-center">
-            <div class="col-md-3">
-                <label class="form-label">تاریخ شروع</label>
-                <input type="date" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">تاریخ پایان</label>
-                <input type="date" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">مقدار (عدد)</label>
-                <input type="number" id="inFilter" class="form-control" placeholder="1">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">نوع درخواست</label>
-                <select id="comboNoeDarkhast" class="form-select">
-                    @*<option value=""></option>*@
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">دسته‌بندی</label>
-                <select class="form-select">
-                    <option selected>انتخاب کنید</option>
-                    <option>دسته ۱</option>
-                    <option>دسته ۲</option>
-                    <option>دسته ۳</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- چک‌باکس‌ها -->
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <label class="form-label d-block mb-2">انتخاب ویژگی‌ها:</label>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="check1">
-                    <label class="form-check-label" for="check1">ویژگی ۱</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">تاریخ شروع:</label>
+                            <input class="form-control" type="date">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">تاریخ پایان:</label>
+                            <input class="form-control" type="date">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">نوع درخواست:</label>
+                            <select class="form-select" id="comboNoeDarkhast"></select>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">مرحله:</label>
+                            <select class="form-select" id="comboMarhale"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">نوع کاربری:</label>
+                            <select class="form-select" id="comboNoeKarbari"></select>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">نوع طرح:</label>
+                            <select class="form-select" id="comboNoeTarh"></select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">منطقه:</label>
+                            <select class="form-select" id="comboMantaghe"></select>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">محدوده:</label>
+                            <select class="form-select" id="comboMahdodeh"></select>
+                        </div>
+                    </div>
+                    <!-- دکمه جستجو -->
+                    <div class="row mt-2 justify-content-center">
+                        <div class="col-4 w-auto">
+                            <button class="btn btn-primary" type="submit" id="btnFilter">اعمال فیلتر</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="check2">
-                    <label class="form-check-label" for="check2">ویژگی ۲</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="check3">
-                    <label class="form-check-label" for="check3">ویژگی ۳</label>
-                </div>
+
             </div>
-        </div>
-
-        <!-- دکمه جستجو -->
-        <div class="mt-4">
-            <button class="btn btn-primary">اعمال فیلتر</button>
-        </div>
-
-        <!-- نقشه و جدول -->
-        <div class="row mt-5">
-            <div class="col-md-12">
+            <!--نقشه-->
+            <div class="col-8 pb-5">
                 <h5>نقشه</h5>
-                <div id="map" class="rounded shadow-sm"></div>
-            </div>
-            <div id="divAttr" class="col-md-12">
-                <h5>جدول اطلاعات</h5>
-                <div id="attributeTable" class="table table-bordered"></div>
-                @*<table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ردیف</th>
-                                <th>نام</th>
-                                <th>مقدار</th>
-                                <th>تاریخ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>۱</td>
-                                <td>آیتم ۱</td>
-                                <td>۱۰۰۰</td>
-                                <td>۱۴۰۳/۰۴/۱۵</td>
-                            </tr>
-                            <tr>
-                                <td>۲</td>
-                                <td>آیتم ۲</td>
-                                <td>۱۵۰۰</td>
-                                <td>۱۴۰۳/۰۴/۱۶</td>
-                            </tr>
-                        </tbody>
-                    </table>*@
+                <div id="map"></div>
             </div>
         </div>
-
+        <!--جدول اطلاعات-->
+        <div class="row pt-3">
+            <div class="col-md-12" id="divAttr">
+                @*<h5>جدول اطلاعات</h5>*@
+                <div id="attributeTable"></div>
+            </div>
+        </div>
     </div>
-
 </body>
 
