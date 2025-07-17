@@ -201,7 +201,7 @@ function updateFeatures() {
         }
         const comboSelectValue = filterState.noeDarkhast;
         updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
-        
+
         //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
         //updateComboBox(comboOther, otherValues);
     });
@@ -232,3 +232,48 @@ comboNoeDarkhast.addEventListener("change", function () {
     filterState.noeDarkhast = this.value;
     updateFeatures();
 });
+
+// Add export button
+document.getElementById("btnCSV").addEventListener("click", function () {
+    exportTableToCSV(layer);
+});
+
+async function exportTableToCSV(layer) {
+    const query = layer.createQuery();
+    query.returnGeometry = false;
+    query.outFields = ["*"];
+
+    try {
+        debugger;
+        const results = await layer.queryFeatures(query);
+        const features = results.features;
+        if (!features.length) {
+            alert("No features to export.");
+            return;
+        }
+
+        // Convert to CSV
+        const csv = convertFeaturesToCSV(features);
+        const BOM = "\uFEFF";
+        const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) {
+        console.error("Export failed", err);
+    }
+}
+
+function convertFeaturesToCSV(features) {
+    debugger;
+    const fields = Object.keys(features[0].attributes);
+    const header = fields.join(",");
+    const rows = features.map(f => {
+        return fields.map(field => `"${f.attributes[field]}"`).join(",");
+    });
+    return [header, ...rows].join("\r\n");
+}
