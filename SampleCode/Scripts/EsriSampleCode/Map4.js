@@ -233,7 +233,7 @@ comboNoeDarkhast.addEventListener("change", function () {
     updateFeatures();
 });
 
-// Add export button
+// Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
     exportTableToCSV(layer);
 });
@@ -276,4 +276,24 @@ function convertFeaturesToCSV(features) {
         return fields.map(field => `"${f.attributes[field]}"`).join(",");
     });
     return [header, ...rows].join("\r\n");
+}
+
+//Export Excel
+document.getElementById("btnExcel").addEventListener("click", () => {
+    exportEditedFeaturesToExcel(layer)
+});
+function exportEditedFeaturesToExcel(featureLayer, filename = "ویرایش‌ها.xlsx") {
+    const query = featureLayer.createQuery();
+    query.returnGeometry = false;
+    query.outFields = ["*"];
+
+    featureLayer.queryFeatures(query).then((results) => {
+        const data = results.features.map((f) => f.attributes);
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "ویرایش‌ها");
+        XLSX.writeFile(workbook, filename);
+    }).catch((error) => {
+        console.error("خطا در گرفتن داده‌ها:", error);
+    });
 }
