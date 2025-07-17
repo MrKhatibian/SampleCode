@@ -297,3 +297,190 @@ function exportEditedFeaturesToExcel(featureLayer, filename = "ویرایش‌ه
         console.error("خطا در گرفتن داده‌ها:", error);
     });
 }
+//Export PDF
+document.getElementById("btnPDF").addEventListener("click", () => {
+    //exportFeatureLayerToPDF(layer)
+    exportFeatureTableToPDF(layer)
+});
+async function exportFeatureLayerToPDF(featureLayer) {
+    const query = featureLayer.createQuery();
+    query.returnGeometry = false;
+    //query.outFields = ["*"];
+    query.outFields = ["shop", "shodarkhast", "noedarkhast","address"];
+
+    try {
+        const results = await featureLayer.queryFeatures(query);
+        const data = results.features.map(f => f.attributes);
+
+        if (!data.length) {
+            alert("هیچ داده‌ای برای خروجی وجود ندارد");
+            return;
+        }
+
+        const columns = Object.keys(data[0]);
+        const rows = data.map(item => columns.map(col => item[col]));
+
+        // آماده‌سازی jsPDF با پشتیبانی فارسی (Right-To-Left)
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+
+        doc.setFont("Vazir");
+        doc.setFontSize(12);
+        doc.text("خروجی PDF با فونت فارسی وزیر", 280, 20, { align: "right" });
+
+        doc.autoTable({
+            head: [columns],
+            body: rows,
+            styles: {
+                font: "Vazir",
+                fontSize: 10,
+                halign: "right"
+            },
+            margin: { top: 30 },
+        });
+
+        doc.save("export-fa.pdf");
+    } catch (error) {
+        console.error("خطا در گرفتن داده‌ها یا تولید PDF:", error);
+    }
+}
+
+async function exportFeatureTableToPDF(featureLayer) {
+    const query = featureLayer.createQuery();
+    query.returnGeometry = false;
+    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
+
+    try {
+        const results = await featureLayer.queryFeatures(query);
+        const features = results.features;
+
+        if (!features.length) {
+            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            return;
+        }
+
+
+        // 🔸 ستونی که باید راست‌چین باشند
+        const rtlColumns = ["address","noedarkhast"]; //← این‌ها را مطابق داده‌های خودت تغییر بده
+
+        // 🔸 لیست همه ستون‌ها
+        const columns = Object.keys(features[0].attributes);
+
+        // 🔸 هدر جدول با فاصله از راست و تنظیم راست/چپ‌چین بودن
+        const headerRow = columns.map(col => ({
+            text: col,
+            alignment: rtlColumns.includes(col) ? 'right' : 'left',
+            margin: [0, 0, 20, 0], // فاصله از راست
+            bold: true
+        }));
+
+        // 🔸 سطرهای جدول با تنظیم چینش هر سلول
+        const bodyRows = features.map(f => {
+            return columns.map(col => ({
+                text: String(f.attributes[col] ?? ""),
+                alignment: rtlColumns.includes(col) ? 'right' : 'left'
+            }));
+        });
+        // ساخت ساختار PDF
+        //const docDefinition = {
+        //    content: [
+        //        { text: 'گزارش اطلاعات جدول ویرایش‌ شده', style: 'header', alignment: 'right' },
+        //        {
+        //            table: {
+        //                headerRows: 1,
+        //                widths: Array(columns.length).fill('*'),
+        //                body: [headerRow, ...bodyRows]
+        //            },
+        //            layout: 'lightHorizontalLines'
+        //        }
+        //    ],
+        //    defaultStyle: {
+        //        font: 'Vazir',
+        //        //alignment: 'right'
+        //    },
+        //    styles: {
+        //        header: {
+        //            fontSize: 16,
+        //            bold: true,
+        //            margin: [0, 0, 0, 10]
+        //        }
+        //    }
+        //};
+        // 🔸 تعریف نهایی فایل PDF
+        const docDefinition = {
+            pageSize: 'A4',
+            pageMargins: [40, 60, 40, 60],
+            header: {
+                text: '📊 گزارش اطلاعات ویرایش‌شده',
+                style: 'header',
+                alignment: 'right',
+                margin: [0, 20, 0, 10]
+            },
+            footer: function (currentPage, pageCount) {
+                return {
+                    text: `صفحه ${currentPage} از ${pageCount}`,
+                    alignment: 'center',
+                    fontSize: 9,
+                    margin: [0, 10]
+                };
+            },
+            content: [
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: columns.map(() => 'auto'),
+                        body: [headerRow, ...bodyRows]
+                    },
+                    layout: {
+                        fillColor: function (rowIndex) {
+                            return rowIndex === 0
+                                ? '#cce5ff'
+                                : rowIndex % 2 === 0
+                                    ? '#f2f2f2'
+                                    : null;
+                        },
+                        hLineWidth: () => 0.5,
+                        vLineWidth: () => 0.5,
+                        hLineColor: () => '#ccc',
+                        vLineColor: () => '#ccc'
+                    }
+                },
+                {
+                    text: 'تاریخ تهیه گزارش: ' + new Date().toLocaleDateString('fa-IR'),
+                    margin: [0, 20, 0, 0],
+                    alignment: 'right',
+                    fontSize: 10
+                },
+                {
+                    text: 'امضای مسئول بررسی:',
+                    margin: [0, 40, 0, 0],
+                    alignment: 'right',
+                    fontSize: 10
+                },
+                {
+                    canvas: [
+                        { type: 'line', x1: 400, y1: 0, x2: 200, y2: 0, lineWidth: 1 }
+                    ]
+                }
+            ],
+            defaultStyle: {
+                font: 'Vazir',
+                alignment: 'right',
+                fontSize: 10
+            },
+            styles: {
+                header: {
+                    fontSize: 18,
+                    bold: true,
+                    color: '#0074D9'
+                }
+            }
+        };
+
+        // ایجاد و دانلود فایل PDF
+        pdfMake.createPdf(docDefinition).download("خروجی_جدول.pdf");
+
+    } catch (err) {
+        console.error("خطا در گرفتن داده‌ها یا ساخت PDF:", err);
+    }
+}

@@ -50444,6 +50444,10 @@
     <Content Include="Scripts\jquery.validate.min.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="Scripts\lib\fonts\vazir-font.js" />
+    <Content Include="Scripts\lib\fonts\Vazir-normal.js" />
+    <Content Include="Scripts\lib\pdfmake\pdfmake.min.js" />
+    <Content Include="Scripts\lib\pdfmake\vfs_vazir.js" />
     <Content Include="Scripts\lib\pdf\jspdf.plugin.autotable.min.js" />
     <Content Include="Scripts\lib\pdf\jspdf.umd.min.js" />
     <Content Include="Scripts\lib\xlsx\xlsx.full.min.js" />
