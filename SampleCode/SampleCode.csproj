@@ -50446,6 +50446,7 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\lib\fonts\vazir-font.js" />
     <Content Include="Scripts\lib\fonts\Vazir-normal.js" />
+    <Content Include="Scripts\lib\kml\arcgis-to-geojson.js" />
     <Content Include="Scripts\lib\kml\tokml.js" />
     <Content Include="Scripts\lib\pdfmake\pdfmake.min.js" />
     <Content Include="Scripts\lib\pdfmake\vfs_vazir.js" />

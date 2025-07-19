@@ -3,6 +3,9 @@ import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
+import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection.js";
+import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
+import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
 
 // ImageLayers
@@ -550,14 +553,14 @@ async function exportToShapefile(featureLayer) {
 }
 // Export KML
 document.getElementById("btnKml").addEventListener("click", () => {
-    exportToKML(layer)
+    console.log("SR:", layer.spatialReference.wkid);
+    exportToKML(layer);
 });
+
 async function exportToKML(featureLayer) {
     const query = featureLayer.createQuery();
     query.outFields = ["*"];
     query.returnGeometry = true;
-    query.returnZ = false;
-    query.returnM = false;
 
     try {
         const result = await featureLayer.queryFeatures(query);
@@ -567,20 +570,25 @@ async function exportToKML(featureLayer) {
             alert("هیچ داده‌ای برای خروجی وجود ندارد.");
             return;
         }
+        debugger;
+        const geojsonFeatures = features.map(f => ({
+            type: "Feature",
+            geometry: arcgisGeometryToGeoJSON(f.geometry),
+            //properties: f.attributes
+            properties: {
+                name: f.attributes["shodarkhast"],
+                description: Object.entries(f.attributes).map(([key, val]) => `${key}: ${val}`).join("\n")
+            }
+        }));
 
         const kmlString = tokml({
             type: "FeatureCollection",
-            features: features
-                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
-                .map(f => ({
-                    type: "Feature",
-                    geometry: f.geometry.toJSON(),
-                    properties: f.attributes
-                }))
+            features: geojsonFeatures
         });
 
-        // دانلود فایل
-        const blob = new Blob([kmlString], { type: "application/vnd.google-earth.kml+xml" });
+        const blob = new Blob(["\ufeff" + kmlString], {
+            type: "application/vnd.google-earth.kml+xml;charset=utf-8"
+        });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -593,3 +601,89 @@ async function exportToKML(featureLayer) {
     }
 }
 
+function arcgisGeometryToGeoJSON(geometry) {
+    if (geometry.type === "point") {
+        return {
+            type: "Point",
+            coordinates: [geometry.x, geometry.y]
+        };
+    } else if (geometry.type === "polyline") {
+        return {
+            type: "LineString",
+            coordinates: geometry.paths[0]
+        };
+    } else if (geometry.type === "polygon") {
+        return {
+            type: "Polygon",
+            coordinates: geometry.rings
+        };
+    }
+    return null;
+}
+
+
+//document.getElementById("btnKml").addEventListener("click", async () => {
+//    await projection.load();
+
+//    const query = layer.createQuery();
+//    query.outFields = ["*"];
+//    query.returnGeometry = true;
+
+//    const result = await layer.queryFeatures(query);
+//    const features = result.features.filter(f => f.geometry);
+
+//    if (!features.length) {
+//        alert("هیچ فیچری پیدا نشد.");
+//        return;
+//    }
+
+//    const sourceSR = new SpatialReference({ wkid: 32639 }); // your layer's spatial reference
+//    const targetSR = new SpatialReference({ wkid: 4326 });  // WGS84 for KML
+
+//    const projectedGeometries = await projection.projectMany(
+//        features.map(f => f.geometry),
+//        sourceSR,
+//        targetSR
+//    );
+
+//    const geojsonFeatures = projectedGeometries.map((geom, i) => ({
+//        type: "Feature",
+//        geometry: arcgisGeometryToGeoJSON(geom),
+//        properties: {
+//            name: features[i].attributes["Name"] || `Feature ${i + 1}`,
+//            description: Object.entries(features[i].attributes)
+//                .map(([k, v]) => `${k}: ${v}`).join("\n")
+//        }
+//    }));
+
+//    const kmlString = tokml({
+//        type: "FeatureCollection",
+//        features: geojsonFeatures
+//    });
+
+//    const blob = new Blob(["\ufeff" + kmlString], {
+//        type: "application/vnd.google-earth.kml+xml;charset=utf-8"
+//    });
+
+//    const url = URL.createObjectURL(blob);
+//    const a = document.createElement("a");
+//    a.href = url;
+//    a.download = "features.kml";
+//    a.click();
+//    URL.revokeObjectURL(url);
+//});
+
+//Export Image 
+document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
+    try {
+        const screenshot = await view.takeScreenshot({ format: "png" });
+
+        const link = document.createElement("a");
+        link.href = screenshot.dataUrl;
+        link.download = "map.png";
+        link.click();
+
+    } catch (err) {
+        console.error("❌ خطا در گرفتن اسکرین‌شات:", err);
+    }
+});
