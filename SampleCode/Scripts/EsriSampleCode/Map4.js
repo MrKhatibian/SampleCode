@@ -548,3 +548,48 @@ async function exportToShapefile(featureLayer) {
         console.error("خطا در گرفتن داده‌ها:", err);
     }
 }
+// Export KML
+document.getElementById("btnKml").addEventListener("click", () => {
+    exportToKML(layer)
+});
+async function exportToKML(featureLayer) {
+    const query = featureLayer.createQuery();
+    query.outFields = ["*"];
+    query.returnGeometry = true;
+    query.returnZ = false;
+    query.returnM = false;
+
+    try {
+        const result = await featureLayer.queryFeatures(query);
+        const features = result.features.filter(f => f.geometry);
+
+        if (!features.length) {
+            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            return;
+        }
+
+        const kmlString = tokml({
+            type: "FeatureCollection",
+            features: features
+                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
+                .map(f => ({
+                    type: "Feature",
+                    geometry: f.geometry.toJSON(),
+                    properties: f.attributes
+                }))
+        });
+
+        // دانلود فایل
+        const blob = new Blob([kmlString], { type: "application/vnd.google-earth.kml+xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "features.kml";
+        a.click();
+        URL.revokeObjectURL(url);
+
+    } catch (err) {
+        console.error("❌ خطا در گرفتن یا تبدیل داده‌ها:", err);
+    }
+}
+
