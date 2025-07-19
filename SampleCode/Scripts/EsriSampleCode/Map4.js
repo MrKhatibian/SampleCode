@@ -306,7 +306,7 @@ async function exportFeatureLayerToPDF(featureLayer) {
     const query = featureLayer.createQuery();
     query.returnGeometry = false;
     //query.outFields = ["*"];
-    query.outFields = ["shop", "shodarkhast", "noedarkhast","address"];
+    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
 
     try {
         const results = await featureLayer.queryFeatures(query);
@@ -361,7 +361,7 @@ async function exportFeatureTableToPDF(featureLayer) {
 
 
         // 🔸 ستونی که باید راست‌چین باشند
-        const rtlColumns = ["address","noedarkhast"]; //← این‌ها را مطابق داده‌های خودت تغییر بده
+        const rtlColumns = ["address", "noedarkhast"]; //← این‌ها را مطابق داده‌های خودت تغییر بده
 
         // 🔸 لیست همه ستون‌ها
         const columns = Object.keys(features[0].attributes);
@@ -381,40 +381,16 @@ async function exportFeatureTableToPDF(featureLayer) {
                 alignment: rtlColumns.includes(col) ? 'right' : 'left'
             }));
         });
-        // ساخت ساختار PDF
-        //const docDefinition = {
-        //    content: [
-        //        { text: 'گزارش اطلاعات جدول ویرایش‌ شده', style: 'header', alignment: 'right' },
-        //        {
-        //            table: {
-        //                headerRows: 1,
-        //                widths: Array(columns.length).fill('*'),
-        //                body: [headerRow, ...bodyRows]
-        //            },
-        //            layout: 'lightHorizontalLines'
-        //        }
-        //    ],
-        //    defaultStyle: {
-        //        font: 'Vazir',
-        //        //alignment: 'right'
-        //    },
-        //    styles: {
-        //        header: {
-        //            fontSize: 16,
-        //            bold: true,
-        //            margin: [0, 0, 0, 10]
-        //        }
-        //    }
-        //};
+
         // 🔸 تعریف نهایی فایل PDF
         const docDefinition = {
             pageSize: 'A4',
             pageMargins: [40, 60, 40, 60],
             header: {
-                text: '📊 گزارش اطلاعات ویرایش‌شده',
+                text: 'ویرایش شده',
                 style: 'header',
                 alignment: 'right',
-                margin: [0, 20, 0, 10]
+                margin: [0, 10, 20, 0]
             },
             footer: function (currentPage, pageCount) {
                 return {
@@ -445,23 +421,23 @@ async function exportFeatureTableToPDF(featureLayer) {
                         vLineColor: () => '#ccc'
                     }
                 },
-                {
-                    text: 'تاریخ تهیه گزارش: ' + new Date().toLocaleDateString('fa-IR'),
-                    margin: [0, 20, 0, 0],
-                    alignment: 'right',
-                    fontSize: 10
-                },
-                {
-                    text: 'امضای مسئول بررسی:',
-                    margin: [0, 40, 0, 0],
-                    alignment: 'right',
-                    fontSize: 10
-                },
-                {
-                    canvas: [
-                        { type: 'line', x1: 400, y1: 0, x2: 200, y2: 0, lineWidth: 1 }
-                    ]
-                }
+                //    {
+                //        text: 'تاریخ تهیه گزارش: ' + new Date().toLocaleDateString('fa-IR'),
+                //        margin: [0, 20, 0, 0],
+                //        alignment: 'right',
+                //        fontSize: 10
+                //    },
+                //    {
+                //        text: 'امضای مسئول بررسی:',
+                //        margin: [0, 40, 0, 0],
+                //        alignment: 'right',
+                //        fontSize: 10
+                //    },
+                //    {
+                //        canvas: [
+                //            { type: 'line', x1: 400, y1: 0, x2: 200, y2: 0, lineWidth: 1 }
+                //        ]
+                //    }
             ],
             defaultStyle: {
                 font: 'Vazir',
@@ -482,5 +458,93 @@ async function exportFeatureTableToPDF(featureLayer) {
 
     } catch (err) {
         console.error("خطا در گرفتن داده‌ها یا ساخت PDF:", err);
+    }
+}
+
+//Expprt GeoJSON
+document.getElementById("btnGeoJSON").addEventListener("click", () => {
+    exportToGeoJSON(layer)
+});
+async function exportToGeoJSON(featureLayer) {
+    const query = featureLayer.createQuery();
+    //query.outFields = ["*"];
+    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
+    query.returnGeometry = true;
+
+    try {
+        const result = await featureLayer.queryFeatures(query);
+        const features = result.features;
+
+        if (!features.length) {
+            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            return;
+        }
+
+        // تبدیل به GeoJSON FeatureCollection
+        const geojson = {
+            type: "FeatureCollection",
+            features: features
+                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
+                .map(f => ({
+                    type: "Feature",
+                    geometry: f.geometry.toJSON(),
+                    properties: f.attributes
+                }))
+        };
+
+        // تبدیل به string و ساخت Blob
+        const geojsonString = JSON.stringify(geojson, null, 2);
+        const blob = new Blob([geojsonString], { type: "application/json" });
+
+        // ساخت لینک دانلود
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "features.geojson";
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("❌ خطا در گرفتن یا تبدیل داده‌ها:", err);
+    }
+}
+document.getElementById("btnShp").addEventListener("click", () => {
+    exportToShapefile(layer)
+});
+
+//Export Shape not work
+async function exportToShapefile(featureLayer) {
+    const query = featureLayer.createQuery();
+    query.outFields = ["*"];
+    query.returnGeometry = true;
+
+    try {
+        const result = await featureLayer.queryFeatures(query);
+        const features = result.features;
+
+        if (!features.length) {
+            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            return;
+        }
+
+        // تبدیل به GeoJSON
+        const geojson = {
+            type: "FeatureCollection",
+            features: features
+                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
+                .map(f => ({
+                    type: "Feature",
+                    geometry: f.geometry.toJSON(),
+                    properties: f.attributes
+                }))
+        };
+
+        // استفاده از shp-write برای خروجی گرفتن
+        //Have bugs in there
+        shpwrite.download(geojson, {
+            file: "Exported_Shapefile"
+        });
+
+    } catch (err) {
+        console.error("خطا در گرفتن داده‌ها:", err);
     }
 }

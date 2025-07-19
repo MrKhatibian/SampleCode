@@ -50450,6 +50450,8 @@
     <Content Include="Scripts\lib\pdfmake\vfs_vazir.js" />
     <Content Include="Scripts\lib\pdf\jspdf.plugin.autotable.min.js" />
     <Content Include="Scripts\lib\pdf\jspdf.umd.min.js" />
+    <Content Include="Scripts\lib\shp\jszip.min.js" />
+    <Content Include="Scripts\lib\shp\shpwrite.js" />
     <Content Include="Scripts\lib\xlsx\xlsx.full.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Web.config" />
