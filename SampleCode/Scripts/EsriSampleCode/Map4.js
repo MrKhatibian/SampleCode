@@ -7,7 +7,7 @@ import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
-import * as query from "../../esriapi/4.30/@arcgis/core/rest/query.js";
+import * as fnQuery from "../../esriapi/4.30/@arcgis/core/rest/query.js";
 
 
 // ImageLayers
@@ -17,18 +17,6 @@ const imageLayer = new MapImageLayer({
         id: 1
     }]
 });
-const viewDarkhast = new MapImageLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
-    sublayers: [{ id: 0 }]
-});
-
-const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
-const myQuery = new Query();
-myQuery.where = `1=1`;
-myQuery.outFields = ["*"];
-myQuery.returnGeometry = true;
-const viewDarkhastFeaturesSet = await query.executeQueryJSON(url, myQuery);
-console.log("Queried features:", viewDarkhastFeaturesSet.features);
 
 //FeatureLayers
 const layer = new FeatureLayer({
@@ -154,16 +142,15 @@ const comboNoeTarh = document.getElementById("comboNoeTarh");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 //const inputFilter = document.getElementById("inFilter");
+
 const btnSync = document.getElementById("btnSync");
 btnSync.addEventListener("click", async () => {
     try {
-        debugger;
-
         // 1. Build query
         myQuery.where = `c_noedarkhast = 15`;
 
         // 2. Execute query - wait for it to complete
-        const viewDarkhastFeaturesSet1 = await query.executeQueryJSON(url, myQuery);
+        const viewDarkhastFeaturesSet1 = await fnQuery.executeQueryJSON(url, myQuery);
 
         // 3. Extract unique 'shodarkhast' values
         const shodarkhastValues = [...new Set(
@@ -209,72 +196,111 @@ let filterState = {
     //ebtal: 0,
     extent: null,
     noeDarkhast: "",
-    Mantaghe: null,
-    codDarkhast: null
+    //Mantaghe: null,
+    //codDarkhast: null
 };
 
 // Build WHERE clause for filtering
 function buildWhereClause() {
+    debugger
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterState.noeDarkhast) {
         clauses.push(`noedarkhast = N'${filterState.noeDarkhast}'`);
     }
-    if (filterState.Mantaghe) {
-        clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
-    }
-    if (filterState.codDarkhast) {
-        clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
-    }
+    //if (filterState.Mantaghe) {
+    //    clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
+    //}
+    //if (filterState.codDarkhast) {
+    //    clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
+    //}
     return clauses.join(" AND ");
 }
 
+
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
+const myQuery = new Query();
+myQuery.where = `1=1`;
+myQuery.outFields = ["*"];
+myQuery.returnGeometry = true;
+//myQuery.geometry = filterState.extent;
+//myQuery.spatialRelationship = "intersects";
+const viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
+console.log("Queried features:", viewDarkhastFeaturesSet.features);
+
 // Main update function: apply extent and definitionExpression
-function updateFeatures() {
-    const query = layer.createQuery();
-    query.geometry = filterState.extent;
-    query.spatialRelationship = "intersects";
-    query.returnGeometry = false;
-    //query.outFields = ["noedarkhast", "shodarkhast"];
-    query.outFields = ["*"];
-
+async function updateFeatures() {
     const where = buildWhereClause();
-    if (where) {
-        query.where = where;
-        layer.definitionExpression = where;
-    } else {
-        query.where = where;
-        layer.definitionExpression = "";
-    }
-    featureTable.filterGeometry = query.geometry;
-    //featureTable.refresh();
-    layer.queryFeatures(query).then(featureSet => {
-        const features = featureSet.features;
+    try {
+        // 1. Build query
+        myQuery.where = where;
+        // 2. Execute query - wait for it to complete
+        let viewDarkhastFeaturesSet1 = await fnQuery.executeQueryJSON(url, myQuery);
+        // Set Data To Comboboxes
+        getComboBoxValue(viewDarkhastFeaturesSet1.features);
 
-        //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
-        const seen = new Set();
-        const noedarkhastValues = [];
-        noedarkhastValues.push("");
-        for (const f of features) {
-            const val = f.attributes?.noedarkhast;
-            if (val && !seen.has(val)) {
-                seen.add(val);
-                noedarkhastValues.push(val);
+        if (where) {
+            // 3. Extract unique 'shodarkhast' values
+            const shodarkhastValues = [...new Set(
+                viewDarkhastFeaturesSet1.features.map(
+                    feature => feature.attributes.shodarkhast
+                )
+            )];
+
+            // 4. Format values for SQL
+            const valueList = shodarkhastValues
+                .filter(v => v !== null && v !== undefined)
+                .map(v => (typeof v === 'string' ? `'${v}'` : v))
+                .join(",");
+
+            // 5. Set the definitionExpression
+            if (valueList.length > 0) {
+                layer.definitionExpression = `shodarkhast IN (${valueList})`;
+            } else {
+                layer.definitionExpression = `1=0`; // No matching records
             }
+            //layer.definitionExpression = where;
         }
-        const comboSelectValue = filterState.noeDarkhast;
-        updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
-
-        //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
-        //updateComboBox(comboOther, otherValues);
-    });
+        else {
+            layer.definitionExpression = "";
+        }
+    } catch (error) {
+        console.error("Error syncing layer:", error);
+    }
 }
+function getComboBoxValue(features) {
+    //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
+    const seen = new Set();
+    const noedarkhastValues = [];
+    noedarkhastValues.push("");
+    for (const f of features) {
+        const val = f.attributes?.noedarkhast;
+        if (val && !seen.has(val)) {
+            seen.add(val);
+            noedarkhastValues.push(val);
+        }
+    }
+    const comboSelectValue = filterState.noeDarkhast;
+    updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
 
+    //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
+    //updateComboBox(comboOther, otherValues);
+}
+getComboBoxValue(viewDarkhastFeaturesSet.features)
 // Event: map extent changed
+const chekSyncMap2FeatureTable = document.getElementById("chekSyncMap2FeatureTable");
+
+
+//query.outFields = ["noedarkhast", "shodarkhast"];
 view.watch("stationary", function (isStationary) {
-    if (isStationary) {
-        filterState.extent = view.extent;
-        updateFeatures();
+    if (isStationary && chekSyncMap2FeatureTable.checked) {
+        const query = layer.createQuery();
+        query.geometry = view.extent;
+        query.spatialRelationship = "intersects";
+        query.returnGeometry = true;
+        featureTable.layer = layer;// ensures the table shows data from the right layer
+        featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
+        //updateFeatures();
     }
 });
 
