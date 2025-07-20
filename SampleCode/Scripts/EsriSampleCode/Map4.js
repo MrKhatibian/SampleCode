@@ -3,11 +3,12 @@ import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
+import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
+import * as fnQuery from "../../esriapi/4.30/@arcgis/core/rest/query.js";
 import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection.js";
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
-import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
-import * as fnQuery from "../../esriapi/4.30/@arcgis/core/rest/query.js";
+
 
 
 // ImageLayers
@@ -177,8 +178,6 @@ btnSync.addEventListener("click", async () => {
     }
 });
 
-
-
 // Utility: Update combo box with unique values
 function updateComboBox(combo, values, selectValue) {
     combo.innerHTML = "";
@@ -196,13 +195,15 @@ let filterState = {
     //ebtal: 0,
     extent: null,
     noeDarkhast: "",
-    //Mantaghe: null,
-    //codDarkhast: null
+    marhale: "",
+    noeKarbari: "",
+    noeTarh: "",
+    mantaghe: null,
+    mahdodeh: ""
 };
 
 // Build WHERE clause for filtering
 function buildWhereClause() {
-    debugger
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterState.noeDarkhast) {
@@ -223,9 +224,8 @@ const myQuery = new Query();
 myQuery.where = `1=1`;
 myQuery.outFields = ["*"];
 myQuery.returnGeometry = true;
-//myQuery.geometry = filterState.extent;
-//myQuery.spatialRelationship = "intersects";
-const viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
+
+let viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
 console.log("Queried features:", viewDarkhastFeaturesSet.features);
 
 // Main update function: apply extent and definitionExpression
@@ -235,14 +235,24 @@ async function updateFeatures() {
         // 1. Build query
         myQuery.where = where;
         // 2. Execute query - wait for it to complete
-        let viewDarkhastFeaturesSet1 = await fnQuery.executeQueryJSON(url, myQuery);
+        viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
         // Set Data To Comboboxes
-        getComboBoxValue(viewDarkhastFeaturesSet1.features);
+        const comboBoxValues = getComboBoxValue(viewDarkhastFeaturesSet.features, "noedarkhast", "Marhale", "NoeKarbari", "NoeTarh", "Mantaghe", "Mahdodeh");
+
+        updateComboBox(comboNoeDarkhast, comboBoxValues.noeDarkhast, filterState.noeDarkhast);
+        updateComboBox(comboMarhale, comboBoxValues.Marhale, filterState.marhale);
+        updateComboBox(comboNoeKarbari, comboBoxValues.NoeKarbari, filterState.noeKarbari);
+        updateComboBox(comboNoeTarh, comboBoxValues.NoeTarh, filterState.noeKarbari);
+        updateComboBox(comboMantaghe, comboBoxValues.Mantaghe, filterState.Mantaghe);
+        updateComboBox(comboMahdodeh, comboBoxValues.Mahdodeh, filterState.Mahdodeh);
+
+        
+
 
         if (where) {
             // 3. Extract unique 'shodarkhast' values
             const shodarkhastValues = [...new Set(
-                viewDarkhastFeaturesSet1.features.map(
+                viewDarkhastFeaturesSet.features.map(
                     feature => feature.attributes.shodarkhast
                 )
             )];
@@ -268,24 +278,47 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     }
 }
-function getComboBoxValue(features) {
-    //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
-    const seen = new Set();
-    const noedarkhastValues = [];
-    noedarkhastValues.push("");
-    for (const f of features) {
-        const val = f.attributes?.noedarkhast;
-        if (val && !seen.has(val)) {
-            seen.add(val);
-            noedarkhastValues.push(val);
+function getComboBoxValue(features, ...keys) {
+    const result = {};
+    const seenMap = {};
+
+    // Initialize maps for each key
+    for (const key of keys) {
+        result[key] = [""];         // Include blank entry
+        seenMap[key] = new Set();
+    }
+
+    for (let i = 0; i < features.length; i++) {
+        const attrs = features[i].attributes;
+        if (!attrs) continue;
+
+        for (const key of keys) {
+            const val = attrs[key];
+            if (val && !seenMap[key].has(val)) {
+                seenMap[key].add(val);
+                result[key].push(val);
+            }
         }
     }
-    const comboSelectValue = filterState.noeDarkhast;
-    updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
 
-    //const otherValues = [...new Set(features.map(f => f.attributes.shodarkhast).filter(Boolean))];
-    //updateComboBox(comboOther, otherValues);
+    return result;
 }
+
+//function getComboBoxValue(features) {
+//    //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
+//    const seen = new Set();
+//    const noedarkhastValues = [];
+//    noedarkhastValues.push("");
+//    for (const f of features) {
+//        const val = f.attributes?.noedarkhast;
+//        if (val && !seen.has(val)) {
+//            seen.add(val);
+//            noedarkhastValues.push(val);
+//        }
+//    }
+//    const comboSelectValue = filterState.noeDarkhast;
+//    updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
+//}
 getComboBoxValue(viewDarkhastFeaturesSet.features)
 // Event: map extent changed
 const chekSyncMap2FeatureTable = document.getElementById("chekSyncMap2FeatureTable");
@@ -319,6 +352,26 @@ view.watch("stationary", function (isStationary) {
 // Event: comboNoeDarkhast changed
 comboNoeDarkhast.addEventListener("change", function () {
     filterState.noeDarkhast = this.value;
+    updateFeatures();
+});
+comboMarhale.addEventListener("change", function () {
+    filterState.marhale = this.value;
+    updateFeatures();
+});
+comboNoeKarbari.addEventListener("change", function () {
+    filterState.noeKarbari = this.value;
+    updateFeatures();
+});
+comboNoeTarh.addEventListener("change", function () {
+    filterState.noeTarh = this.value;
+    updateFeatures();
+});
+comboMantaghe.addEventListener("change", function () {
+    filterState.mantaghe = this.value;
+    updateFeatures();
+});
+comboMahdodeh.addEventListener("change", function () {
+    filterState.mahdodeh = this.value;
     updateFeatures();
 });
 
