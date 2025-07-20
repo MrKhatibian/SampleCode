@@ -7,6 +7,8 @@ import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
+import * as query from "../../esriapi/4.30/@arcgis/core/rest/query.js";
+
 
 // ImageLayers
 const imageLayer = new MapImageLayer({
@@ -15,6 +17,19 @@ const imageLayer = new MapImageLayer({
         id: 1
     }]
 });
+const viewDarkhast = new MapImageLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
+    sublayers: [{ id: 0 }]
+});
+
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
+const myQuery = new Query();
+myQuery.where = `1=1`;
+myQuery.outFields = ["*"];
+myQuery.returnGeometry = true;
+const viewDarkhastFeaturesSet = await query.executeQueryJSON(url, myQuery);
+console.log("Queried features:", viewDarkhastFeaturesSet.features);
+
 //FeatureLayers
 const layer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
@@ -133,7 +148,48 @@ const featureTable = new FeatureTable({
 
 // Create the combo box (HTML <select> element)
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
+const comboMarhale = document.getElementById("comboMarhale");
+const comboNoeKarbari = document.getElementById("comboNoeKarbari");
+const comboNoeTarh = document.getElementById("comboNoeTarh");
+const comboMantaghe = document.getElementById("comboMantaghe");
+const comboMahdodeh = document.getElementById("comboMahdodeh");
 //const inputFilter = document.getElementById("inFilter");
+const btnSync = document.getElementById("btnSync");
+btnSync.addEventListener("click", async () => {
+    try {
+        debugger;
+
+        // 1. Build query
+        myQuery.where = `c_noedarkhast = 15`;
+
+        // 2. Execute query - wait for it to complete
+        const viewDarkhastFeaturesSet1 = await query.executeQueryJSON(url, myQuery);
+
+        // 3. Extract unique 'shodarkhast' values
+        const shodarkhastValues = [...new Set(
+            viewDarkhastFeaturesSet1.features.map(
+                feature => feature.attributes.shodarkhast
+            )
+        )];
+
+        // 4. Format values for SQL
+        const valueList = shodarkhastValues
+            .filter(v => v !== null && v !== undefined)
+            .map(v => (typeof v === 'string' ? `'${v}'` : v))
+            .join(",");
+
+        // 5. Set the definitionExpression
+        if (valueList.length > 0) {
+            layer.definitionExpression = `shodarkhast IN (${valueList})`;
+        } else {
+            layer.definitionExpression = `1=0`; // No matching records
+        }
+
+    } catch (error) {
+        console.error("Error syncing layer:", error);
+    }
+});
+
 
 
 // Utility: Update combo box with unique values
@@ -153,6 +209,7 @@ let filterState = {
     //ebtal: 0,
     extent: null,
     noeDarkhast: "",
+    Mantaghe: null,
     codDarkhast: null
 };
 
@@ -162,6 +219,9 @@ function buildWhereClause() {
     //clauses.push(`Ebtal = 0`);
     if (filterState.noeDarkhast) {
         clauses.push(`noedarkhast = N'${filterState.noeDarkhast}'`);
+    }
+    if (filterState.Mantaghe) {
+        clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
     }
     if (filterState.codDarkhast) {
         clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
