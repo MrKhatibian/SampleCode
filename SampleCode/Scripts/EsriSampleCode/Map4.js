@@ -144,6 +144,7 @@ const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 //const inputFilter = document.getElementById("inFilter");
 
+// btn Sync for test sync in Map image layer and layre
 const btnSync = document.getElementById("btnSync");
 btnSync.addEventListener("click", async () => {
     try {
@@ -228,6 +229,10 @@ myQuery.returnGeometry = true;
 let viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
 console.log("Queried features:", viewDarkhastFeaturesSet.features);
 
+document.getElementById("btnUpdate").addEventListener("click", () => {
+    updateFeatures();
+});
+
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
     const where = buildWhereClause();
@@ -237,14 +242,14 @@ async function updateFeatures() {
         // 2. Execute query - wait for it to complete
         viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
         // Set Data To Comboboxes
-        const comboBoxValues = getComboBoxValue(viewDarkhastFeaturesSet.features, "noedarkhast", "Marhale", "NoeKarbari", "NoeTarh", "Mantaghe", "Mahdodeh");
+        const comboBoxValues = getComboBoxValue(viewDarkhastFeaturesSet.features);
 
-        updateComboBox(comboNoeDarkhast, comboBoxValues.noeDarkhast, filterState.noeDarkhast);
-        updateComboBox(comboMarhale, comboBoxValues.Marhale, filterState.marhale);
-        updateComboBox(comboNoeKarbari, comboBoxValues.NoeKarbari, filterState.noeKarbari);
-        updateComboBox(comboNoeTarh, comboBoxValues.NoeTarh, filterState.noeKarbari);
-        updateComboBox(comboMantaghe, comboBoxValues.Mantaghe, filterState.Mantaghe);
-        updateComboBox(comboMahdodeh, comboBoxValues.Mahdodeh, filterState.Mahdodeh);
+        updateComboBox(comboNoeDarkhast, comboBoxValues.noedarkhast, filterState.noeDarkhast);
+        updateComboBox(comboMarhale, comboBoxValues.marhaleh, filterState.marhale);
+        updateComboBox(comboNoeKarbari, comboBoxValues.noe_parvaneh, filterState.noeKarbari);
+        //updateComboBox(comboNoeTarh, comboBoxValues.NoeTarh, filterState.noeKarbari);
+        //updateComboBox(comboMantaghe, comboBoxValues.Mantaghe, filterState.Mantaghe);
+        //updateComboBox(comboMahdodeh, comboBoxValues.Mahdodeh, filterState.Mahdodeh);
 
         
 
@@ -278,10 +283,16 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     }
 }
-function getComboBoxValue(features, ...keys) {
+/**
+ * Get Values form map service and fill for his comboBox
+ * @param {any} features //add objec FeatureSet.features
+ * @returns Object 
+ */
+function getComboBoxValue(features) {
     const result = {};
     const seenMap = {};
-
+    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
+    /*const keys = ["noedarkhast"];*/
     // Initialize maps for each key
     for (const key of keys) {
         result[key] = [""];         // Include blank entry
@@ -300,25 +311,9 @@ function getComboBoxValue(features, ...keys) {
             }
         }
     }
-
     return result;
 }
 
-//function getComboBoxValue(features) {
-//    //const noedarkhastValues = [...new Set(features.map(f => f.attributes.noedarkhast).filter(Boolean))];
-//    const seen = new Set();
-//    const noedarkhastValues = [];
-//    noedarkhastValues.push("");
-//    for (const f of features) {
-//        const val = f.attributes?.noedarkhast;
-//        if (val && !seen.has(val)) {
-//            seen.add(val);
-//            noedarkhastValues.push(val);
-//        }
-//    }
-//    const comboSelectValue = filterState.noeDarkhast;
-//    updateComboBox(comboNoeDarkhast, noedarkhastValues, comboSelectValue);
-//}
 getComboBoxValue(viewDarkhastFeaturesSet.features)
 // Event: map extent changed
 const chekSyncMap2FeatureTable = document.getElementById("chekSyncMap2FeatureTable");
