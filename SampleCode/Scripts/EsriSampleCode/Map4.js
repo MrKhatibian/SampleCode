@@ -9,19 +9,26 @@ import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 
+//const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
+//const myQuery = new Query();
+//myQuery.where = `1=1`;
+//myQuery.outFields = ["*"];
+//myQuery.returnGeometry = true;
 
+//let viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
+//console.log("Queried features:", viewDarkhastFeaturesSet.features);
 
-// ImageLayers
-const imageLayer = new MapImageLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajN/MapServer",
+// Arse Image Layer
+const arseILayer = new MapImageLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
     sublayers: [{
         id: 1
     }]
 });
 
-//FeatureLayers
-const layer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
+// Darkhast Feature Layer
+const darkhastFLayer = new FeatureLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -33,12 +40,32 @@ const layer = new FeatureLayer({
     },
     popupTemplate: {
         title: "درخواست",
-        content: "شماره: {shodarkhast}"
+        content: "شماره: {Sohd}"
     },
-    //definitionExpression : `Ebtal != 0`,
     outFields: ["*"]
 });
-layer.featureReduction = {
+
+//FeatureLayers
+//const layer = new FeatureLayer({
+//    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
+//    renderer: {
+//        type: "simple",  // autocasts as new SimpleRenderer()
+//        symbol: {
+//            type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+//            size: 5,
+//            color: "black",
+//            outline: null
+//        }
+//    },
+//    popupTemplate: {
+//        title: "درخواست",
+//        content: "شماره: {Sohd}"
+//    },
+//    //definitionExpression : `Ebtal != 0`,
+//    outFields: ["*"]
+//});
+
+darkhastFLayer.featureReduction = {
     type: "cluster",
     clusterRadius: "100px",
     clusterMaxSize: 40,
@@ -98,6 +125,7 @@ layer.featureReduction = {
         labelPlacement: "center-center"
     }]
 };
+
 // Initialize map
 const map = new Map({
     basemap: "osm"
@@ -108,32 +136,86 @@ const view = new MapView({
     zoom: 14, // Zoom level
     center: [48.464869, 34.834155],
 });
-map.addMany([imageLayer, layer]);
+map.addMany([arseILayer, darkhastFLayer]);
 //FeatureTable
 const featureTable = new FeatureTable({
     view: view,
-    layer: layer,
+    layer: darkhastFLayer,
     tableTemplate: {
         columnTemplates: [
             {
                 type: "field",
-                fieldName: "shop",
+                fieldName: "Shop",
                 label: "شماره پرونده"
             },
             {
                 type: "field",
-                fieldName: "shodarkhast",
+                fieldName: "Shod",
                 label: "شماره درخواست"
             },
             {
                 type: "field",
                 fieldName: "noedarkhast",
                 label: "نوع درخواست"
+            },
+            {
+                type: "field",
+                fieldName: "marhaleh",
+                label: "مرحله"
+            },
+            {
+                type: "field",
+                fieldName: "noe_parvaneh",
+                label: "نوع کاربری"
             }
         ]
     },
     container: "attributeTable"
 });
+
+// Global filter state
+let filterValues = {
+    //ebtal: 0,
+    extent: null,
+    noeDarkhast: "",
+    marhaleh: "",
+    noeKarbari: "",
+    noeTarh: "",
+    mantaghe: null,
+    mahdodeh: ""
+};
+
+// Build WHERE clause for filtering
+function buildWhereClause() {
+    const clauses = [];
+    //clauses.push(`Ebtal = 0`);
+    if (filterValues.noeDarkhast) {
+        clauses.push(`noedarkhast = N'${filterValues.noeDarkhast}'`);
+    }
+    if (filterValues.marhaleh) {
+        clauses.push(`marhaleh = N'${filterValues.marhaleh}'`);
+    }
+    if (filterValues.noeKarbari) {
+        clauses.push(`noe_parvaneh = N'${filterValues.noeKarbari}'`);
+    }
+    return clauses.join(" AND ");
+}
+
+//Creat Where
+const where = buildWhereClause();
+
+// Build query
+const query = darkhastFLayer.createQuery();
+query.where = where; // for attributes
+query.geometry = view.extent;  // for Geometry
+query.spatialRelationship = "intersects";  // this is the default
+query.returnGeometry = true;
+query.outFields = ["*"];
+
+// To return a feature set containing the attributes:
+const darkhastFSet = await darkhastFLayer.queryFeatures(query)
+// get Features from Featureset
+let darkhastFeatures = darkhastFSet.features;
 
 // Create the combo box (HTML <select> element)
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
@@ -143,6 +225,70 @@ const comboNoeTarh = document.getElementById("comboNoeTarh");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 //const inputFilter = document.getElementById("inFilter");
+
+// Set Data To Comboboxes
+const comboBoxValues = getComboBoxValues(darkhastFeatures);
+
+/**
+ * Get Values form map service and fill for his comboBox
+ * @param {any} features //add objec FeatureSet.features
+ * @returns Object 
+ */
+function getComboBoxValues(features) {
+    const result = {};
+    const seenMap = {};
+    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
+    /*const keys = ["noedarkhast"];*/
+    // Initialize maps for each key
+    for (const key of keys) {
+        result[key] = [""];         // Include blank entry
+        seenMap[key] = new Set();
+    }
+
+    for (let i = 0; i < features.length; i++) {
+        const attrs = features[i].attributes;
+        if (!attrs) continue;
+
+        for (const key of keys) {
+            const val = attrs[key];
+            if (val && !seenMap[key].has(val)) {
+                seenMap[key].add(val);
+                result[key].push(val);
+            }
+        }
+    }
+    return result;
+}
+// Dictionary convert Combobox name to Field name
+const dicCombo2Field = {
+    comboNoeDarkhast: "noedarkhast",
+    comboMarhale: "marhaleh",
+    comboNoeKarbari: "noe_parvaneh"
+};
+
+//Fill Comboboxes
+const comboboxes = ["comboNoeDarkhast", "comboMarhale", "comboNoeKarbari"];
+fillComboboxes()
+function fillComboboxes(comboboxes) {
+    for (combobox of comboboxes) {
+        const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
+        updateComboBox(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
+    }
+    return;
+}
+
+// Utility: Update combo box with unique values
+function updateComboBox(combo, values, selectValue) {
+    combo.innerHTML = "";
+    values.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.text = value;
+        combo.appendChild(option);
+    });
+    combo.value = selectValue;
+}
+
 
 // btn Sync for test sync in Map image layer and layre
 const btnSync = document.getElementById("btnSync");
@@ -179,55 +325,6 @@ btnSync.addEventListener("click", async () => {
     }
 });
 
-// Utility: Update combo box with unique values
-function updateComboBox(combo, values, selectValue) {
-    combo.innerHTML = "";
-    values.forEach(value => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.text = value;
-        combo.appendChild(option);
-    });
-    combo.value = selectValue;
-}
-
-// Global filter state
-let filterState = {
-    //ebtal: 0,
-    extent: null,
-    noeDarkhast: "",
-    marhale: "",
-    noeKarbari: "",
-    noeTarh: "",
-    mantaghe: null,
-    mahdodeh: ""
-};
-
-// Build WHERE clause for filtering
-function buildWhereClause() {
-    const clauses = [];
-    //clauses.push(`Ebtal = 0`);
-    if (filterState.noeDarkhast) {
-        clauses.push(`noedarkhast = N'${filterState.noeDarkhast}'`);
-    }
-    //if (filterState.Mantaghe) {
-    //    clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
-    //}
-    //if (filterState.codDarkhast) {
-    //    clauses.push(`c_noedarkhast = ${filterState.codDarkhast}`);
-    //}
-    return clauses.join(" AND ");
-}
-
-
-const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
-const myQuery = new Query();
-myQuery.where = `1=1`;
-myQuery.outFields = ["*"];
-myQuery.returnGeometry = true;
-
-let viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
-console.log("Queried features:", viewDarkhastFeaturesSet.features);
 
 document.getElementById("btnUpdate").addEventListener("click", () => {
     updateFeatures();
@@ -242,16 +339,16 @@ async function updateFeatures() {
         // 2. Execute query - wait for it to complete
         viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
         // Set Data To Comboboxes
-        const comboBoxValues = getComboBoxValue(viewDarkhastFeaturesSet.features);
+        const comboBoxValues = getComboBoxValues(viewDarkhastFeaturesSet.features);
 
-        updateComboBox(comboNoeDarkhast, comboBoxValues.noedarkhast, filterState.noeDarkhast);
-        updateComboBox(comboMarhale, comboBoxValues.marhaleh, filterState.marhale);
-        updateComboBox(comboNoeKarbari, comboBoxValues.noe_parvaneh, filterState.noeKarbari);
-        //updateComboBox(comboNoeTarh, comboBoxValues.NoeTarh, filterState.noeKarbari);
-        //updateComboBox(comboMantaghe, comboBoxValues.Mantaghe, filterState.Mantaghe);
-        //updateComboBox(comboMahdodeh, comboBoxValues.Mahdodeh, filterState.Mahdodeh);
+        updateComboBox(comboNoeDarkhast, comboBoxValues.noedarkhast, filterValues.noeDarkhast);
+        updateComboBox(comboMarhale, comboBoxValues.marhaleh, filterValues.marhaleh);
+        updateComboBox(comboNoeKarbari, comboBoxValues.noe_parvaneh, filterValues.noeKarbari);
+        //updateComboBox(comboNoeTarh, comboBoxValues.NoeTarh, filterValues.noeKarbari);
+        //updateComboBox(comboMantaghe, comboBoxValues.Mantaghe, filterValues.Mantaghe);
+        //updateComboBox(comboMahdodeh, comboBoxValues.Mahdodeh, filterValues.Mahdodeh);
 
-        
+
 
 
         if (where) {
@@ -283,38 +380,18 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     }
 }
-/**
- * Get Values form map service and fill for his comboBox
- * @param {any} features //add objec FeatureSet.features
- * @returns Object 
- */
-function getComboBoxValue(features) {
-    const result = {};
-    const seenMap = {};
-    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
-    /*const keys = ["noedarkhast"];*/
-    // Initialize maps for each key
-    for (const key of keys) {
-        result[key] = [""];         // Include blank entry
-        seenMap[key] = new Set();
-    }
 
-    for (let i = 0; i < features.length; i++) {
-        const attrs = features[i].attributes;
-        if (!attrs) continue;
 
-        for (const key of keys) {
-            const val = attrs[key];
-            if (val && !seenMap[key].has(val)) {
-                seenMap[key].add(val);
-                result[key].push(val);
-            }
-        }
-    }
-    return result;
-}
 
-getComboBoxValue(viewDarkhastFeaturesSet.features)
+
+
+
+
+
+
+
+
+
 // Event: map extent changed
 const chekSyncMap2FeatureTable = document.getElementById("chekSyncMap2FeatureTable");
 
@@ -340,33 +417,33 @@ view.watch("stationary", function (isStationary) {
 //        console.warn("مقدار ورودی نامعتیر است");
 //        return;
 //    }
-//    filterState.codDarkhast = value;
+//    filterValues.codDarkhast = value;
 //    updateFeatures();
 //});
 
 // Event: comboNoeDarkhast changed
 comboNoeDarkhast.addEventListener("change", function () {
-    filterState.noeDarkhast = this.value;
+    filterValues.noeDarkhast = this.value;
     updateFeatures();
 });
 comboMarhale.addEventListener("change", function () {
-    filterState.marhale = this.value;
+    filterValues.marhaleh = this.value;
     updateFeatures();
 });
 comboNoeKarbari.addEventListener("change", function () {
-    filterState.noeKarbari = this.value;
+    filterValues.noeKarbari = this.value;
     updateFeatures();
 });
 comboNoeTarh.addEventListener("change", function () {
-    filterState.noeTarh = this.value;
+    filterValues.noeTarh = this.value;
     updateFeatures();
 });
 comboMantaghe.addEventListener("change", function () {
-    filterState.mantaghe = this.value;
+    filterValues.mantaghe = this.value;
     updateFeatures();
 });
 comboMahdodeh.addEventListener("change", function () {
-    filterState.mahdodeh = this.value;
+    filterValues.mahdodeh = this.value;
     updateFeatures();
 });
 
