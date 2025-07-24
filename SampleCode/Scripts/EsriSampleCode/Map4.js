@@ -28,7 +28,8 @@ const arseILayer = new MapImageLayer({
 
 // Darkhast Feature Layer
 const darkhastFLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
+    //url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -177,9 +178,9 @@ const featureTable = new FeatureTable({
 let filterValues = {
     //ebtal: 0,
     extent: null,
-    noeDarkhast: "",
+    noedarkhast: "",
     marhaleh: "",
-    noeKarbari: "",
+    noe_parvaneh: "",
     noeTarh: "",
     mantaghe: null,
     mahdodeh: ""
@@ -189,14 +190,14 @@ let filterValues = {
 function buildWhereClause() {
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
-    if (filterValues.noeDarkhast) {
-        clauses.push(`noedarkhast = N'${filterValues.noeDarkhast}'`);
+    if (filterValues.noedarkhast) {
+        clauses.push(`noedarkhast = N'${filterValues.noedarkhast}'`);
     }
     if (filterValues.marhaleh) {
         clauses.push(`marhaleh = N'${filterValues.marhaleh}'`);
     }
-    if (filterValues.noeKarbari) {
-        clauses.push(`noe_parvaneh = N'${filterValues.noeKarbari}'`);
+    if (filterValues.noe_parvaneh) {
+        clauses.push(`noe_parvaneh = N'${filterValues.noe_parvaneh}'`);
     }
     return clauses.join(" AND ");
 }
@@ -213,10 +214,10 @@ query.returnGeometry = true;
 query.outFields = ["*"];
 
 // To return a feature set containing the attributes:
-const darkhastFSet = await darkhastFLayer.queryFeatures(query)
+let darkhastFSet = await darkhastFLayer.queryFeatures(query)
 // get Features from Featureset
 let darkhastFeatures = darkhastFSet.features;
-console.log("Features:", darkhastFeatures);
+
 // Create the combo box (HTML <select> element)
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 const comboMarhale = document.getElementById("comboMarhale");
@@ -238,13 +239,11 @@ function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
-    /*const keys = ["noedarkhast"];*/
     // Initialize maps for each key
     for (const key of keys) {
         result[key] = [""];         // Include blank entry
         seenMap[key] = new Set();
     }
-    console.log("in comboBox value:", features);
     for (let feature of features) {
         const attrs = feature.attributes;
         if (!attrs) continue;
@@ -271,9 +270,9 @@ const dicCombo2Field = {
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
-   for (let combobox of comboboxes) {
-        //const fieldName = dicCombo2Field[combobox]; // get the key for comboBoxValues
-        const fieldName = "noedarkhast"; // get the key for comboBoxValues
+    for (let combobox of comboboxes) {
+        const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
+        //const fieldName = "noedarkhast"; // get the key for comboBoxValues
         updateComboBox(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
     }
     return;
@@ -281,6 +280,7 @@ function fillComboboxes(comboboxes) {
 
 // Utility: Update combo box with unique values
 function updateComboBox(combo, values, selectValue) {
+
     combo.innerHTML = "";
     values.forEach(value => {
         const option = document.createElement("option");
@@ -293,7 +293,7 @@ function updateComboBox(combo, values, selectValue) {
 
 // Event: comboNoeDarkhast changed
 comboNoeDarkhast.addEventListener("change", function () {
-    filterValues.noeDarkhast = this.value;
+    filterValues.noedarkhast = this.value;
     updateFeatures();
 });
 comboMarhale.addEventListener("change", function () {
@@ -301,7 +301,7 @@ comboMarhale.addEventListener("change", function () {
     updateFeatures();
 });
 comboNoeKarbari.addEventListener("change", function () {
-    filterValues.noeKarbari = this.value;
+    filterValues.noe_parvaneh = this.value;
     updateFeatures();
 });
 comboNoeTarh.addEventListener("change", function () {
@@ -322,18 +322,18 @@ comboMahdodeh.addEventListener("change", function () {
 async function updateFeatures() {
     where = buildWhereClause();
     try {
-        debugger;
+        ;
         // 1. Build query
         query.where = where;
-        console.log("in update features", query);
         // 2. Execute query - wait for it to complete
-        darkhastFeatures = await darkhastFLayer.queryFeatures(query).features;
-        console.log("in update features", darkhastFeatures);
+        darkhastFSet = await darkhastFLayer.queryFeatures(query);
+        darkhastFeatures = darkhastFSet.features;
         // Set Data To Comboboxes
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
+        featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
         darkhastFLayer.definitionExpression = where;
-        
+
     } catch (error) {
         console.error("Error syncing layer:", error);
     }
@@ -350,77 +350,11 @@ view.watch("stationary", function (isStationary) {
         //query.spatialRelationship = "intersects";
         //query.returnGeometry = true;
         //featureTable.layer = layer;// ensures the table shows data from the right layer
-        featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
+        
         updateFeatures();
     }
 });
 
-
-
-
-// btn Sync for test sync in Map image layer and layre
-document.getElementById("btnSync").addEventListener("click", async () => {
-    try {
-        // 1. Build query
-        myQuery.where = `c_noedarkhast = 15`;
-
-        // 2. Execute query - wait for it to complete
-        const viewDarkhastFeaturesSet1 = await fnQuery.executeQueryJSON(url, myQuery);
-
-        // 3. Extract unique 'shodarkhast' values
-        const shodarkhastValues = [...new Set(
-            viewDarkhastFeaturesSet1.features.map(
-                feature => feature.attributes.shodarkhast
-            )
-        )];
-
-        // 4. Format values for SQL
-        const valueList = shodarkhastValues
-            .filter(v => v !== null && v !== undefined)
-            .map(v => (typeof v === 'string' ? `'${v}'` : v))
-            .join(",");
-
-        // 5. Set the definitionExpression
-        if (valueList.length > 0) {
-            layer.definitionExpression = `shodarkhast IN (${valueList})`;
-        } else {
-            layer.definitionExpression = `1=0`; // No matching records
-        }
-
-    } catch (error) {
-        console.error("Error syncing layer:", error);
-    }
-});
-
-document.getElementById("btnUpdate").addEventListener("click", () => {
-    updateFeatures();
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Event: input text filter
-//inputFilter.addEventListener("input", function () {
-//    let value = this.value?.trim();
-//    value = parseInt(value);
-//    if (!value || isNaN(value)) {
-//        console.warn("مقدار ورودی نامعتیر است");
-//        return;
-//    }
-//    filterValues.codDarkhast = value;
-//    updateFeatures();
-//});
 
 
 
@@ -435,7 +369,7 @@ async function exportTableToCSV(layer) {
     query.outFields = ["*"];
 
     try {
-        debugger;
+        ;
         const results = await layer.queryFeatures(query);
         const features = results.features;
         if (!features.length) {
@@ -460,7 +394,7 @@ async function exportTableToCSV(layer) {
 }
 
 function convertFeaturesToCSV(features) {
-    debugger;
+    ;
     const fields = Object.keys(features[0].attributes);
     const header = fields.join(",");
     const rows = features.map(f => {
@@ -758,7 +692,7 @@ async function exportToKML(featureLayer) {
             alert("هیچ داده‌ای برای خروجی وجود ندارد.");
             return;
         }
-        debugger;
+        ;
         const geojsonFeatures = features.map(f => ({
             type: "Feature",
             geometry: arcgisGeometryToGeoJSON(f.geometry),
