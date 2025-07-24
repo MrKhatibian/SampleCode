@@ -9,15 +9,6 @@ import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 
-//const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0";
-//const myQuery = new Query();
-//myQuery.where = `1=1`;
-//myQuery.outFields = ["*"];
-//myQuery.returnGeometry = true;
-
-//let viewDarkhastFeaturesSet = await fnQuery.executeQueryJSON(url, myQuery);
-//console.log("Queried features:", viewDarkhastFeaturesSet.features);
-
 // Arse Image Layer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
@@ -46,26 +37,7 @@ const darkhastFLayer = new FeatureLayer({
     outFields: ["*"]
 });
 
-//FeatureLayers
-//const layer = new FeatureLayer({
-//    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
-//    renderer: {
-//        type: "simple",  // autocasts as new SimpleRenderer()
-//        symbol: {
-//            type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
-//            size: 5,
-//            color: "black",
-//            outline: null
-//        }
-//    },
-//    popupTemplate: {
-//        title: "درخواست",
-//        content: "شماره: {Sohd}"
-//    },
-//    //definitionExpression : `Ebtal != 0`,
-//    outFields: ["*"]
-//});
-
+// Creat Clustring for darkhastFeatureLayer
 darkhastFLayer.featureReduction = {
     type: "cluster",
     clusterRadius: "100px",
@@ -138,6 +110,7 @@ const view = new MapView({
     center: [48.464869, 34.834155],
 });
 map.addMany([arseILayer, darkhastFLayer]);
+
 //FeatureTable
 const featureTable = new FeatureTable({
     view: view,
