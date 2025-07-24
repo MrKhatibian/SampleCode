@@ -19,8 +19,8 @@ const arseILayer = new MapImageLayer({
 
 // Darkhast Feature Layer
 const darkhastFLayer = new FeatureLayer({
-    //url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
+    //url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -295,7 +295,6 @@ comboMahdodeh.addEventListener("change", function () {
 async function updateFeatures() {
     where = buildWhereClause();
     try {
-        ;
         // 1. Build query
         query.where = where;
         // 2. Execute query - wait for it to complete
@@ -312,18 +311,10 @@ async function updateFeatures() {
     }
 }
 // Event: map extent changed
-const chekSyncMap2FeatureTable = document.getElementById("chekSyncMap2FeatureTable");
-
-
-//query.outFields = ["noedarkhast", "shodarkhast"];
+const mapExtent = document.getElementById("mapExtent");
 view.watch("stationary", function (isStationary) {
-    if (isStationary && chekSyncMap2FeatureTable.checked) {
-        //const query = layer.createQuery();
+    if (isStationary && mapExtent.checked) {
         query.geometry = view.extent;
-        //query.spatialRelationship = "intersects";
-        //query.returnGeometry = true;
-        //featureTable.layer = layer;// ensures the table shows data from the right layer
-        
         updateFeatures();
     }
 });
