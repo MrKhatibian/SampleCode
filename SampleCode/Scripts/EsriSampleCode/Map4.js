@@ -8,16 +8,26 @@ import * as fnQuery from "../../esriapi/4.30/@arcgis/core/rest/query.js";
 import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection.js";
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
+import esriConfig from "../../esriapi/4.30/@arcgis/core/config.js";
+
+
+// Set the geometry service URL (required for projection)
+esriConfig.geometryServiceUrl = "http://localhost:6080/arcgis/rest/services/Utilities/Geometry/GeometryServer";
 
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
-    sublayers: [{id: 1}]
+    sublayers: [{ id: 1 }]
+});
+arseILayer.when(() => {
+    console.log("arseILayer loaded successfully.");
+}).catch((error) => {
+    console.error("Error loading arseILayer:", error);
 });
 
 // Initialize Darkhast FeatureLayer
 const darkhastFLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",    
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -94,6 +104,13 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
+darkhastFLayer.when(() => {
+    console.log("darkhastFLayer loaded successfully.");
+    view.goTo(darkhastFLayer.fullExtent);
+    
+}).catch ((error) => {
+    console.error("Error loading darkhastFLayer:", error);
+});
 
 // Initialize Map
 const map = new Map({
@@ -105,46 +122,29 @@ const map = new Map({
 let view = new MapView({
     container: "map",
     map: map,
-    zoom: 14, // Zoom level
-    center: [48.464869, 34.834155],
+    //zoom: 14, // Zoom level
+    //center: [48.464869, 34.834155],
+});
+view.when(() => {
+    console.log("MapView is ready");
+}).catch((error) => {
+    console.error("MapView failed to load:", error);
 });
 
-
-
-//FeatureTable
+// Initialize FeatureTable
 const featureTable = new FeatureTable({
+    container: "attributeTable",
     view: view,
     layer: darkhastFLayer,
     tableTemplate: {
         columnTemplates: [
-            {
-                type: "field",
-                fieldName: "Shop",
-                label: "شماره پرونده"
-            },
-            {
-                type: "field",
-                fieldName: "Shod",
-                label: "شماره درخواست"
-            },
-            {
-                type: "field",
-                fieldName: "noedarkhast",
-                label: "نوع درخواست"
-            },
-            {
-                type: "field",
-                fieldName: "marhaleh",
-                label: "مرحله"
-            },
-            {
-                type: "field",
-                fieldName: "noe_parvaneh",
-                label: "نوع کاربری"
-            }
+            { type: "field", fieldName: "Shop", label: "شماره پرونده" },
+            { type: "field", fieldName: "Shod", label: "شماره درخواست" },
+            { type: "field", fieldName: "noedarkhast", label: "نوع درخواست" },
+            { type: "field", fieldName: "marhaleh", label: "مرحله" },
+            { type: "field", fieldName: "noe_parvaneh", label: "نوع کاربری" }
         ]
-    },
-    container: "attributeTable"
+    }
 });
 
 // Global filter state
