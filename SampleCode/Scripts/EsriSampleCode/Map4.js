@@ -9,18 +9,15 @@ import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection
 import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 
-// Arse Image Layer
+// Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
-    sublayers: [{
-        id: 1
-    }]
+    sublayers: [{id: 1}]
 });
 
-// Darkhast Feature Layer
+// Initialize Darkhast FeatureLayer
 const darkhastFLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
-    //url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",    
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -34,82 +31,85 @@ const darkhastFLayer = new FeatureLayer({
         title: "درخواست",
         content: "شماره: {Sohd}"
     },
-    outFields: ["*"]
-});
-
-// Creat Clustring for darkhastFeatureLayer
-darkhastFLayer.featureReduction = {
-    type: "cluster",
-    clusterRadius: "100px",
-    clusterMaxSize: 40,
-    clusterMinSize: 10,
-    maxScale: 3000,
-    renderer: {
-        type: "unique-value",
-        field: "cluster_count",
-        uniqueValueInfos: [
-            {
-                value: 1,
-                symbol: {
-                    type: "simple-marker",
-                    size: 5,
-                    outline: null // No outline for cluster_count = 1
+    outFields: ["*"],
+    // Creat Clustring for darkhastFeatureLayer
+    featureReduction: {
+        type: "cluster",
+        clusterRadius: "100px",
+        clusterMaxSize: 40,
+        clusterMinSize: 10,
+        maxScale: 3000,
+        renderer: {
+            type: "unique-value",
+            field: "cluster_count",
+            uniqueValueInfos: [
+                {
+                    value: 1,
+                    symbol: {
+                        type: "simple-marker",
+                        size: 5,
+                        outline: null // No outline for cluster_count = 1
+                    }
                 }
-            }
-        ],
-        defaultSymbol: {
-            type: "simple-marker",
-            color: "#BEE8FF",
-            size: 10,
-            outline: {
-                type: "simple-line",
-                color: [0, 77, 158, 0.5],
-                width: 3
-            }
-        },
-        visualVariables: [
-            {
-                type: "color",
-                field: "cluster_count",
-                stops: [
-                    { value: 1, color: "black" },
-                    { value: 2, color: "#BEE8FF" },
-                    { value: 100, color: "#002673" }
-                ]
-            }
-        ]
-    },
-    labelingInfo: [{
-        deconflictionStrategy: "none",
-        labelExpressionInfo: {
-            expression: "$feature.cluster_count"
-        },
-        symbol: {
-            type: "text",
-            color: "white",
-            haloColor: "black",
-            haloSize: "1px",
-            font: {
-                family: "Arial",
+            ],
+            defaultSymbol: {
+                type: "simple-marker",
+                color: "#BEE8FF",
                 size: 10,
-                weight: "bold"
-            }
+                outline: {
+                    type: "simple-line",
+                    color: [0, 77, 158, 0.5],
+                    width: 3
+                }
+            },
+            visualVariables: [
+                {
+                    type: "color",
+                    field: "cluster_count",
+                    stops: [
+                        { value: 1, color: "black" },
+                        { value: 2, color: "#BEE8FF" },
+                        { value: 100, color: "#002673" }
+                    ]
+                }
+            ]
         },
-        labelPlacement: "center-center"
-    }]
-};
-
-// Initialize map
-const map = new Map({
-    basemap: "osm"
+        labelingInfo: [{
+            deconflictionStrategy: "none",
+            labelExpressionInfo: {
+                expression: "$feature.cluster_count"
+            },
+            symbol: {
+                type: "text",
+                color: "white",
+                haloColor: "black",
+                haloSize: "1px",
+                font: {
+                    family: "Arial",
+                    size: 10,
+                    weight: "bold"
+                }
+            },
+            labelPlacement: "center-center"
+        }]
+    }
 });
+
+// Initialize Map
+const map = new Map({
+    basemap: "osm",
+    layers: [arseILayer, darkhastFLayer]
+});
+
+// Initialize View
 let view = new MapView({
     container: "map",
     map: map,
     zoom: 14, // Zoom level
     center: [48.464869, 34.834155],
 });
-map.addMany([arseILayer, darkhastFLayer]);
+
+
 
 //FeatureTable
 const featureTable = new FeatureTable({
@@ -303,6 +303,14 @@ async function updateFeatures() {
         // Set Data To Comboboxes
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
+
+        view.whenLayerView(darkhastFLayer).then(function (layerView) {
+            //extent = view.extent;
+            layerView.filter = {
+                geometry: query.geometry,
+                spatialRelationship: "intersects",
+            };
+        });
         featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
         darkhastFLayer.definitionExpression = where;
 
@@ -313,16 +321,8 @@ async function updateFeatures() {
 // Event: map extent changed
 const mapExtent = document.getElementById("mapExtent");
 mapExtent.addEventListener('change', () => {
-    debugger;
     if (mapExtent.checked) {
         query.geometry = view.extent;
-        updateFeatures();
-    }
-    else {
-        view.goTo(darkhastFLayer.fullExtent);
-        //view.extent = darkhastFLayer.fullExtent
-        query.geomerty = view.extent;
-        featureTable.filterGeometry = query.geometry;
         updateFeatures();
     }
 });
@@ -334,12 +334,7 @@ view.watch("stationary", function (isStationary) {
     }
 });
 document.getElementById("btnUpdate").addEventListener("click", () => {
-    view.goTo(darkhastFLayer.fullExtent);
-    query.geomerty = view.extent;
-    updateFeatures();
-    featureTable.layer = darkhastFLayer;
-    featureTable.refresh();
-    featureTable.filterGeometry = query.geometry;
+
 });
 
 
