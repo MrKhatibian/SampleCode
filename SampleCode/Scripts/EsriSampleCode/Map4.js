@@ -103,7 +103,7 @@ darkhastFLayer.featureReduction = {
 const map = new Map({
     basemap: "osm"
 });
-const view = new MapView({
+let view = new MapView({
     container: "map",
     map: map,
     zoom: 14, // Zoom level
@@ -312,13 +312,35 @@ async function updateFeatures() {
 }
 // Event: map extent changed
 const mapExtent = document.getElementById("mapExtent");
+mapExtent.addEventListener('change', () => {
+    debugger;
+    if (mapExtent.checked) {
+        query.geometry = view.extent;
+        updateFeatures();
+    }
+    else {
+        view.goTo(darkhastFLayer.fullExtent);
+        //view.extent = darkhastFLayer.fullExtent
+        query.geomerty = view.extent;
+        featureTable.filterGeometry = query.geometry;
+        updateFeatures();
+    }
+});
+
 view.watch("stationary", function (isStationary) {
     if (isStationary && mapExtent.checked) {
         query.geometry = view.extent;
         updateFeatures();
     }
 });
-
+document.getElementById("btnUpdate").addEventListener("click", () => {
+    view.goTo(darkhastFLayer.fullExtent);
+    query.geomerty = view.extent;
+    updateFeatures();
+    featureTable.layer = darkhastFLayer;
+    featureTable.refresh();
+    featureTable.filterGeometry = query.geometry;
+});
 
 
 
