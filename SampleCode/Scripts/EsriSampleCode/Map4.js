@@ -3,16 +3,6 @@ import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
-import Query from "../../esriapi/4.30/@arcgis/core/rest/support/Query.js";
-import * as fnQuery from "../../esriapi/4.30/@arcgis/core/rest/query.js";
-import * as projection from "../../esriapi/4.30/@arcgis/core/geometry/projection.js";
-import SpatialReference from "../../esriapi/4.30/@arcgis/core/geometry/SpatialReference.js";
-import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
-import esriConfig from "../../esriapi/4.30/@arcgis/core/config.js";
-
-
-// Set the geometry service URL (required for projection)
-esriConfig.geometryServiceUrl = "http://localhost:6080/arcgis/rest/services/Utilities/Geometry/GeometryServer";
 
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
@@ -107,8 +97,8 @@ const darkhastFLayer = new FeatureLayer({
 darkhastFLayer.when(() => {
     console.log("darkhastFLayer loaded successfully.");
     view.goTo(darkhastFLayer.fullExtent);
-    
-}).catch ((error) => {
+
+}).catch((error) => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
@@ -147,30 +137,43 @@ const featureTable = new FeatureTable({
     }
 });
 
+// Set Fields Name
+let fieldsName = {
+    dateSend: "date_rooz",
+    noeDarkhast: "noedarkhast",
+    marhale: "marhaleh",
+    noeKarbari: "",
+    mantaghe: "mantaghe",
+    mahale: "",
+    ebtal: "Ebtal"
+};
+
 // Global filter state
 let filterValues = {
-    //ebtal: 0,
     extent: null,
     noedarkhast: "",
     marhaleh: "",
     noe_parvaneh: "",
-    noeTarh: "",
     mantaghe: null,
-    mahdodeh: ""
+    mahdodeh: "",
+    //ebtal: 0,
 };
 
-// Build WHERE clause for filtering
+/**
+ * Build WHERE clause for filtering
+ * @returns Where String for Filter Data
+ */
 function buildWhereClause() {
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterValues.noedarkhast) {
-        clauses.push(`noedarkhast = N'${filterValues.noedarkhast}'`);
+        clauses.push(`${fieldsName.noeDarkhast} = N'${filterValues.noedarkhast}'`);
     }
     if (filterValues.marhaleh) {
-        clauses.push(`marhaleh = N'${filterValues.marhaleh}'`);
+        clauses.push(`${fieldsName.marhale} = N'${filterValues.marhaleh}'`);
     }
     if (filterValues.noe_parvaneh) {
-        clauses.push(`noe_parvaneh = N'${filterValues.noe_parvaneh}'`);
+        clauses.push(`${fieldsName.noeKarbari} = N'${filterValues.noe_parvaneh}'`);
     }
     return clauses.join(" AND ");
 }
@@ -186,10 +189,16 @@ query.spatialRelationship = "intersects";  // this is the default
 query.returnGeometry = true;
 query.outFields = ["*"];
 
-// To return a feature set containing the attributes:
-let darkhastFSet = await darkhastFLayer.queryFeatures(query)
-// get Features from Featureset
-let darkhastFeatures = darkhastFSet.features;
+let darkhastFSet;
+let darkhastFeatures = [];
+try {
+    // To return a feature set containing the attributes:
+    darkhastFSet = await darkhastFLayer.queryFeatures(query);
+    // get Features from Featureset
+    darkhastFeatures = darkhastFSet.features;
+} catch (err) {
+    console.error("Initial queryFeatures failed:", err);
+}
 
 // Create the combo box (HTML <select> element)
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
@@ -198,7 +207,7 @@ const comboNoeKarbari = document.getElementById("comboNoeKarbari");
 const comboNoeTarh = document.getElementById("comboNoeTarh");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
-//const inputFilter = document.getElementById("inFilter");
+
 
 // Set Data To Comboboxes
 let comboBoxValues = getComboBoxValues(darkhastFeatures);
@@ -212,6 +221,7 @@ function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
+
     // Initialize maps for each key
     for (const key of keys) {
         result[key] = [""];         // Include blank entry
@@ -231,6 +241,7 @@ function getComboBoxValues(features) {
     }
     return result;
 }
+
 // Dictionary convert Combobox name to Field name
 const dicCombo2Field = {
     comboNoeDarkhast: "noedarkhast",
@@ -238,8 +249,10 @@ const dicCombo2Field = {
     comboNoeKarbari: "noe_parvaneh"
 };
 
-
-//Fill Comboboxes
+/**
+ * Fill Comboboxes
+ * @param {any} comboboxes Combobox object
+  */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
@@ -248,12 +261,20 @@ function fillComboboxes(comboboxes) {
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
         updateComboBox(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
     }
-    return;
 }
 
-// Utility: Update combo box with unique values
+/**
+ * Update combo box with unique values
+ * @param {any} combo Combobox object
+ * @param {any} values Combobox values
+ * @param {any} selectValue Delect Combobox value
+ * @returns update Comboboxes and selected value
+ */
 function updateComboBox(combo, values, selectValue) {
-
+    if (!Array.isArray(values)) {
+        console.warn(`Invalid values for combo: ${combo.id}`);
+        return;
+    }
     combo.innerHTML = "";
     values.forEach(value => {
         const option = document.createElement("option");
@@ -318,6 +339,7 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     }
 }
+
 // Event: map extent changed
 const mapExtent = document.getElementById("mapExtent");
 mapExtent.addEventListener('change', () => {
@@ -341,18 +363,10 @@ document.getElementById("btnUpdate").addEventListener("click", () => {
 
 // Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
-    exportTableToCSV(layer);
+    exportTableToCSV(darkhastFeatures);
 });
-
-async function exportTableToCSV(layer) {
-    const query = layer.createQuery();
-    query.returnGeometry = false;
-    query.outFields = ["*"];
-
+async function exportTableToCSV(features) {
     try {
-        ;
-        const results = await layer.queryFeatures(query);
-        const features = results.features;
         if (!features.length) {
             alert("No features to export.");
             return;
@@ -365,7 +379,7 @@ async function exportTableToCSV(layer) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", "export.csv");
+        link.setAttribute("download", "Export.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -373,7 +387,6 @@ async function exportTableToCSV(layer) {
         console.error("Export failed", err);
     }
 }
-
 function convertFeaturesToCSV(features) {
     ;
     const fields = Object.keys(features[0].attributes);
@@ -386,203 +399,28 @@ function convertFeaturesToCSV(features) {
 
 //Export Excel
 document.getElementById("btnExcel").addEventListener("click", () => {
-    exportEditedFeaturesToExcel(layer)
+    exportEditedFeaturesToExcel(darkhastFeatures)
 });
-function exportEditedFeaturesToExcel(featureLayer, filename = "ویرایش‌ها.xlsx") {
-    const query = featureLayer.createQuery();
-    query.returnGeometry = false;
-    query.outFields = ["*"];
-
-    featureLayer.queryFeatures(query).then((results) => {
-        const data = results.features.map((f) => f.attributes);
+function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
+    try {
+        const data = features.map((f) => f.attributes);
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "ویرایش‌ها");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "‌Export");
         XLSX.writeFile(workbook, filename);
-    }).catch((error) => {
-        console.error("خطا در گرفتن داده‌ها:", error);
-    });
-}
-//Export PDF
-document.getElementById("btnPDF").addEventListener("click", () => {
-    //exportFeatureLayerToPDF(layer)
-    exportFeatureTableToPDF(layer)
-});
-async function exportFeatureLayerToPDF(featureLayer) {
-    const query = featureLayer.createQuery();
-    query.returnGeometry = false;
-    //query.outFields = ["*"];
-    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
-
-    try {
-        const results = await featureLayer.queryFeatures(query);
-        const data = results.features.map(f => f.attributes);
-
-        if (!data.length) {
-            alert("هیچ داده‌ای برای خروجی وجود ندارد");
-            return;
-        }
-
-        const columns = Object.keys(data[0]);
-        const rows = data.map(item => columns.map(col => item[col]));
-
-        // آماده‌سازی jsPDF با پشتیبانی فارسی (Right-To-Left)
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: "landscape", format: "a4" });
-
-        doc.setFont("Vazir");
-        doc.setFontSize(12);
-        doc.text("خروجی PDF با فونت فارسی وزیر", 280, 20, { align: "right" });
-
-        doc.autoTable({
-            head: [columns],
-            body: rows,
-            styles: {
-                font: "Vazir",
-                fontSize: 10,
-                halign: "right"
-            },
-            margin: { top: 30 },
-        });
-
-        doc.save("export-fa.pdf");
     } catch (error) {
-        console.error("خطا در گرفتن داده‌ها یا تولید PDF:", error);
-    }
-}
-
-async function exportFeatureTableToPDF(featureLayer) {
-    const query = featureLayer.createQuery();
-    query.returnGeometry = false;
-    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
-
-    try {
-        const results = await featureLayer.queryFeatures(query);
-        const features = results.features;
-
-        if (!features.length) {
-            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
-            return;
-        }
-
-
-        // 🔸 ستونی که باید راست‌چین باشند
-        const rtlColumns = ["address", "noedarkhast"]; //← این‌ها را مطابق داده‌های خودت تغییر بده
-
-        // 🔸 لیست همه ستون‌ها
-        const columns = Object.keys(features[0].attributes);
-
-        // 🔸 هدر جدول با فاصله از راست و تنظیم راست/چپ‌چین بودن
-        const headerRow = columns.map(col => ({
-            text: col,
-            alignment: rtlColumns.includes(col) ? 'right' : 'left',
-            margin: [0, 0, 20, 0], // فاصله از راست
-            bold: true
-        }));
-
-        // 🔸 سطرهای جدول با تنظیم چینش هر سلول
-        const bodyRows = features.map(f => {
-            return columns.map(col => ({
-                text: String(f.attributes[col] ?? ""),
-                alignment: rtlColumns.includes(col) ? 'right' : 'left'
-            }));
-        });
-
-        // 🔸 تعریف نهایی فایل PDF
-        const docDefinition = {
-            pageSize: 'A4',
-            pageMargins: [40, 60, 40, 60],
-            header: {
-                text: 'ویرایش شده',
-                style: 'header',
-                alignment: 'right',
-                margin: [0, 10, 20, 0]
-            },
-            footer: function (currentPage, pageCount) {
-                return {
-                    text: `صفحه ${currentPage} از ${pageCount}`,
-                    alignment: 'center',
-                    fontSize: 9,
-                    margin: [0, 10]
-                };
-            },
-            content: [
-                {
-                    table: {
-                        headerRows: 1,
-                        widths: columns.map(() => 'auto'),
-                        body: [headerRow, ...bodyRows]
-                    },
-                    layout: {
-                        fillColor: function (rowIndex) {
-                            return rowIndex === 0
-                                ? '#cce5ff'
-                                : rowIndex % 2 === 0
-                                    ? '#f2f2f2'
-                                    : null;
-                        },
-                        hLineWidth: () => 0.5,
-                        vLineWidth: () => 0.5,
-                        hLineColor: () => '#ccc',
-                        vLineColor: () => '#ccc'
-                    }
-                },
-                //    {
-                //        text: 'تاریخ تهیه گزارش: ' + new Date().toLocaleDateString('fa-IR'),
-                //        margin: [0, 20, 0, 0],
-                //        alignment: 'right',
-                //        fontSize: 10
-                //    },
-                //    {
-                //        text: 'امضای مسئول بررسی:',
-                //        margin: [0, 40, 0, 0],
-                //        alignment: 'right',
-                //        fontSize: 10
-                //    },
-                //    {
-                //        canvas: [
-                //            { type: 'line', x1: 400, y1: 0, x2: 200, y2: 0, lineWidth: 1 }
-                //        ]
-                //    }
-            ],
-            defaultStyle: {
-                font: 'Vazir',
-                alignment: 'right',
-                fontSize: 10
-            },
-            styles: {
-                header: {
-                    fontSize: 18,
-                    bold: true,
-                    color: '#0074D9'
-                }
-            }
-        };
-
-        // ایجاد و دانلود فایل PDF
-        pdfMake.createPdf(docDefinition).download("خروجی_جدول.pdf");
-
-    } catch (err) {
-        console.error("خطا در گرفتن داده‌ها یا ساخت PDF:", err);
+        console.error("Export failed", error);
     }
 }
 
 //Expprt GeoJSON
 document.getElementById("btnGeoJSON").addEventListener("click", () => {
-    exportToGeoJSON(layer)
+    exportToGeoJSON(darkhastFeatures)
 });
-async function exportToGeoJSON(featureLayer) {
-    const query = featureLayer.createQuery();
-    //query.outFields = ["*"];
-    query.outFields = ["shop", "shodarkhast", "noedarkhast", "address"];
-    query.returnGeometry = true;
-
-    try {
-        const result = await featureLayer.queryFeatures(query);
-        const features = result.features;
-
+async function exportToGeoJSON(features) {    
+    try {        
         if (!features.length) {
-            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            alert("No features to export.");
             return;
         }
 
@@ -606,11 +444,11 @@ async function exportToGeoJSON(featureLayer) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "features.geojson";
+        a.download = "Export.geojson";
         a.click();
         URL.revokeObjectURL(url);
     } catch (err) {
-        console.error("❌ خطا در گرفتن یا تبدیل داده‌ها:", err);
+        console.error("Export failed", err);
     }
 }
 document.getElementById("btnShp").addEventListener("click", () => {
@@ -723,58 +561,6 @@ function arcgisGeometryToGeoJSON(geometry) {
     }
     return null;
 }
-
-
-//document.getElementById("btnKml").addEventListener("click", async () => {
-//    await projection.load();
-
-//    const query = layer.createQuery();
-//    query.outFields = ["*"];
-//    query.returnGeometry = true;
-
-//    const result = await layer.queryFeatures(query);
-//    const features = result.features.filter(f => f.geometry);
-
-//    if (!features.length) {
-//        alert("هیچ فیچری پیدا نشد.");
-//        return;
-//    }
-
-//    const sourceSR = new SpatialReference({ wkid: 32639 }); // your layer's spatial reference
-//    const targetSR = new SpatialReference({ wkid: 4326 });  // WGS84 for KML
-
-//    const projectedGeometries = await projection.projectMany(
-//        features.map(f => f.geometry),
-//        sourceSR,
-//        targetSR
-//    );
-
-//    const geojsonFeatures = projectedGeometries.map((geom, i) => ({
-//        type: "Feature",
-//        geometry: arcgisGeometryToGeoJSON(geom),
-//        properties: {
-//            name: features[i].attributes["Name"] || `Feature ${i + 1}`,
-//            description: Object.entries(features[i].attributes)
-//                .map(([k, v]) => `${k}: ${v}`).join("\n")
-//        }
-//    }));
-
-//    const kmlString = tokml({
-//        type: "FeatureCollection",
-//        features: geojsonFeatures
-//    });
-
-//    const blob = new Blob(["\ufeff" + kmlString], {
-//        type: "application/vnd.google-earth.kml+xml;charset=utf-8"
-//    });
-
-//    const url = URL.createObjectURL(blob);
-//    const a = document.createElement("a");
-//    a.href = url;
-//    a.download = "features.kml";
-//    a.click();
-//    URL.revokeObjectURL(url);
-//});
 
 //Export Image 
 document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
