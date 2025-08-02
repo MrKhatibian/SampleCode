@@ -11,7 +11,7 @@ import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
  * Add feature layer
  ********************/
 const featureLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajN/FeatureServer/1",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
     outFields: ["*"]
 });
 const mapImageLayer = new MapImageLayer({
@@ -21,7 +21,7 @@ const mapImageLayer = new MapImageLayer({
     }]
 });
 const clusteredLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajND/FeatureServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -97,14 +97,11 @@ clusteredLayer.featureReduction = {
         labelPlacement: "center-center"
     }]
 };
-//document.getElementById("btnFilter").addEventListener("click", () => {   
-//    const value = document.getElementById("inFilter").value;  
-//    clusteredLayer.definitionExpression = value ? `ShoD > ${value}` : "";
+
+//document.getElementById("inFilter").addEventListener("input", function () {
+//    const value = this.value;
+//    clusteredLayer.definitionExpression = value ? `c_noedarkhast = ${value}` : "";
 //});
-document.getElementById("inFilter").addEventListener("input", function () {
-    const value = this.value;
-    clusteredLayer.definitionExpression = value ? `c_noedarkhast = ${value}` : "";
-});
 const map = new Map({
     basemap: "osm",
     layers: [mapImageLayer, clusteredLayer]
@@ -113,6 +110,31 @@ const map = new Map({
 const view = new MapView({
     container: "viewDiv",
     map: map,
-    zoom: 15, // Zoom level
+    zoom: 12, // Zoom level
     center: [48.464869, 34.834155], // Longitude, latitude 48.464869  34.834155
+});
+
+
+let where = "";
+let extent = view.extent;
+//document.getElementById("btnFilter").addEventListener("click", () => {
+
+   
+//});
+view.whenLayerView(clusteredLayer).then(function (layerView) {
+
+    document.getElementById("btnFilter").addEventListener("click", () => {
+        //alert("hiii");
+        //where = `noedarkhast = N'پروانه'`;
+        //view.goTo(clusteredLayer.fullExtent);
+        extent = view.extent;
+        layerView.filter = {
+            geometry: extent,
+            spatialRelationship: "intersects",
+            where: where
+        };
+    });
+
+    
+
 });
