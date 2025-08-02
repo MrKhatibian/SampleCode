@@ -159,6 +159,9 @@ let filterValues = {
     //ebtal: 0,
 };
 
+//Creat Where
+let where = buildWhereClause();
+
 /**
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
@@ -177,9 +180,6 @@ function buildWhereClause() {
     }
     return clauses.join(" AND ");
 }
-
-//Creat Where
-let where = buildWhereClause();
 
 // Build query
 const query = darkhastFLayer.createQuery();
@@ -259,7 +259,7 @@ function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
-        updateComboBox(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
+        updateComboValues(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
     }
 }
 
@@ -270,7 +270,7 @@ function fillComboboxes(comboboxes) {
  * @param {any} selectValue Delect Combobox value
  * @returns update Comboboxes and selected value
  */
-function updateComboBox(combo, values, selectValue) {
+function updateComboValues(combo, values, selectValue) {
     if (!Array.isArray(values)) {
         console.warn(`Invalid values for combo: ${combo.id}`);
         return;
@@ -310,7 +310,6 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.mahdodeh = this.value;
     updateFeatures();
 });
-
 
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
@@ -358,8 +357,6 @@ view.watch("stationary", function (isStationary) {
 document.getElementById("btnUpdate").addEventListener("click", () => {
 
 });
-
-
 
 // Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
@@ -420,7 +417,7 @@ document.getElementById("btnGeoJSON").addEventListener("click", () => {
 async function exportToGeoJSON(features) {    
     try {        
         if (!features.length) {
-            alert("No features to export.");
+            alert("No features to export");
             return;
         }
 
@@ -466,7 +463,7 @@ async function exportToShapefile(featureLayer) {
         const features = result.features;
 
         if (!features.length) {
-            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            alert("No features to export");
             return;
         }
 
@@ -489,7 +486,7 @@ async function exportToShapefile(featureLayer) {
         });
 
     } catch (err) {
-        console.error("خطا در گرفتن داده‌ها:", err);
+        console.error("Export failed", err);
     }
 }
 // Export KML
@@ -508,7 +505,7 @@ async function exportToKML(featureLayer) {
         const features = result.features.filter(f => f.geometry);
 
         if (!features.length) {
-            alert("هیچ داده‌ای برای خروجی وجود ندارد.");
+            alert("No features to export");
             return;
         }
         ;
@@ -533,12 +530,12 @@ async function exportToKML(featureLayer) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "features.kml";
+        a.download = "Export.kml";
         a.click();
         URL.revokeObjectURL(url);
 
     } catch (err) {
-        console.error("❌ خطا در گرفتن یا تبدیل داده‌ها:", err);
+        console.error("Export failed", err);
     }
 }
 
