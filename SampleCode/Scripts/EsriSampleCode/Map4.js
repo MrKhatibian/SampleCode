@@ -4,6 +4,7 @@ import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 
+
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
@@ -144,7 +145,7 @@ let fieldsName = {
     marhale: "marhaleh",
     noeKarbari: "",
     mantaghe: "mantaghe",
-    mahale: "",
+    mahdodeh: "",
     ebtal: "Ebtal"
 };
 
@@ -178,6 +179,9 @@ function buildWhereClause() {
     if (filterValues.noe_parvaneh) {
         clauses.push(`${fieldsName.noeKarbari} = N'${filterValues.noe_parvaneh}'`);
     }
+    if (filterValues.mantaghe) {
+        clauses.push(`${fieldsName.mantaghe} = N'${filterValues.mantaghe}'`);
+    }
     return clauses.join(" AND ");
 }
 
@@ -204,7 +208,6 @@ try {
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 const comboMarhale = document.getElementById("comboMarhale");
 const comboNoeKarbari = document.getElementById("comboNoeKarbari");
-const comboNoeTarh = document.getElementById("comboNoeTarh");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 
@@ -220,7 +223,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
 function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
-    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh"];
+    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh","mantaghe"];
 
     // Initialize maps for each key
     for (const key of keys) {
@@ -246,14 +249,15 @@ function getComboBoxValues(features) {
 const dicCombo2Field = {
     comboNoeDarkhast: "noedarkhast",
     comboMarhale: "marhaleh",
-    comboNoeKarbari: "noe_parvaneh"
+    comboNoeKarbari: "noe_parvaneh",
+    comboMantaghe: "mantaghe"
 };
 
 /**
  * Fill Comboboxes
  * @param {any} comboboxes Combobox object
   */
-const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari];
+const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
@@ -296,10 +300,6 @@ comboMarhale.addEventListener("change", function () {
 });
 comboNoeKarbari.addEventListener("change", function () {
     filterValues.noe_parvaneh = this.value;
-    updateFeatures();
-});
-comboNoeTarh.addEventListener("change", function () {
-    filterValues.noeTarh = this.value;
     updateFeatures();
 });
 comboMantaghe.addEventListener("change", function () {
@@ -354,9 +354,6 @@ view.watch("stationary", function (isStationary) {
         updateFeatures();
     }
 });
-document.getElementById("btnUpdate").addEventListener("click", () => {
-
-});
 
 // Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
@@ -408,155 +405,6 @@ function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
     } catch (error) {
         console.error("Export failed", error);
     }
-}
-
-//Expprt GeoJSON
-document.getElementById("btnGeoJSON").addEventListener("click", () => {
-    exportToGeoJSON(darkhastFeatures)
-});
-async function exportToGeoJSON(features) {    
-    try {        
-        if (!features.length) {
-            alert("No features to export");
-            return;
-        }
-
-        // تبدیل به GeoJSON FeatureCollection
-        const geojson = {
-            type: "FeatureCollection",
-            features: features
-                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
-                .map(f => ({
-                    type: "Feature",
-                    geometry: f.geometry.toJSON(),
-                    properties: f.attributes
-                }))
-        };
-
-        // تبدیل به string و ساخت Blob
-        const geojsonString = JSON.stringify(geojson, null, 2);
-        const blob = new Blob([geojsonString], { type: "application/json" });
-
-        // ساخت لینک دانلود
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "Export.geojson";
-        a.click();
-        URL.revokeObjectURL(url);
-    } catch (err) {
-        console.error("Export failed", err);
-    }
-}
-document.getElementById("btnShp").addEventListener("click", () => {
-    exportToShapefile(layer)
-});
-
-//Export Shape not work
-async function exportToShapefile(featureLayer) {
-    const query = featureLayer.createQuery();
-    query.outFields = ["*"];
-    query.returnGeometry = true;
-
-    try {
-        const result = await featureLayer.queryFeatures(query);
-        const features = result.features;
-
-        if (!features.length) {
-            alert("No features to export");
-            return;
-        }
-
-        // تبدیل به GeoJSON
-        const geojson = {
-            type: "FeatureCollection",
-            features: features
-                .filter(f => f.geometry)  // فقط اون‌هایی که geometry دارند
-                .map(f => ({
-                    type: "Feature",
-                    geometry: f.geometry.toJSON(),
-                    properties: f.attributes
-                }))
-        };
-
-        // استفاده از shp-write برای خروجی گرفتن
-        //Have bugs in there
-        shpwrite.download(geojson, {
-            file: "Exported_Shapefile"
-        });
-
-    } catch (err) {
-        console.error("Export failed", err);
-    }
-}
-// Export KML
-document.getElementById("btnKml").addEventListener("click", () => {
-    console.log("SR:", layer.spatialReference.wkid);
-    exportToKML(layer);
-});
-
-async function exportToKML(featureLayer) {
-    const query = featureLayer.createQuery();
-    query.outFields = ["*"];
-    query.returnGeometry = true;
-
-    try {
-        const result = await featureLayer.queryFeatures(query);
-        const features = result.features.filter(f => f.geometry);
-
-        if (!features.length) {
-            alert("No features to export");
-            return;
-        }
-        ;
-        const geojsonFeatures = features.map(f => ({
-            type: "Feature",
-            geometry: arcgisGeometryToGeoJSON(f.geometry),
-            //properties: f.attributes
-            properties: {
-                name: f.attributes["shodarkhast"],
-                description: Object.entries(f.attributes).map(([key, val]) => `${key}: ${val}`).join("\n")
-            }
-        }));
-
-        const kmlString = tokml({
-            type: "FeatureCollection",
-            features: geojsonFeatures
-        });
-
-        const blob = new Blob(["\ufeff" + kmlString], {
-            type: "application/vnd.google-earth.kml+xml;charset=utf-8"
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "Export.kml";
-        a.click();
-        URL.revokeObjectURL(url);
-
-    } catch (err) {
-        console.error("Export failed", err);
-    }
-}
-
-function arcgisGeometryToGeoJSON(geometry) {
-    if (geometry.type === "point") {
-        return {
-            type: "Point",
-            coordinates: [geometry.x, geometry.y]
-        };
-    } else if (geometry.type === "polyline") {
-        return {
-            type: "LineString",
-            coordinates: geometry.paths[0]
-        };
-    } else if (geometry.type === "polygon") {
-        return {
-            type: "Polygon",
-            coordinates: geometry.rings
-        };
-    }
-    return null;
 }
 
 //Export Image 
