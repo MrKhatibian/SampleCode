@@ -98,7 +98,30 @@ const darkhastFLayer = new FeatureLayer({
 darkhastFLayer.when(() => {
     console.log("darkhastFLayer loaded successfully.");
     view.goTo(darkhastFLayer.fullExtent);
+    const allFields = darkhastFLayer.fields;
 
+    // حذف فیلدهایی که نوع آن‌ها geometry هست
+    const validFields = allFields.filter(field => field.type !== "geometry");
+
+    // ساخت columnTemplates با فقط 10 فیلد اول به صورت visible
+    const columnTemplates = validFields.map((field, index) => {
+        return {
+            type: "field",
+            fieldName: field.name,
+            label: field.alias || field.name,
+            visible: index < 10 // فقط 10 تای اول قابل مشاهده باشند
+        };
+    });
+
+    // ساخت FeatureTable با columnTemplates آماده‌شده
+    const featureTable = new FeatureTable({
+        container: "attributeTable",
+        view: view,
+        layer: darkhastFLayer,
+        tableTemplate: {
+            columnTemplates: columnTemplates
+        }
+    });
 }).catch((error) => {
     console.error("Error loading darkhastFLayer:", error);
 });
@@ -122,21 +145,30 @@ view.when(() => {
     console.error("MapView failed to load:", error);
 });
 
-// Initialize FeatureTable
-const featureTable = new FeatureTable({
-    container: "attributeTable",
-    view: view,
-    layer: darkhastFLayer,
-    tableTemplate: {
-        columnTemplates: [
-            { type: "field", fieldName: "Shop", label: "شماره پرونده" },
-            { type: "field", fieldName: "Shod", label: "شماره درخواست" },
-            { type: "field", fieldName: "noedarkhast", label: "نوع درخواست" },
-            { type: "field", fieldName: "marhaleh", label: "مرحله" },
-            { type: "field", fieldName: "noe_parvaneh", label: "نوع کاربری" }
-        ]
-    }
-});
+
+
+
+//// Initialize FeatureTable
+//const featureTable = new FeatureTable({
+//    container: "attributeTable",
+//    view: view,
+//    layer: darkhastFLayer,
+//    tableTemplate: {
+//        columnTemplates: [
+//            { type: "field", fieldName: "Shop", label: "شماره پرونده" },
+//            { type: "field", fieldName: "Shod", label: "شماره درخواست" },
+//            { type: "field", fieldName: "noedarkhast", label: "نوع درخواست" },
+//            { type: "field", fieldName: "marhaleh", label: "مرحله" },
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//            { type: "field", fieldName: "", label: "" }
+//        ]
+//    }
+//});
 
 // Set Fields Name
 let fieldsName = {
@@ -223,7 +255,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
 function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
-    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh","mantaghe"];
+    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe"];
 
     // Initialize maps for each key
     for (const key of keys) {
