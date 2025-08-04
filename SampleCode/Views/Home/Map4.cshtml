@@ -19,11 +19,12 @@
     </style>
     <script>
         // Must be at the very top, before imports
-        window.dojoConfig = {
-            locale: "en"  // or "ar" for Arabic
-        };
+        //window.dojoConfig = {
+        //    locale: "en"  // or "ar" for Arabic
+        //};
     </script>
     <script type="module" src="~/Scripts/EsriSampleCode/Map4.js"></script>
+    
 </head>
 
 <body class="p-4">
@@ -54,11 +55,11 @@
                     <div class="row">
                         <div class="col-6">
                             <label class="form-label">تاریخ شروع:</label>
-                            <input class="form-control" type="date">
+                            <input class="form-control" type="date" id="startDateSend">                           
                         </div>
                         <div class="col-6">
                             <label class="form-label">تاریخ پایان:</label>
-                            <input class="form-control" type="date">
+                            <input class="form-control" type="date" id="endDateSend">
                         </div>
                     </div>
                     <div class="row">
@@ -105,7 +106,7 @@
         <div class="row mt-2 justify-content-center">
             <div class="col-4 w-auto">
                 <button class="btn btn-primary" type="submit" id="btnCSV">خروجی CSV</button>
-                <button class="btn btn-primary" type="submit" id="btnExcel">خروجی Excel</button>                
+                <button class="btn btn-primary" type="submit" id="btnExcel">خروجی Excel</button>
                 <button class="btn btn-primary" type="submit" id="btnMapScreenshot">خروجی تصویر نقشه</button>
             </div>
         </div>
@@ -116,6 +117,6 @@
                 <div id="attributeTable"></div>
             </div>
         </div>
-    </div>
+    </div>    
 </body>
 

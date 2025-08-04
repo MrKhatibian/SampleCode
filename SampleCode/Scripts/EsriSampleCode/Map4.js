@@ -4,7 +4,6 @@ import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 
-
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
@@ -95,15 +94,19 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
+let featureTable;
 darkhastFLayer.when(() => {
     console.log("darkhastFLayer loaded successfully.");
-    view.goTo(darkhastFLayer.fullExtent);
+    if (darkhastFLayer.fullExtent) {
+        view.goTo(darkhastFLayer.fullExtent);
+    }
+
     const allFields = darkhastFLayer.fields;
 
-    // حذف فیلدهایی که نوع آن‌ها geometry هست
+    // filter geometry field for not showing
     const validFields = allFields.filter(field => field.type !== "geometry");
 
-    // ساخت columnTemplates با فقط 10 فیلد اول به صورت visible
+    // Dynamic display of featuretable columns and display of the top 10
     const columnTemplates = validFields.map((field, index) => {
         return {
             type: "field",
@@ -113,8 +116,8 @@ darkhastFLayer.when(() => {
         };
     });
 
-    // ساخت FeatureTable با columnTemplates آماده‌شده
-    const featureTable = new FeatureTable({
+    // Initialize FeatureTable
+    featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
         layer: darkhastFLayer,
@@ -145,31 +148,6 @@ view.when(() => {
     console.error("MapView failed to load:", error);
 });
 
-
-
-
-//// Initialize FeatureTable
-//const featureTable = new FeatureTable({
-//    container: "attributeTable",
-//    view: view,
-//    layer: darkhastFLayer,
-//    tableTemplate: {
-//        columnTemplates: [
-//            { type: "field", fieldName: "Shop", label: "شماره پرونده" },
-//            { type: "field", fieldName: "Shod", label: "شماره درخواست" },
-//            { type: "field", fieldName: "noedarkhast", label: "نوع درخواست" },
-//            { type: "field", fieldName: "marhaleh", label: "مرحله" },
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//            { type: "field", fieldName: "", label: "" }
-//        ]
-//    }
-//});
-
 // Set Fields Name
 let fieldsName = {
     dateSend: "date_rooz",
@@ -184,6 +162,7 @@ let fieldsName = {
 // Global filter state
 let filterValues = {
     extent: null,
+    dateSend: null,
     noedarkhast: "",
     marhaleh: "",
     noe_parvaneh: "",
@@ -199,9 +178,13 @@ let where = buildWhereClause();
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
  */
-function buildWhereClause() {
+function buildWhereClause() {    
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
+    if (filterValues.dateSend) {
+
+        clauses.push(`${fieldsName.dateSend} > ${filterValues.dateSend}`);
+    }
     if (filterValues.noedarkhast) {
         clauses.push(`${fieldsName.noeDarkhast} = N'${filterValues.noedarkhast}'`);
     }
@@ -243,6 +226,9 @@ const comboNoeKarbari = document.getElementById("comboNoeKarbari");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 
+//
+const startDateSend = document.getElementById("startDateSend");
+const endDateSend = document.getElementById("endDateSend");
 
 // Set Data To Comboboxes
 let comboBoxValues = getComboBoxValues(darkhastFeatures);
@@ -342,6 +328,62 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.mahdodeh = this.value;
     updateFeatures();
 });
+startDateSend.addEventListener("change", () => {
+    const dateStr = startDateSend.value;
+
+    // Check if the date is empty
+    if (!dateStr) {
+        console.warn("No date selected.");
+        return;
+    }
+
+    // Check if the format is correct (YYYY-MM-DD)
+    const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    if (!isValidFormat) {
+        console.warn("Invalid date format:", dateStr);
+        return;
+    }
+
+    // Check if it's a real valid date (e.g., not 2025-02-30)
+    const parsedDate = new Date(dateStr);
+    if (isNaN(parsedDate.getTime())) {
+        console.warn("Invalid date value:", dateStr);
+        return;
+    }
+
+    // All good → convert to Persian and apply filter
+    const persianDate = convert2shamsi(dateStr);
+    filterValues.dateSend = persianDate;
+    updateFeatures();
+});
+
+function convert2shamsi(date) {    
+    const _date = new Date(date);
+
+    if (isNaN(_date)) {
+        console.warn("Invalid date:", date);
+        return null;
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-US-u-ca-persian', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+
+    const parts = formatter.formatToParts(_date);
+    console.log("pats:", parts);
+    const yearPart = parts.find(p => p.type === 'year');
+    const monthPart = parts.find(p => p.type === 'month');
+    const dayPart = parts.find(p => p.type === 'day');
+
+    if (!yearPart || !monthPart || !dayPart) {
+        console.warn("Could not parse date parts:", parts);
+        return null;
+    }
+    const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;    
+    return Number(persianDate);
+}
 
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
