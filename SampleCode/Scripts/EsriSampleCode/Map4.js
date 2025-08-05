@@ -150,7 +150,8 @@ view.when(() => {
 
 // Set Fields Name
 let fieldsName = {
-    dateSend: "date_rooz",
+    sDateSend: "date_rooz",
+    eDateSend: "date_rooz",
     noeDarkhast: "noedarkhast",
     marhale: "marhaleh",
     noeKarbari: "",
@@ -162,7 +163,8 @@ let fieldsName = {
 // Global filter state
 let filterValues = {
     extent: null,
-    dateSend: null,
+    sDateSend: null,
+    eDateSend: null,
     noedarkhast: "",
     marhaleh: "",
     noe_parvaneh: "",
@@ -181,9 +183,13 @@ let where = buildWhereClause();
 function buildWhereClause() {    
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
-    if (filterValues.dateSend) {
+    if (filterValues.sDateSend) {
 
-        clauses.push(`${fieldsName.dateSend} > ${filterValues.dateSend}`);
+        clauses.push(`${fieldsName.sDateSend} > ${filterValues.sDateSend}`);
+    }
+    if (filterValues.eDateSend) {
+
+        clauses.push(`${fieldsName.eDateSend} < ${filterValues.eDateSend}`);
     }
     if (filterValues.noedarkhast) {
         clauses.push(`${fieldsName.noeDarkhast} = N'${filterValues.noedarkhast}'`);
@@ -328,35 +334,48 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.mahdodeh = this.value;
     updateFeatures();
 });
-startDateSend.addEventListener("change", () => {
+startDateSend.addEventListener("change", () => {    
     const dateStr = startDateSend.value;
 
+    if (!dateValidation(dateStr)) { return };
+
+    // All good → convert to Persian and apply filter
+    const persianDate = convert2shamsi(dateStr);
+    filterValues.sDateSend = persianDate;
+    updateFeatures();
+});
+endDateSend.addEventListener("change", () => {
+    const dateStr = endDateSend.value;
+
+    if (!dateValidation(dateStr)) { return };
+
+    // All good → convert to Persian and apply filter
+    const persianDate = convert2shamsi(dateStr);
+    filterValues.eDateSend = persianDate;
+    updateFeatures();
+});
+function dateValidation(date) {    
     // Check if the date is empty
-    if (!dateStr) {
+    if (!date) {
         console.warn("No date selected.");
         return;
     }
 
     // Check if the format is correct (YYYY-MM-DD)
-    const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(date);
     if (!isValidFormat) {
-        console.warn("Invalid date format:", dateStr);
+        console.warn("Invalid date format:", date);
         return;
     }
 
     // Check if it's a real valid date (e.g., not 2025-02-30)
-    const parsedDate = new Date(dateStr);
+    const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
         console.warn("Invalid date value:", dateStr);
         return;
     }
-
-    // All good → convert to Persian and apply filter
-    const persianDate = convert2shamsi(dateStr);
-    filterValues.dateSend = persianDate;
-    updateFeatures();
-});
-
+    return true;
+}
 function convert2shamsi(date) {    
     const _date = new Date(date);
 
@@ -427,6 +446,23 @@ view.watch("stationary", function (isStationary) {
         query.geometry = view.extent;
         updateFeatures();
     }
+});
+
+// Clear Filters
+document.getElementById("btnClearFilters").addEventListener("click", () => {
+    filterValues = {
+        extent: null,
+        sDateSend: null,
+        noedarkhast: "",
+        marhaleh: "",
+        noe_parvaneh: "",
+        mantaghe: null,
+        mahdodeh: "",
+        //ebtal: 0,
+    };
+    startDateSend.value = "";
+    endDateSend.value = "";
+    updateFeatures();
 });
 
 // Export CSV
