@@ -156,7 +156,7 @@ let fieldsName = {
     marhale: "marhaleh",
     noeKarbari: "",
     mantaghe: "mantaghe",
-    mahdodeh: "",
+    mahdodeh: "hoze",
     ebtal: "Ebtal"
 };
 
@@ -169,7 +169,7 @@ let filterValues = {
     marhaleh: "",
     noe_parvaneh: "",
     mantaghe: null,
-    mahdodeh: "",
+    mahdodeh: null,
     //ebtal: 0,
 };
 
@@ -202,6 +202,9 @@ function buildWhereClause() {
     }
     if (filterValues.mantaghe) {
         clauses.push(`${fieldsName.mantaghe} = N'${filterValues.mantaghe}'`);
+    }
+    if (filterValues.mahdodeh) {
+        clauses.push(`${fieldsName.mahdodeh} = N'${filterValues.mahdodeh}'`);
     }
     return clauses.join(" AND ");
 }
@@ -247,7 +250,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
 function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
-    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe"];
+    const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
 
     // Initialize maps for each key
     for (const key of keys) {
@@ -274,14 +277,15 @@ const dicCombo2Field = {
     comboNoeDarkhast: "noedarkhast",
     comboMarhale: "marhaleh",
     comboNoeKarbari: "noe_parvaneh",
-    comboMantaghe: "mantaghe"
+    comboMantaghe: "mantaghe",
+    comboMahdodeh: "hoze"
 };
 
 /**
  * Fill Comboboxes
  * @param {any} comboboxes Combobox object
   */
-const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe];
+const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
@@ -328,6 +332,10 @@ comboNoeKarbari.addEventListener("change", function () {
 });
 comboMantaghe.addEventListener("change", function () {
     filterValues.mantaghe = this.value;
+    updateFeatures();
+});
+comboMahdodeh.addEventListener("change", function () {
+    filterValues.mahdodeh = this.value;
     updateFeatures();
 });
 comboMahdodeh.addEventListener("change", function () {
@@ -391,7 +399,7 @@ function convert2shamsi(date) {
     });
 
     const parts = formatter.formatToParts(_date);
-    console.log("pats:", parts);
+    //console.log("pats:", parts);
     const yearPart = parts.find(p => p.type === 'year');
     const monthPart = parts.find(p => p.type === 'month');
     const dayPart = parts.find(p => p.type === 'day');
@@ -457,7 +465,7 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
         marhaleh: "",
         noe_parvaneh: "",
         mantaghe: null,
-        mahdodeh: "",
+        mahdodeh: null,
         //ebtal: 0,
     };
     startDateSend.value = "";
