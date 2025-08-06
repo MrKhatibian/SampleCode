@@ -1,6 +1,6 @@
 ﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
-import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
-import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
+import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
+import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 
