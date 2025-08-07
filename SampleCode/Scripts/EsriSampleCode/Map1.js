@@ -1,112 +1,115 @@
 ﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
-import MapView from "../../esriapi/4.30/@arcgis/core/views/mapview.js";
-import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/featurelayer.js";
-import Expand from "../../esriapi/4.30/@arcgis/core/widgets/expand.js";
-import Legend from "../../esriapi/4.30/@arcgis/core/widgets/legend.js";
+import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
+import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
+import GraphicsLayer from "../../EsriAPI/4.30/@arcgis/core/layers/GraphicsLayer.js"
+import * as geometryEngine from "../../EsriAPI/4.30/@arcgis/core/geometry/geometryEngine.js";
+import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
+import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
+import Query from "../../EsriAPI/4.30/@arcgis/core/rest/support/Query.js";
+import MapImageLayer from "../../EsriAPI/4.30/@arcgis/core/layers/MapImageLayer.js";
 
 
-const clusteredLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajN/FeatureServer/0",
-    featureReduction: {
-        type: "cluster",
-        clusterRadius: "100px",
-        renderer: {}, // will be set dynamically below
-        labelingInfo: [{
-            deconflictionStrategy: "none",
-            labelExpressionInfo: {
-                expression: "IIF($feature.cluster_count < 3, '', $feature.cluster_count)"
-            },
-            symbol: {
-                type: "text",
-                color: "white",
-                haloColor: "black",
-                haloSize: "1px",
-                font: {
-                    family: "Arial",
-                    size: 10,
-                    weight: "bold"
-                }
-            },
-            labelPlacement: "center-center"
-        }]
-    },
-    featureReductionPopupTemplate: {
-        title: "Cluster of {cluster_count} features",
-        content: "Click individual features for more details."
-    },
-    popupTemplate: {
-        title: "{name}",
-        content: "Naghshe Info"
-    },
-    outFields: ["*"]
-});
-
-const map = new Map({
-    basemap: "osm",
-    layers: [clusteredLayer]
-});
+const map = new Map({ basemap: "osm" });
 
 const view = new MapView({
-    container: "viewDiv",
     map: map,
-    zoom: 15,
-    center: [48.464869, 34.834155]
+    container: "mapView",
+    center: [48.464869, 34.834155],
+    zoom: 14
 });
 
-// Zoom-based rendering logic
-view.watch("zoom", (zoomLevel) => {
-    updateClusterRenderer(zoomLevel);
-});
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
 
-function updateClusterRenderer(zoom) {
-    const zoomStats = {
-        10: { min: 3, max: 50 },
-        11: { min: 3, max: 80 },
-        12: { min: 3, max: 150 },
-        13: { min: 3, max: 300 },
-        14: { min: 3, max: 600 },
-        15: { min: 3, max: 1000 },
-        16: { min: 3, max: 2000 }
-    };
-    const stats = zoomStats[zoom] || zoomStats[15];
+const darkhastFLayer = new FeatureLayer({url: `${url}/0`});
 
-    const sizeStops = getStops(stats.min, stats.max, [15, 22, 30, 40, 50]);
-    const colorStops = getStops(stats.min, stats.max, ["#4CAF50", "#8BC34A", "#FFC107", "#FF9800", "#F44336"], "color");
+const arseFLayer = new FeatureLayer({ url: `${url}/1`});
 
-    clusteredLayer.featureReduction.renderer = {
-        type: "simple",
+const graphicsLayer = new GraphicsLayer();
+
+map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
+
+async function getPolygonByAttribute(field, value) {
+    debugger;
+    
+    const query = arseFLayer.createQuery();
+    query.where = `${field} = '${value}'`;
+    query.returnGeometry = true;
+    query.outfields = ["*"];
+    query.outSpatialReference = view.spatialReference;
+    
+    const result = await arseFLayer.queryFeatures(query);        
+    return result.features.length ? result.features[0].geometry : null;
+    
+}
+
+// Generate a unique random point inside the polygon
+async function generateValidPointInPolygon(polygon) {
+    debugger;
+    const extent = polygon.extent;
+    let attempts = 0;
+    const maxAttempts = 1000;
+
+    while (attempts < maxAttempts) {
+        const x = extent.xmin + Math.random() * (extent.xmax - extent.xmin);
+        const y = extent.ymin + Math.random() * (extent.ymax - extent.ymin);
+
+        const candidatePoint = new Point({
+            x, y,
+            spatialReference: polygon.spatialReference
+        });
+
+        if (!geometryEngine.contains(polygon, candidatePoint)) {
+            attempts++;
+            continue;
+        }
+
+        const buffer = geometryEngine.buffer(candidatePoint, 1, "meters");
+
+        const query = darkhastFLayer.createQuery();
+        query.geometry = buffer;
+        query.spatialRelationship = "intersects";
+        query.returnGeometry = false;
+
+        const result = await darkhastFLayer.queryFeatures(query);
+        if (result.features.length === 0) {
+            return candidatePoint;
+        }
+
+        attempts++;
+    }
+
+    console.warn("Failed to generate a unique point.");
+    return null;
+}
+
+// Main logic
+async function createDarkhastPoint(nCode) {
+    debugger;
+    graphicsLayer.removeAll();
+
+    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
+    if (!polygon) {
+        console.error("No polygon found with Code_nosazi:", nCode);
+        return;
+    }
+
+    const randomPoint = await generateValidPointInPolygon(polygon);
+    if (!randomPoint) return;
+
+    const pointGraphic = new Graphic({
+        geometry: randomPoint,
         symbol: {
             type: "simple-marker",
-            outline: {
-                type: "simple-line",
-                color: [0, 77, 158, 0.5],
-                width: 3
-            }
-        },
-        visualVariables: [
-            {
-                type: "size",
-                field: "cluster_count",
-                stops: [
-                    { value: 1, size: 0 },
-                    { value: 2, size: 0 },
-                    ...sizeStops
-                ]
-            },
-            {
-                type: "color",
-                field: "cluster_count",
-                stops: colorStops
-            }
-        ]
-    };
+            color: "red",
+            size: 10
+        }
+    });
+
+    graphicsLayer.add(pointGraphic);
+
+    console.log("Generated point geometry:", randomPoint.toJSON());
 }
 
-function getStops(min, max, values, type = "size") {
-    const count = values.length;
-    const step = (max - min) / (count - 1);
-    return values.map((val, i) => ({
-        value: min + i * step,
-        [type]: val
-    }));
-}
+document.getElementById("btnSabtDarkhast").addEventListener("click", () => {    
+    createDarkhastPoint("501-3-13-1-0-0-0");
+})

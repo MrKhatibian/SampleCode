@@ -5,7 +5,7 @@
     <title> ArcGIS api 4.30</title>
 
     <style>
-        #viewDiv {
+        #mapView {
             padding: 0;
             margin: 0;
             height: 75vh;
@@ -16,6 +16,13 @@
 </head>
 
 <body>
-    <div id="viewDiv"></div>    
+    <div class="row justify-content-start">
+        <div class="col-4 w-auto">
+            <button class="btn btn-primary" type="submit" id="btnSabtDarkhast">SabtDarkhast</button>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col" id="mapView"></div>
+    </div>    
 </body>
 
