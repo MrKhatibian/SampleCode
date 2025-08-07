@@ -30,14 +30,16 @@ map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
 
 async function getPolygonByAttribute(field, value) {
     debugger;
+    
     const query = arseFLayer.createQuery();
-    query.where = `'${field}' = '${value}'`;
+    query.where = `${field} = '${value}'`;
     query.returnGeometry = true;
     query.outfields = ["*"];
     query.outSpatialReference = view.spatialReference;
-
-    const result = await arseFLayer.queryFeatures(query);
-    return result.features.length ? result.features[0].geometry : null;    
+    
+    const result = await arseFLayer.queryFeatures(query);        
+    return result.features.length ? result.features[0].geometry : null;
+    
 }
 
 // Generate a unique random point inside the polygon
@@ -63,12 +65,12 @@ async function generateValidPointInPolygon(polygon) {
 
         const buffer = geometryEngine.buffer(candidatePoint, 1, "meters");
 
-        const query = darkhastLayer.createQuery();
+        const query = darkhastFLayer.createQuery();
         query.geometry = buffer;
         query.spatialRelationship = "intersects";
         query.returnGeometry = false;
 
-        const result = await darkhastLayer.queryFeatures(query);
+        const result = await darkhastFLayer.queryFeatures(query);
         if (result.features.length === 0) {
             return candidatePoint;
         }
