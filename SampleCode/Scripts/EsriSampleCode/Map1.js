@@ -111,5 +111,5 @@ async function createDarkhastPoint(nCode) {
 }
 
 document.getElementById("btnSabtDarkhast").addEventListener("click", () => {    
-    createDarkhastPoint("501-3-13-1-0-0-0");
+    createDarkhastPoint("501-8-4-28-0-0-0");
 })

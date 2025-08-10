@@ -29,7 +29,7 @@ const darkhastFLayer = new FeatureLayer({
     },
     popupTemplate: {
         title: "درخواست",
-        content: "شماره: {Sohd}"
+        content: "شماره: {shodarkhast}"
     },
     outFields: ["*"],
     // Creat Clustring for darkhastFeatureLayer
