@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="8452c03647f94a96b8147ffd4a263835" Name="Diagram1">
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Article77ExpertsInvitation" Width="1.5" PointX="7.75" PointY="15.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DecisionToVoteArticle77" Width="1.5" PointX="0.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DefenseArticle77" Width="1.5" PointX="2.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Draft" Width="1.5" PointX="17.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ExpertsOfArticle77" Width="1.5" PointX="29.75" PointY="2.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.MeetingVoteArticle77" Width="1.5" PointX="32" PointY="3.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Voting" Width="1.5" PointX="2.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Warnings" Width="1.5" PointX="0.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.accesslevel" Width="1.5" PointX="34.75" PointY="30.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Agreement" Width="1.5" PointX="2.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Amlak" Width="1.5" PointX="9.75" PointY="18.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AmlakMostaghelatShardari" Width="1.5" PointX="19.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.apartman" Width="1.5" PointX="23.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ApplicationVersion" Width="1.5" PointX="12.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Approvals" Width="1.5" PointX="2.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ArchiveReport" Width="1.5" PointX="25.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ARSE" Width="1.5" PointX="15.75" PointY="38.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Article100ExpertsInvitation" Width="1.5" PointX="10.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Article100SmsAutorization" Width="1.5" PointX="12.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Arzesh_Amlak" Width="1.5" PointX="36.75" PointY="19.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ArzeshDaraei" Width="1.5" PointX="36.75" PointY="23.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ArzeshMoamelatiSakhteman" Width="1.5" PointX="36.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf" Width="1.5" PointX="2.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_Avarez" Width="1.5" PointX="15.25" PointY="10" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_Formol" Width="1.5" PointX="36.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_FormolItems" Width="1.5" PointX="38.75" PointY="19.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_Jadval" Width="1.5" PointX="36.75" PointY="32.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_Jobs" Width="1.5" PointX="38.75" PointY="23.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Asnaf_Shenase" Width="1.5" PointX="25.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Avarez" Width="1.5" PointX="27.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AvarezDeleted" Width="1.5" PointX="29.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Barokaf" Width="1.5" PointX="38.75" PointY="28.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Baygani" Width="1.5" PointX="31.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Blocked_Malekin" Width="1.5" PointX="38.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.CarvingHaffari" Width="1.5" PointX="39.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ChangeLog" Width="1.5" PointX="39.75" PointY="6.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Check" Width="1.5" PointX="5.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.CommonFields" Width="1.5" PointX="7.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ConflictFormulaDetails" Width="1.5" PointX="39.75" PointY="10.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Control_Map" Width="1.5" PointX="17.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.D_bargeh" Width="1.5" PointX="19.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.D_Traffic" Width="1.5" PointX="21" PointY="35.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad" Width="1.5" PointX="39.75" PointY="13.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_AccDocumentD" Width="1.5" PointX="39.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_AccDocumentM" Width="1.5" PointX="2.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Banks" Width="1.5" PointX="40.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Bodje" Width="1.5" PointX="40.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_DaftarBank" Width="1.5" PointX="40.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_DCheck" Width="1.5" PointX="40.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_DF_parvande" Width="1.5" PointX="10.75" PointY="38.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_DFish" Width="1.5" PointX="41.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_DTaqsit" Width="1.5" PointX="41.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Factors" Width="1.5" PointX="13" PointY="40.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Formol" Width="1.5" PointX="32" PointY="31" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Jadval" Width="1.5" PointX="12.75" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_jadvalArse" Width="1.5" PointX="41.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_jadvalmojtama" Width="1.5" PointX="14.75" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_jadvalvahed" Width="1.5" PointX="42.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_MCheck" Width="1.5" PointX="42.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_MFish" Width="1.5" PointX="29.75" PointY="17.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_MTaqsit" Width="1.5" PointX="42.75" PointY="26.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_posht_formol" Width="1.5" PointX="42.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_Shenase" Width="1.5" PointX="36.75" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Daramad_t_formool_m" Width="1.5" PointX="29.75" PointY="32.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DaramadFormulGardeshKar" Width="1.5" PointX="42.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DaramadFormulGardeshKar_Det" Width="1.5" PointX="42.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DaramadFormulGardeshKar_Where" Width="1.5" PointX="43.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Darkhast" Width="1.5" PointX="22" PointY="11.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DastorShahrsazi" Width="1.5" PointX="43.75" PointY="6.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dastresi" Width="1.5" PointX="43.75" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DastresiForWeb" Width="1.5" PointX="7.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DastresiKartabl" Width="1.5" PointX="43.75" PointY="13.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DeliveryAndTransformation" Width="1.5" PointX="31.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DensityCoefficient" Width="1.5" PointX="43.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DensitySettings" Width="1.5" PointX="33.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DestMarhaleh" Width="1.5" PointX="27.25" PointY="6" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Document_Template" Width="1.5" PointX="42.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DTaghsit_Info" Width="1.5" PointX="0.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_aghabneshini" Width="1.5" PointX="8" PointY="25.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_AlodegiShoghli" Width="1.5" PointX="2.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_dahaneh" Width="1.5" PointX="9.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_darb" Width="1.5" PointX="44.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_divar" Width="1.5" PointX="44.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_ductAndPatio" Width="1.5" PointX="44.75" PointY="26.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_eshterak" Width="1.5" PointX="44.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_fazayesabz" Width="1.5" PointX="44.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_jahat" Width="1.5" PointX="44.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_karbari" Width="1.5" PointX="11" PointY="20.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_KarbariChanges" Width="1.5" PointX="45.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_karbarimojaz" Width="1.5" PointX="45.75" PointY="6.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_karbariMojod" Width="1.5" PointX="4.75" PointY="47.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_karbarimosavab" Width="1.5" PointX="38.75" PointY="47.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_komision" Width="1.5" PointX="6.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_ListShoghl" Width="1.5" PointX="13" PointY="9" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_MabaleghDaraei" Width="1.5" PointX="45.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_mafasa" Width="1.5" PointX="46.75" PointY="16.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_malekin" Width="1.5" PointX="14.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_manba" Width="1.5" PointX="16.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_mohandes" Width="1.5" PointX="46.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_mojaverin" Width="1.5" PointX="18.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_MoshakhasatMojavez" Width="1.5" PointX="20.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_MoshakhasatTablo" Width="1.5" PointX="46.75" PointY="25.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_naameh" Width="1.5" PointX="46.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_pakh" Width="1.5" PointX="33.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_parking" Width="1.5" PointX="46.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_Parking2" Width="1.5" PointX="35.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_pelaksabti" Width="1.5" PointX="46.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_pishamadegi" Width="1.5" PointX="14" PointY="22.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_savabegh" Width="1.5" PointX="46.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_sayeremkanat" Width="1.5" PointX="47.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.dv_Tarakom" Width="1.5" PointX="47.75" PointY="6.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_tasisat" Width="1.5" PointX="47.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_TatilatShoghli" Width="1.5" PointX="11.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_z_eshterak" Width="1.5" PointX="40.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_zamaem" Width="1.5" PointX="48.75" PointY="16.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Dv_zavabet" Width="1.5" PointX="48.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.e_sign" Width="1.5" PointX="48.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ebtals" Width="1.5" PointX="48.75" PointY="33.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Ekhtariyeh" Width="1.5" PointX="48.75" PointY="36.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.EkhtarMohandesan" Width="1.5" PointX="48.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ElamBazdid" Width="1.5" PointX="48.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ElamMamor" Width="1.5" PointX="48.75" PointY="50.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Erja" Width="1.5" PointX="27" PointY="12.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ErjaShode" Width="1.5" PointX="49.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Estelam" Width="1.5" PointX="0.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ExpertOfEstate" Width="1.5" PointX="0.75" PointY="37.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ExpertStaff" Width="1.5" PointX="3" PointY="38" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FaniOmran" Width="1.5" PointX="49.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FazayeSabz" Width="1.5" PointX="49.75" PointY="11.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FinancialSituation" Width="1.5" PointX="42.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FireStation" Width="1.5" PointX="20.75" PointY="28.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FireStationDefineItem" Width="1.5" PointX="20.75" PointY="3.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FireStationItem" Width="1.5" PointX="23" PointY="2.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Fish" Width="1.5" PointX="44.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FishSabti" Width="1.5" PointX="8.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Formol" Width="1.5" PointX="50.75" PointY="14.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.FoulDefinitionSetting" Width="1.5" PointX="16.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Gardesh_Kar" Width="1.5" PointX="19.75" PointY="14.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_ITEMRELATIONSHIPS" Width="1.5" PointX="18.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_ITEMS" Width="1.5" PointX="50.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Gis_Accesslevel" Width="1.5" PointX="20.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Groh_Of_Marahel" Width="1.5" PointX="50.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Haffari" Width="1.5" PointX="50.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.History" Width="1.5" PointX="29.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Hoghughi" Width="1.5" PointX="50.75" PointY="33.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i2" Width="1.5" PointX="31.75" PointY="52.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i3" Width="1.5" PointX="50.75" PointY="36.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i4" Width="1.5" PointX="50.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i5" Width="1.5" PointX="50.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i6" Width="1.5" PointX="50.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.i7" Width="1.5" PointX="50.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.KhadamatShahri" Width="1.5" PointX="50.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Khalaf" Width="1.5" PointX="51.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Khalaf_Daramad_Formol" Width="1.5" PointX="51.75" PointY="10.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LevelJob" Width="1.5" PointX="24.25" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LocationImages" Width="1.5" PointX="10.75" PointY="53.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LogException" Width="1.5" PointX="33.75" PointY="53.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LoginHistory" Width="1.5" PointX="35.75" PointY="53.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LogSMS" Width="1.5" PointX="37" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.LogTotalCalc" Width="1.5" PointX="37.75" PointY="53.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.m_access" Width="1.5" PointX="52.75" PointY="14.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_badvi" Width="1.5" PointX="52.75" PointY="18.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_D_Ray" Width="1.5" PointX="25.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_ekhtariyeh" Width="1.5" PointX="52.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_Eslah" Width="1.5" PointX="52.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_karshenasan" Width="1.5" PointX="15.75" PointY="2.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.M100_ta_badvi_tajdid" Width="1.5" PointX="39.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Decision_to_vote" Width="1.5" PointX="52.75" PointY="44.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_DetailFormula" Width="1.5" PointX="46.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_EjraRay" Width="1.5" PointX="52.75" PointY="50.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_eteraz" Width="1.5" PointX="48.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_ExpertComments" Width="1.5" PointX="50.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Experts" Width="1.5" PointX="52.75" PointY="53.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Formula" Width="1.5" PointX="53.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_GardeshKar" Width="1.5" PointX="3" PointY="3.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Karshenasan_Comments" Width="1.5" PointX="53.75" PointY="6.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Kartable" Width="1.5" PointX="53.75" PointY="10.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Marahel" Width="1.5" PointX="0.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Marahel_Bargasht" Width="1.5" PointX="3" PointY="6.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Marahel_Desc" Width="1.5" PointX="3" PointY="9.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Marahel_group" Width="1.5" PointX="3" PointY="12" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Marhale_Of_commission" Width="1.5" PointX="3" PointY="14.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Ray" Width="1.5" PointX="34.75" PointY="12.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_RayCalculated" Width="1.5" PointX="20.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_RayDetails" Width="1.5" PointX="37" PointY="13" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_SendVoteCommission" Width="1.5" PointX="41.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_SodorRay" Width="1.5" PointX="0.75" PointY="56.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_tajdid" Width="1.5" PointX="10.75" PointY="56.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_Typecommission" Width="1.5" PointX="7.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Made100_VoteInformation" Width="1.5" PointX="37" PointY="35.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Mailroom" Width="1.5" PointX="54.75" PointY="14.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.MailroomSetting" Width="1.5" PointX="54.75" PointY="18.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.MaliHesabdari" Width="1.5" PointX="16.75" PointY="56.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Mapping" Width="1.5" PointX="54.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Marahel" Width="1.5" PointX="25" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Marahel_Bargasht" Width="1.5" PointX="27.25" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Marahel_Desc" Width="1.5" PointX="54.75" PointY="24.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Marahel_Erja" Width="1.5" PointX="27.25" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Marhaleh" Width="1.5" PointX="22.75" PointY="7.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.masahat_khalaf" Width="1.5" PointX="17" PointY="21.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Melk" Width="1.5" PointX="22.75" PointY="56.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.MLogSms" Width="1.5" PointX="34.75" PointY="8.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Mohandesan" Width="1.5" PointX="54.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Mojaz_Parvaneh" Width="1.5" PointX="54.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.mokatebat" Width="1.5" PointX="54.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Nosazi_Factors" Width="1.5" PointX="54.75" PointY="50.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.NosaziAllocateFormula" Width="1.5" PointX="54.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ParaAsli" Width="1.5" PointX="55.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.parametric" Width="1.5" PointX="2.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ParametricAccCoding" Width="1.5" PointX="55.75" PointY="5.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ParaTarefe_Zarib" Width="1.5" PointX="4.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Parvandeh" Width="1.5" PointX="22" PointY="21.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Parvandeh_GardeshKar" Width="1.5" PointX="55.75" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ParvandehHistory" Width="1.5" PointX="27.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.parvaneh" Width="1.5" PointX="29.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Payankar" Width="1.5" PointX="31.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.PeaceAgreement" Width="1.5" PointX="5.75" PointY="9.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Pishnevis" Width="1.5" PointX="33.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.posht_formol" Width="1.5" PointX="56.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.PosInfo" Width="1.5" PointX="56.75" PointY="16.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Reconciliators" Width="1.5" PointX="8" PointY="9.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RegionalPrice_Temp" Width="1.5" PointX="56.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Rental" Width="1.5" PointX="5.75" PointY="15.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RercordsManagementCategory" Width="1.5" PointX="18.75" PointY="58.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ResourceAccessLevel" Width="1.5" PointX="56.75" PointY="23.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RrcordsManagement" Width="1.5" PointX="56.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RuleCalcParameter" Width="1.5" PointX="56.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RuleCalculated" Width="1.5" PointX="56.75" PointY="33.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RuleDeclaration" Width="1.5" PointX="56.75" PointY="36.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Rules" Width="1.5" PointX="35.75" PointY="58.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RulesDetail" Width="1.5" PointX="56.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RulesField" Width="1.5" PointX="56.75" PointY="43.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RulesOfRegressAndOpening" Width="1.5" PointX="56.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Sabetha" Width="1.5" PointX="56.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.sakhteman" Width="1.5" PointX="56.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SanjeshMoadian" Width="1.5" PointX="57.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_archives" Width="1.5" PointX="10.25" PointY="4.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_column_registry" Width="1.5" PointX="57.75" PointY="5.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_dbtune" Width="1.5" PointX="57.75" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_geometry_columns" Width="1.5" PointX="27" PointY="24.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_GEOMETRY1" Width="1.5" PointX="12.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_GEOMETRY2" Width="1.5" PointX="14.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_layer_locks" Width="1.5" PointX="24.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_layer_stats" Width="1.5" PointX="37" PointY="2.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_layers" Width="1.5" PointX="27" PointY="28.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_lineages_modified" Width="1.5" PointX="41.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_locators" Width="1.5" PointX="46.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_logfile_pool" Width="1.5" PointX="48.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_metadata" Width="1.5" PointX="50.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_object_ids" Width="1.5" PointX="52.75" PointY="59.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_object_locks" Width="1.5" PointX="58.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_process_information" Width="1.5" PointX="58.75" PointY="16.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_raster_columns" Width="1.5" PointX="27" PointY="36" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_server_config" Width="1.5" PointX="58.75" PointY="22.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_spatial_references" Width="1.5" PointX="24.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_state_lineages" Width="1.5" PointX="58.75" PointY="25.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_state_locks" Width="1.5" PointX="58.75" PointY="28.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_states" Width="1.5" PointX="5.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_table_locks" Width="1.5" PointX="58.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_table_registry" Width="1.5" PointX="8" PointY="4" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_tables_modified" Width="1.5" PointX="58.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_version" Width="1.5" PointX="58.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_versions" Width="1.5" PointX="34.75" PointY="3.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_xml_columns" Width="1.5" PointX="13.25" PointY="4.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_xml_index_tags" Width="1.5" PointX="13.25" PointY="1.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SDE_xml_indexes" Width="1.5" PointX="11" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Senfi" Width="1.5" PointX="58.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Shenase" Width="1.5" PointX="58.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.signature" Width="1.5" PointX="58.75" PointY="60.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SmsAuthorization" Width="1.5" PointX="59.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SmsControl" Width="1.5" PointX="59.75" PointY="5.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.StaticParameter" Width="1.5" PointX="4.75" PointY="61.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.substitute_signature" Width="1.5" PointX="59.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SurveyCheck" Width="1.5" PointX="6.75" PointY="61.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SurveyInquiry" Width="1.5" PointX="60.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SurveyUser" Width="1.5" PointX="12.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.taAhodat" Width="1.5" PointX="60.75" PointY="15.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TaeenEmza" Width="1.5" PointX="14.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Taghsit_Inform" Width="1.5" PointX="16.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TakhfifAsnaf" Width="1.5" PointX="60.75" PointY="19.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TakhfifDaramad" Width="1.5" PointX="18.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TakhfifNosazi" Width="1.5" PointX="60.75" PointY="24.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Takhsis" Width="1.5" PointX="60.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TaqsitD" Width="1.5" PointX="31.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TaqsitM" Width="1.5" PointX="60.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TarhTafsili" Width="1.5" PointX="33.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Tarifha" Width="1.5" PointX="35.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.tblDeviceDirectPrint" Width="1.5" PointX="60.75" PointY="38.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Template" Width="1.5" PointX="37.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TemplateControl" Width="1.5" PointX="60.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Tozihat" Width="1.5" PointX="39.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Traffic" Width="1.5" PointX="18.75" PointY="36.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TrafficDetail" Width="1.5" PointX="34.25" PointY="22" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TrafficFormula" Width="1.5" PointX="32" PointY="18.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TrafficMaster" Width="1.5" PointX="32" PointY="21.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UpdateDaramadCode" Width="1.5" PointX="41.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.User_Of_Groh" Width="1.5" PointX="60.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UserLogined" Width="1.5" PointX="46.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UserPaymentInfo" Width="1.5" PointX="60.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UsersLoginRestrictions" Width="1.5" PointX="60.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UserSource" Width="1.5" PointX="52.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.UseTypeSyncTable" Width="1.5" PointX="60.75" PointY="58.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Zavabet" Width="1.5" PointX="60.75" PointY="61.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AggregatedCounter" Width="1.5" PointX="61.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Counter" Width="1.5" PointX="0.75" PointY="63.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Hash" Width="1.5" PointX="61.75" PointY="5.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Job" Width="1.5" PointX="29.75" PointY="11" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.JobParameter" Width="1.5" PointX="32" PointY="9.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.JobQueue" Width="1.5" PointX="61.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.List" Width="1.5" PointX="24.75" PointY="63.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Schema" Width="1.5" PointX="15.75" PointY="16.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Server" Width="1.5" PointX="48.75" PointY="63.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Set" Width="1.5" PointX="2.75" PointY="64.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.State" Width="1.5" PointX="32" PointY="12.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AdjustmentCoefficientFloor" Width="1.5" PointX="4.75" PointY="64.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.CoefficientBuildingUseType" Width="1.5" PointX="6.75" PointY="64.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DiscountTracker" Width="1.5" PointX="62.75" PointY="11.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.IncomeFormulaDetection" Width="1.5" PointX="32" PointY="36.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SpecialDiscountAmountUsed" Width="1.5" PointX="62.75" PointY="15.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.SpecialDiscounts" Width="1.5" PointX="62.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AccountType" Width="1.5" PointX="5.75" PointY="23.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.AccountTypeDetail" Width="1.5" PointX="8" PointY="22.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.BuildingType" Width="1.5" PointX="5.75" PointY="30.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.BuildingTypeDetail" Width="1.5" PointX="8" PointY="37.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Defense" Width="1.5" PointX="62.75" PointY="24.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Density" Width="1.5" PointX="5.75" PointY="33.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DensityDetail" Width="1.5" PointX="8" PointY="33.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ExpertOpinion" Width="1.5" PointX="62.75" PointY="27.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.MeetingVoteMade100" Width="1.5" PointX="18" PointY="3.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RegionalPrices" Width="1.5" PointX="14.75" PointY="19.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RegionalPricesDetail" Width="1.5" PointX="17" PointY="18.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TypeStructuresMaterials" Width="1.5" PointX="5.75" PointY="26.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.TypeStructuresMaterialsDetail" Width="1.5" PointX="8" PointY="70" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.VoteViolationType" Width="1.5" PointX="26.75" PointY="64.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RenovationCoefficientArea" Width="1.5" PointX="16" PointY="34.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.YearCoefficientRenovation" Width="1.5" PointX="13.75" PointY="35" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.CreditWorthiness" Width="1.5" PointX="62.75" PointY="32.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.DetailZaribTadil" Width="1.5" PointX="34" PointY="25.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.IncomeRating" Width="1.5" PointX="10.75" PointY="12" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.PositionRank" Width="1.5" PointX="10.75" PointY="8.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ProfessionalRank" Width="1.5" PointX="10.75" PointY="15.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.YearZaribTadil" Width="1.5" PointX="31.75" PointY="26.125" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_ITEMRELATIONSHIPTYPES" Width="1.5" PointX="62.75" PointY="35.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_ITEMTYPES" Width="1.5" PointX="62.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_REPLICALOG" Width="1.5" PointX="62.75" PointY="42.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.GDB_TABLES_LAST_MODIFIED" Width="1.5" PointX="62.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.temp" Width="1.5" PointX="62.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.Darkhast_Melk" Width="1.5" PointX="63.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.darkhastGis" Width="1.5" PointX="28.75" PointY="65.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.dbtune" Width="1.5" PointX="41.75" PointY="65.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RepBed" Width="1.5" PointX="50.75" PointY="65.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.repbed_mostajer" Width="1.5" PointX="52.75" PointY="65.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.RepBedTafzili" Width="1.5" PointX="64.75" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ST_GEOMETRY_COLUMNS" Width="1.5" PointX="64.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.ST_SPATIAL_REFERENCE_SYSTEMS" Width="1.5" PointX="64.75" PointY="24.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v" Width="1.5" PointX="64.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Accesslevel" Width="1.5" PointX="30.75" PointY="66.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_amlakShahrdari" Width="1.5" PointX="32.75" PointY="66.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Apartman_Malkin" Width="1.5" PointX="64.75" PointY="36.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_ArzeshAmlak" Width="1.5" PointX="37.75" PointY="66.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AsnafAvarez" Width="1.5" PointX="64.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AsnafCalculateAll" Width="1.5" PointX="64.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AsnafCalculateAllLog" Width="1.5" PointX="64.75" PointY="63.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AsnafDaramadFish" Width="1.5" PointX="65.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AsnafSiyahe" Width="1.5" PointX="0.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AvalDore_Daramad" Width="1.5" PointX="18.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AvalDoreAsnaf" Width="1.5" PointX="46.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Avarez" Width="1.5" PointX="58.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Avarez_Jobs_Formol" Width="1.5" PointX="60.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_AvarezDeleted" Width="1.5" PointX="2.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Baygani" Width="1.5" PointX="4.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_CarvingHaffari" Width="1.5" PointX="66.75" PointY="9.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_Daramad_Check" Width="1.5" PointX="66.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Daramad_DF_parvande" Width="1.5" PointX="12.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_Daramad_DTaqsit" Width="1.5" PointX="14.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_Daramad_Fish" Width="1.5" PointX="66.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Daramad_Mfish_Dfish" Width="1.5" PointX="66.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadFishExport" Width="1.5" PointX="66.75" PointY="39.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadFishExportTraffic" Width="1.5" PointX="39.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadFormulGardeshKar" Width="1.5" PointX="41.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadFormulGardeshKarDet" Width="1.5" PointX="66.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadFormulGardeshKarWhere" Width="1.5" PointX="66.75" PointY="50.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadMFishMDTaqsit" Width="1.5" PointX="52.75" PointY="68.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_DaramadTaqsitParvande" Width="1.5" PointX="66.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DaramadTraffic" Width="1.5" PointX="66.75" PointY="62.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Darkhast_Malkin_Daramad" Width="1.5" PointX="66.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_DarkhastMarahel" Width="1.5" PointX="68.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Dastresi_groh_user" Width="1.5" PointX="68.75" PointY="14.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_e_p_s" Width="1.5" PointX="68.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_ebtals" Width="1.5" PointX="68.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Ekhtar_Mohandesan" Width="1.5" PointX="68.75" PointY="26.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_ElamBazdid_Darkhast" Width="1.5" PointX="68.75" PointY="31.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Erja" Width="1.5" PointX="68.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_ExpertsFullInfo" Width="1.5" PointX="68.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_FishSabti" Width="1.5" PointX="68.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_FishTotalCalc" Width="1.5" PointX="68.75" PointY="58.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_FullSearchInParvandeh" Width="1.5" PointX="16.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_GetAllMalekinNames" Width="1.5" PointX="18.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_GetDataSakhtemanForGIS" Width="1.5" PointX="24.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_govahi" Width="1.5" PointX="30.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_gozaresh_made100" Width="1.5" PointX="32.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Groh_Of_Marahel" Width="1.5" PointX="46.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_IncomeReceipts" Width="1.5" PointX="70.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_InfoMalekinForMahasebeKoli_Nosazi" Width="1.5" PointX="70.75" PointY="10.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Karbaran_Groh_Marahel" Width="1.5" PointX="70.75" PointY="18.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Karbaran_Marahel" Width="1.5" PointX="70.75" PointY="22.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_karshenasan_Made100" Width="1.5" PointX="70.75" PointY="26.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_KartableM100" Width="1.5" PointX="26.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Khalaf_Daramad_Formol" Width="1.5" PointX="70.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_ListShoghl" Width="1.5" PointX="70.75" PointY="34.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_logMohasebeKoliNosazi" Width="1.5" PointX="70.75" PointY="41.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_LogTotalCalc" Width="1.5" PointX="41.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_M100_InFrontage" Width="1.5" PointX="43.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_M100Bazdid_Apartman" Width="1.5" PointX="70.75" PointY="49.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_M100BazdidSakhteman" Width="1.5" PointX="70.75" PointY="56.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Made100_Badvi_tajdidNazar" Width="1.5" PointX="54.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Made100_Ray" Width="1.5" PointX="70.75" PointY="63.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Made100_Ray_khalaf" Width="1.5" PointX="70.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Made100_RayOnKhalaf" Width="1.5" PointX="6.75" PointY="73.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Mamor_Bazdid" Width="1.5" PointX="8.75" PointY="73.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Marahel_Bargasht" Width="1.5" PointX="60.75" PointY="73.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Marahel_DestMarhaleh" Width="1.5" PointX="72.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Marahel_Erja" Width="1.5" PointX="72.75" PointY="5.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Marhale_Desc" Width="1.5" PointX="72.75" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_marhaleh_marahel" Width="1.5" PointX="72.75" PointY="12.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_masahatBazdid" Width="1.5" PointX="72.75" PointY="15.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_melk_Malekin" Width="1.5" PointX="72.75" PointY="20.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_NosaziFish" Width="1.5" PointX="18.75" PointY="74.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_ParvandehHistory" Width="1.5" PointX="72.75" PointY="32.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Parvaneh_Erja" Width="1.5" PointX="72.75" PointY="40.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Rep_Made100Ray" Width="1.5" PointX="72.75" PointY="45.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Rep_parvaneh" Width="1.5" PointX="72.75" PointY="51.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Rep_Vosol_Ba_Tarikh" Width="1.5" PointX="72.75" PointY="57.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_RepInMapGIS" Width="1.5" PointX="72.75" PointY="64.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_RepSodorRay" Width="1.5" PointX="62.75" PointY="74.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_RuleCalcParameter" Width="1.5" PointX="64.75" PointY="74.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_RuleCalculated" Width="1.5" PointX="72.75" PointY="71.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_RuleDeclaration" Width="1.5" PointX="37.75" PointY="75.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_Rules" Width="1.5" PointX="45.75" PointY="75.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_RulesDetail" Width="1.5" PointX="47.75" PointY="75.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Sakhteman_Info" Width="1.5" PointX="74.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Sakhteman_Malekin" Width="1.5" PointX="10.75" PointY="76.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_SearchKarshenasanM100" Width="1.5" PointX="12.75" PointY="76.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_SearchSessionMade100" Width="1.5" PointX="74.75" PointY="17.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_SelectFormula" Width="1.5" PointX="74.75" PointY="30.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Senfi_Malkin" Width="1.5" PointX="74.75" PointY="38.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_Shenase_SodorFish" Width="1.5" PointX="74.75" PointY="48.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_shopMelkINmalekin" Width="1.5" PointX="52.75" PointY="76.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_SimpleSearchInParvandeh" Width="1.5" PointX="74.75" PointY="55.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_sodorRay" Width="1.5" PointX="54.75" PointY="76.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_subSign" Width="1.5" PointX="74.75" PointY="67.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_SurveyConfirm" Width="1.5" PointX="74.75" PointY="72.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_SurveyTransferAll" Width="1.5" PointX="28.75" PointY="77.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_TakhfifDaramad" Width="1.5" PointX="49.75" PointY="77.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_TakhfifNosazi" Width="1.5" PointX="70.75" PointY="77.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_TaqsitD" Width="1.5" PointX="72.75" PointY="77.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_TaqsitM" Width="1.5" PointX="74.75" PointY="77.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_Tozihat_Marahel" Width="1.5" PointX="76.75" PointY="2.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_TrafficFormula" Width="1.5" PointX="76.75" PointY="7.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_TurnOverNosazi" Width="1.5" PointX="76.75" PointY="11.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_UnionMalekin" Width="1.5" PointX="18.75" PointY="78.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_UpdateDaramadCode_Bodje" Width="1.5" PointX="76.75" PointY="21.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_userGroup" Width="1.5" PointX="76.75" PointY="25.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_UserSigners" Width="1.5" PointX="76.75" PointY="29.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_WorkExperience" Width="1.5" PointX="76.75" PointY="33.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_GetDataForMapGIS" Width="1.5" PointX="76.75" PointY="37.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_GetDataForMapGIS_Sorkhrud" Width="1.5" PointX="39.75" PointY="78.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_GetDataMelkForMapGIS" Width="1.5" PointX="41.75" PointY="78.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.View_DarkhsTest" Width="1.5" PointX="76.75" PointY="46.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.v_karbariFormulaSetting" Width="1.5" PointX="76.75" PointY="50.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.VW_MalekinAvaldore" Width="1.5" PointX="76.75" PointY="54.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="AmardShahrsaziMaryanajModel.V_SearchReportMade100Ray" Width="1.5" PointX="76.75" PointY="64.5" IsExpanded="true" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVote_CityCouncilExpert" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVote_JudicialExpert" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVote_MinistryExpert" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_VoteInformation_accesslevel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Asnaf_Avarez_Dv_ListShoghl" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_D_Traffic_Traffic" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Daramad_Factors_Daramad_DF_parvande" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Daramad_Formol_Daramad_t_formool_m" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_TrafficMaster_Daramad_MFish" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_IncomeFormulaDetection_Daramad_t_formool_m" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Darkhast_Darkhast" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_LevelJob_Darkhast" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_DestMarhaleh_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_aghabneshini_AccountType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_aghabneshini_BuildingType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_aghabneshini_Density" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_aghabneshini_TypeStructuresMaterials" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_karbari_AccountType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_karbari_BuildingType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_karbari_Density" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_karbari_TypeStructuresMaterials" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_ListShoghl_IncomeRating" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_ListShoghl_PositionRank" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_ListShoghl_ProfessionalRank" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_pishamadegi_AccountType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_pishamadegi_BuildingType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_pishamadegi_Density" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Dv_pishamadegi_TypeStructuresMaterials" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Erja_Gardesh_Kar" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Erja_Marhaleh" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK__ExpertSta__Exper__1CFB0A1E" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_FireStationItem_FireStation" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_FireStationItem_FireStationDefineItem" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Marahel_Gardesh_Kar" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_LevelJob_Parvandeh" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_LogSMS_MLogSms" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVoteMade100_M100_karshenasan" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVoteMade100_M100_karshenasan1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_MeetingVoteMade100_M100_karshenasan2" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_GardeshKar_Made100_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_GardeshKar_Made100_Marahel1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_GardeshKar_Made100_Marahel2" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_Marahel_Bargasht_Made100_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_Marahel_Desc_Made100_Marahel1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_Marahel_group_Made100_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_Marhale_Of_commission_Made100_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Made100_RayDetails_Made100_Ray" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Marahel_Bargasht_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Marahel_Erja_Marahel" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_Marahel_Marhaleh" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_masahat_khalaf_AccountType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_masahat_khalaf_BuildingType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_masahat_khalaf_Density" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_masahat_khalaf_RegionalPrices" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_masahat_khalaf_TypeStructuresMaterials" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK__Reconcili__Peace__2960E103" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK__Reconcili__Peace__2E259620" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK__Reconcili__Renta__2A55053C" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK__Reconcili__Renta__2F19BA59" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.archives_fk1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.archives_fk2" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.geocol_fk" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.sdelayer_stats_fk2" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.layers_fk" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.layers_sfk" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.rascol_fk" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.xml_columns_fk1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.xml_columns_fk2" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.xml_indextags_fk1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_TrafficDetail_TrafficFormula" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_TrafficDetail_TrafficMaster1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_HangFire_JobParameter_Job" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_HangFire_State_Job" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_AccountTypeDetail_AccountTypeDetail1" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_BuildingTypeDetail_BuildingType" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_DensityDetail_Density" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_RegionalPricesDetail_RegionalPrices" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_TypeStructuresMaterialsDetail_TypeStructuresMaterials" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_RenovationCoefficientArea_YearCoefficientRenovation" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.FK_DetailZaribTadil_YearZaribTadil" ManuallyRouted="false" />
+        <AssociationConnector Association="AmardShahrsaziMaryanajModel.SDE_mvtables_modified" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

@@ -111,5 +111,30 @@ async function createDarkhastPoint(nCode) {
 }
 
 document.getElementById("btnSabtDarkhast").addEventListener("click", () => {    
-    createDarkhastPoint("501-3-13-1-0-0-0");
+    createDarkhastPoint("501-8-4-28-0-0-0");
 })
+
+document.getElementById("testConnection").addEventListener("click", function () {
+    //alert("Hi Mohammad");
+    debugger;
+    $.ajax({
+        cache: false,
+        type: "get",
+        datatype: "JSON",
+        url: '/Home/testConnection',
+        success: function (data) {
+            alert(data.result);
+        },
+        error: function (error) {
+            alert("Error: " + error);
+        }
+    });
+    //fetch('/Home/testConnection')
+    //    .then(response => response.json())
+    //    .then(data => {
+    //        alert(data.result);
+    //    })
+    //    .catch(error => {
+    //        alert("Error: " + error);
+    //    });
+});

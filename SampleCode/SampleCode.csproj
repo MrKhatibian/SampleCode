@@ -45,10 +45,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.5.0.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.Entity" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -123,6 +129,1566 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="Models\accesslevel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AccountType.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AccountTypeDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AdjustmentCoefficientFloor.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AggregatedCounter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Agreement.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AmarDaramadNosazi_Report_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AmardShahrsaziMaryanaj.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AmardShahrsaziMaryanaj.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AmardShahrsaziMaryanaj.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AmardShahrsaziMaryanaj.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AmardShahrsaziMaryanaj.edmx</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Amlak.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AmlakMostaghelatShardari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\apartman.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ApplicationVersion.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Approvals.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ArchiveReport.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ARSE.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Article100ExpertsInvitation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Article100SmsAutorization.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Article77ExpertsInvitation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ArzeshDaraei.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ArzeshMoamelatiSakhteman.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Arzesh_Amlak.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_Avarez.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_FormolItems.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_Jadval.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_Jobs.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Asnaf_Shenase.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Avarez.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AvarezDeleted.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Barokaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Baygani.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Blocked_Malekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\BuildingType.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\BuildingTypeDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CarvingHaffari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ChangeLog.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Check.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CoefficientBuildingUseType.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CommonFields.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ConflictFormulaDetails.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Control_Map.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Counter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CreditWorthiness.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DaramadFormulGardeshKar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DaramadFormulGardeshKar_Det.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DaramadFormulGardeshKar_Where.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_AccDocumentD.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_AccDocumentM.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Banks.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Bodje.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_DaftarBank.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_DCheck.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_DFish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_DF_parvande.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_DTaqsit.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Factors.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Jadval.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_jadvalArse.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_jadvalmojtama.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_jadvalvahed.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_MCheck.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_MFish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_MTaqsit.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_posht_formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_Shenase.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Daramad_t_formool_m.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Darkhast.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\darkhastGis.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Darkhast_Melk.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DastorShahrsazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dastresi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DastresiForWeb.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DastresiKartabl.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\dbtune.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DecisionToVoteArticle77.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Defense.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DefenseArticle77.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DeliveryAndTransformation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Density.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DensityCoefficient.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DensityDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DensitySettings.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DestMarhaleh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DetailZaribTadil.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DiscountTracker.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Document_Template.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Draft.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\DTaghsit_Info.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_aghabneshini.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_AlodegiShoghli.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_dahaneh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_darb.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_divar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_ductAndPatio.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_eshterak.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_fazayesabz.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_jahat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_karbari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_KarbariChanges.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_karbarimojaz.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_karbariMojod.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_karbarimosavab.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_komision.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_ListShoghl.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_MabaleghDaraei.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_mafasa.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_malekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_manba.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_mohandes.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_mojaverin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_MoshakhasatMojavez.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_MoshakhasatTablo.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_naameh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_pakh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_parking.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_Parking2.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_pelaksabti.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_pishamadegi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_savabegh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_sayeremkanat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\dv_Tarakom.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_tasisat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_TatilatShoghli.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_zamaem.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_zavabet.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Dv_z_eshterak.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\D_bargeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\D_Traffic.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ebtals.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Ekhtariyeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\EkhtarMohandesan.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ElamBazdid.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ElamMamor.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Erja.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ErjaShode.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Estelam.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ExpertOfEstate.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ExpertOpinion.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ExpertsOfArticle77.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ExpertStaff.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\e_sign.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FaniOmran.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FazayeSabz.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FinancialSituation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FireStation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FireStationDefineItem.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FireStationItem.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Fish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FishSabti.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\fn_LatestErja_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\FoulDefinitionSetting.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gardesh_Kar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_ITEMRELATIONSHIPS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_ITEMRELATIONSHIPTYPES.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_ITEMS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_ITEMTYPES.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_REPLICALOG.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GDB_TABLES_LAST_MODIFIED.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetAvarez_FishFromFile_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetDaramad_DfParvande_Budje_Nyriz_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetDaramad_DfParvande_Budje_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GETFishMohasebeKoliNosazi_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetKarbari_MoshakhasateParvandeh_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetKodeDaramadiNotExistCurrentYear_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetPelakSabti_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetTakhfifNosazi_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Get_Karshanasan_Made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gis_Accesslevel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GozareshChart_AmarDaramad_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GozareshHarimShahr_Made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GozareshMahane_made100_Daramad_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_Daramad_Made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_FishSabtiByBank_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_JahatGroupedByJahat_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_kartabl_Made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_Made100_EblaghRay_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_Made100_SodorRayTajdidNazar_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_Made100_TajdidNazar_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_SabtDarkhast2_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_SabtDarkhast_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_tabaghat_Made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_TaminEgtemaee_Neyriz_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_TedadGovahiSadere_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Gozaresh_Transfer_Daramad_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Groh_Of_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Haffari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Hash.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\History.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Hoghughi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i2.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i3.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i4.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i5.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i6.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\i7.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\IncomeFormulaDetection.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\IncomeRating.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Job.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\JobParameter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\JobQueue.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\KhadamatShahri.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Khalaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Khalaf_Daramad_Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LevelJob.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\List.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LocationImages.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LogException.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LoginHistory.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LogSMS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\LogTotalCalc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_badvi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_D_Ray.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_ekhtariyeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_Eslah.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_karshenasan.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\M100_ta_badvi_tajdid.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Decision_to_vote.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_DetailFormula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_EjraRay.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_eteraz.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_ExpertComments.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Experts.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Formula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_GardeshKar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Karshenasan_Comments.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Kartable.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Marahel_Bargasht.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Marahel_Desc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Marahel_group.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Marhale_Of_commission.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Ray.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_RayCalculated.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_RayDetails.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_SendVoteCommission.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_SodorRay.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_tajdid.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_Typecommission.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Made100_VoteInformation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Mailroom.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MailroomSetting.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MaliHesabdari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Mapping.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Marahel_Bargasht.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Marahel_Desc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Marahel_Erja.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Marhaleh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\masahat_khalaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MeetingVoteArticle77.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MeetingVoteMade100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Melk.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\MLogSms.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Mohandesan.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Mojaz_Parvaneh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\mokatebat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\m_access.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\NosaziAllocateFormula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Nosazi_Factors.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\OnvanFormul_Report_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ParaAsli.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\parametric.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ParametricAccCoding.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ParaTarefe_Zarib.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Parvandeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ParvandehHistory.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Parvandeh_GardeshKar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\parvaneh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Payankar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PeaceAgreement.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Pishnevis.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\posht_formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PosInfo.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PositionRank.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ProfessionalRank.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Reconciliators.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RegionalPrices.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RegionalPricesDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RegionalPrice_Temp.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RenovationCoefficientArea.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Rental.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RepBed.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RepBedTafzili.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\repbed_mostajer.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RercordsManagementCategory.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ResourceAccessLevel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RrcordsManagement.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RuleCalcParameter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RuleCalculated.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RuleDeclaration.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Rules.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RulesDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RulesField.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RulesOfRegressAndOpening.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Sabetha.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sakhteman.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SanjeshMoadian.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Schema.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_archives.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_column_registry.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_dbtune.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_GEOMETRY1.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_GEOMETRY2.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_geometry_columns.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_layers.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_layer_locks.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_layer_stats.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_lineages_modified.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_locators.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_logfile_pool.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_metadata.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_object_ids.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_object_locks.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_process_information.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_raster_columns.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_server_config.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_spatial_references.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_states.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_state_lineages.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_state_locks.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_tables_modified.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_table_locks.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_table_registry.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_version.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_versions.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_xml_columns.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_xml_indexes.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SDE_xml_index_tags.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Senfi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Server.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Set.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Shenase.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\signature.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SmsAuthorization.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SmsControl.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\spAvalDore_Asnaf_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SpecialDiscountAmountUsed.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SpecialDiscounts.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Split_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_AvalDore_Daramad_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SP_ChartAsnafDaryafti_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_DaramadTajmiMahaneh_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GozareshatDaryaftiChek_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GozareshatGardeshHesabBed_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GozareshatMoeinChek_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GozareshatVosolNaShodChek_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GozareshatVosolShodChek_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_gozaresh_made100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_gozaresh_sessionmade100_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_NosaziTafkiki_Report_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_RepNosaziMojtama_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\State.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\StaticParameter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ST_GEOMETRY_COLUMNS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ST_SPATIAL_REFERENCE_SYSTEMS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\substitute_signature.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SurveyCheck.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SurveyInquiry.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\SurveyUser.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\taAhodat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TaeenEmza.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Taghsit_Inform.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TakhfifAsnaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TakhfifDaramad.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TakhfifNosazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Takhsis.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TaqsitD.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TaqsitM.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TarhTafsili.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Tarifha.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\tblDeviceDirectPrint.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\temp.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Template.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TemplateControl.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TF_GetInfoMalekin_Result.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Tozihat.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Traffic.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TrafficDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TrafficFormula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TrafficMaster.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TypeStructuresMaterials.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\TypeStructuresMaterialsDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UpdateDaramadCode.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UserLogined.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UserPaymentInfo.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UsersLoginRestrictions.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UserSource.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\User_Of_Groh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\UseTypeSyncTable.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\View_DarkhsTest.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\VoteViolationType.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Voting.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\VW_MalekinAvaldore.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Accesslevel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_amlakShahrdari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Apartman_Malkin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_ArzeshAmlak.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AsnafAvarez.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AsnafCalculateAll.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AsnafCalculateAllLog.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AsnafDaramadFish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AsnafSiyahe.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AvalDoreAsnaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AvalDore_Daramad.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Avarez.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_AvarezDeleted.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Avarez_Jobs_Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Baygani.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_CarvingHaffari.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadFishExport.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadFishExportTraffic.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadFormulGardeshKar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadFormulGardeshKarDet.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadFormulGardeshKarWhere.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadMFishMDTaqsit.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_DaramadTaqsitParvande.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DaramadTraffic.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_Daramad_Check.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Daramad_DF_parvande.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_Daramad_DTaqsit.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_Daramad_Fish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Daramad_Mfish_Dfish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_DarkhastMarahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Darkhast_Malkin_Daramad.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Dastresi_groh_user.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_ebtals.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Ekhtar_Mohandesan.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_ElamBazdid_Darkhast.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Erja.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_ExpertsFullInfo.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_e_p_s.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_FishSabti.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_FishTotalCalc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_FullSearchInParvandeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_GetAllMalekinNames.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_GetDataForMapGIS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_GetDataForMapGIS_Sorkhrud.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_GetDataMelkForMapGIS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_GetDataSakhtemanForGIS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_govahi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_gozaresh_made100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Groh_Of_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_IncomeReceipts.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_InfoMalekinForMahasebeKoli_Nosazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Karbaran_Groh_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Karbaran_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_karbariFormulaSetting.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_karshenasan_Made100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_KartableM100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Khalaf_Daramad_Formol.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_ListShoghl.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_logMohasebeKoliNosazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_LogTotalCalc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_M100BazdidSakhteman.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_M100Bazdid_Apartman.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_M100_InFrontage.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Made100_Badvi_tajdidNazar.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Made100_Ray.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Made100_RayOnKhalaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Made100_Ray_khalaf.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Mamor_Bazdid.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Marahel_Bargasht.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Marahel_DestMarhaleh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Marahel_Erja.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_marhaleh_marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Marhale_Desc.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_masahatBazdid.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_melk_Malekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_NosaziFish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_ParvandehHistory.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Parvaneh_Erja.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_RepInMapGIS.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_RepSodorRay.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Rep_Made100Ray.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Rep_parvaneh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Rep_Vosol_Ba_Tarikh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_RuleCalcParameter.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_RuleCalculated.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_RuleDeclaration.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_Rules.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_RulesDetail.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Sakhteman_Info.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Sakhteman_Malekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_SearchKarshenasanM100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_SearchReportMade100Ray.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_SearchSessionMade100.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_SelectFormula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Senfi_Malkin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_Shenase_SodorFish.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_shopMelkINmalekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_SimpleSearchInParvandeh.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_sodorRay.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_subSign.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_SurveyConfirm.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_SurveyTransferAll.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_TakhfifDaramad.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_TakhfifNosazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_TaqsitD.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_TaqsitM.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_Tozihat_Marahel.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_TrafficFormula.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_TurnOverNosazi.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_UnionMalekin.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\v_UpdateDaramadCode_Bodje.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_userGroup.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_UserSigners.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\V_WorkExperience.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Warnings.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\YearCoefficientRenovation.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\YearZaribTadil.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Zavabet.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -15273,6 +16839,16 @@
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Models\AmardShahrsaziMaryanaj.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>AmardShahrsaziMaryanaj.Context.cs</LastGenOutput>
+      <DependentUpon>AmardShahrsaziMaryanaj.edmx</DependentUpon>
+    </Content>
+    <Content Include="Models\AmardShahrsaziMaryanaj.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>AmardShahrsaziMaryanaj.edmx</DependentUpon>
+      <LastGenOutput>AmardShahrsaziMaryanaj.cs</LastGenOutput>
+    </Content>
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -50430,6 +52006,13 @@
     <Content Include="Content\fonts\arial-unicode-ms-regular\0-255.pbf" />
     <Content Include="EsriAPI\4.30\esri\widgets\FeatureTable\t9n\FeatureTable_pe.json" />
     <Content Include="EsriAPI\4.30\esri\widgets\FeatureTable\t9n\FeatureTable_ORen.json" />
+    <EntityDeploy Include="Models\AmardShahrsaziMaryanaj.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>AmardShahrsaziMaryanaj.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <Content Include="Models\AmardShahrsaziMaryanaj.edmx.diagram">
+      <DependentUpon>AmardShahrsaziMaryanaj.edmx</DependentUpon>
+    </Content>
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\EsriSampleCode\Map5.js" />
     <Content Include="Scripts\EsriSampleCode\Map4.js" />
@@ -50468,7 +52051,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />
@@ -50496,6 +52078,9 @@
     <Content Include="Scripts\bootstrap.bundle.js.map" />
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
