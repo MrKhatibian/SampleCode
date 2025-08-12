@@ -53,5 +53,27 @@ namespace SampleCode.Controllers
             return Json(new { result = message }, JsonRequestBehavior.AllowGet);
 
         }
+
+
+
+        // Update Darkhast Value
+        [HttpPost]
+        public ActionResult updateDarkhast(string darkhastNewValue)
+        {
+            if (string.IsNullOrEmpty(darkhastNewValue))
+                return Json(new { success = false, message = "Invalid Data" });
+
+            try
+            {
+                // Your update logic here
+
+                return Json(new { success = true, message = "Updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
     }
 }

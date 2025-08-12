@@ -20,9 +20,9 @@ const view = new MapView({
 
 const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
 
-const darkhastFLayer = new FeatureLayer({url: `${url}/0`});
+const darkhastFLayer = new FeatureLayer({ url: `${url}/0` });
 
-const arseFLayer = new FeatureLayer({ url: `${url}/1`});
+const arseFLayer = new FeatureLayer({ url: `${url}/1` });
 
 const graphicsLayer = new GraphicsLayer();
 
@@ -30,16 +30,16 @@ map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
 
 async function getPolygonByAttribute(field, value) {
     debugger;
-    
+
     const query = arseFLayer.createQuery();
     query.where = `${field} = '${value}'`;
     query.returnGeometry = true;
     query.outfields = ["*"];
     query.outSpatialReference = view.spatialReference;
-    
-    const result = await arseFLayer.queryFeatures(query);        
+
+    const result = await arseFLayer.queryFeatures(query);
     return result.features.length ? result.features[0].geometry : null;
-    
+
 }
 
 // Generate a unique random point inside the polygon
@@ -110,15 +110,16 @@ async function createDarkhastPoint(nCode) {
     console.log("Generated point geometry:", randomPoint.toJSON());
 }
 
-document.getElementById("btnSabtDarkhast").addEventListener("click", () => {    
+document.getElementById("btnSabtDarkhast").addEventListener("click", () => {
     createDarkhastPoint("501-8-4-28-0-0-0");
 })
-
+let data = { test: "Hi" };
 document.getElementById("testConnection").addEventListener("click", function () {
-    //alert("Hi Mohammad");
+    alert(data.test);
     debugger;
     $.ajax({
         cache: false,
+        data: data,
         type: "get",
         datatype: "JSON",
         url: '/Home/testConnection',
@@ -137,4 +138,22 @@ document.getElementById("testConnection").addEventListener("click", function () 
     //    .catch(error => {
     //        alert("Error: " + error);
     //    });
+});
+
+document.getElementById("btnUpdate").addEventListener("click", () => {
+    //alert("hi");
+    debugger;
+    $.ajax({
+        cache: false,
+        type: "POST",  // Changed from GET to POST
+        dataType: "json",    // lowercase 't' in dataType
+        url: '/Home/updateDarkhast',
+        data: { darkhastNewValue: "someValue" }, // Send data to the server
+        success: function (data) {
+            alert(data.message); // changed to match the controller's return
+        },
+        error: function (xhr, status, error) {
+            alert("Error: " + error);
+        }
+    });
 });
