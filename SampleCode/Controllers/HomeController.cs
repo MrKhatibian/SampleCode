@@ -76,6 +76,11 @@ namespace SampleCode.Controllers
                 if (feature == null)
                     return Json(new { success = false, message = "Not find Darkhast" });
 
+                // Update Field Value
+                feature.noedarkhast = darkhastNewValue.noedarkhast;
+
+                _dbContext.SaveChanges();
+
                 return Json(new { success = true, message = feature.noedarkhast });
             }
             catch (Exception ex)

@@ -5,6 +5,7 @@ import GraphicsLayer from "../../EsriAPI/4.30/@arcgis/core/layers/GraphicsLayer.
 import * as geometryEngine from "../../EsriAPI/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
 import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
+import * as webMercatorUtils from "../../EsriAPI/4.30/@arcgis/core/geometry/support/webMercatorUtils.js";
 import Query from "../../EsriAPI/4.30/@arcgis/core/rest/support/Query.js";
 import MapImageLayer from "../../EsriAPI/4.30/@arcgis/core/layers/MapImageLayer.js";
 
@@ -100,6 +101,8 @@ async function generateValidPointInPolygon(polygon) {
     return null;
 }
 
+let wkt = "";
+
 // Main logic
 async function createDarkhastPoint(nCode) {
     debugger;
@@ -124,8 +127,22 @@ async function createDarkhastPoint(nCode) {
     });
 
     graphicsLayer.add(pointGraphic);
+    debugger;
+    // Convert randomPoint x y to WGS84 lat/log
+    const utmPoint = webMercatorUtils.webMercatorToGeographic(randomPoint); 
+
+    // Define SpatialRefrence
+    proj4.defs("EPSG:3857", "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +no_defs");
+    proj4.defs("EPSG:32639", "+proj=utm +zone=39 +datum=WGS84 +units=m +no_defs");
+
+    // Convert SpatialRefrence from WebMercator to UTM N39
+    const [xUTM, yUTM] = proj4("EPSG:3857", "EPSG:32639", [randomPoint.x, randomPoint.y]);
+
+    // Create geometry for set geometry's field value
+    wkt = `POINT(${xUTM} ${yUTM} 0)`;
 
     console.log("Generated point geometry:", randomPoint.toJSON());
+    console.log("Generated point geometry:", wkt);
 }
 
 document.getElementById("btnSabtDarkhast").addEventListener("click", () => {
@@ -157,7 +174,8 @@ document.getElementById("testConnection").addEventListener("click", function () 
     //        alert("Error: " + error);
     //    });
 });
-let darkhastNewValue = { shodarkhast: 2217 };
+let darkhastNewValue = { shodarkhast: 1097, noedarkhast: "پروانه1" }
+
 document.getElementById("btnUpdate").addEventListener("click", () => {
     //alert("hi");
     debugger;
@@ -166,7 +184,12 @@ document.getElementById("btnUpdate").addEventListener("click", () => {
         type: "POST",  // Changed from GET to POST
         dataType: "json",    // lowercase 't' in dataType
         url: '/Home/updateDarkhast',
-        data: darkhastNewValue, // Send data to the server
+        //data: darkhastNewValue, // Send data to the server
+        data: JSON.stringify({
+            shodarkhast: 1097,       // your Id
+            Shape: wkt       // POINT(X Y)
+        }),
+        contentType: 'application/json; charset=utf-8',
         success: function (data) {
             alert(data.message); // changed to match the controller's return
         },
