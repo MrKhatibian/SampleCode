@@ -67,7 +67,7 @@ namespace SampleCode.Controllers
             {
                 // Your update logic here
 
-                return Json(new { success = true, message = "Updated successfully" });
+                return Json(new { success = true, message = darkhastNewValue });
             }
             catch (Exception ex)
             {
