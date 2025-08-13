@@ -23,14 +23,14 @@ const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapS
 const darkhastFLayer = new FeatureLayer({
     url: `${url}/0`,
     popupTemplate: {
-        title: "Darkhast",       
+        title: "Darkhast",
         content: [{
             type: "fields", // Autocasts as new FieldsContent()
             // Autocasts as new FieldInfo[]
             fieldInfos: [
                 {
                     fieldName: "shodarkhast",
-                    label: "Shomare Darkhast",                    
+                    label: "Shomare Darkhast",
                 },
                 {
                     fieldName: "noedarkhast",
@@ -157,7 +157,7 @@ document.getElementById("testConnection").addEventListener("click", function () 
     //        alert("Error: " + error);
     //    });
 });
-
+let darkhastNewValue = { shodarkhast: 2217 };
 document.getElementById("btnUpdate").addEventListener("click", () => {
     //alert("hi");
     debugger;
@@ -166,7 +166,7 @@ document.getElementById("btnUpdate").addEventListener("click", () => {
         type: "POST",  // Changed from GET to POST
         dataType: "json",    // lowercase 't' in dataType
         url: '/Home/updateDarkhast',
-        data: { darkhastNewValue: "ajax say Hi" }, // Send data to the server
+        data: darkhastNewValue, // Send data to the server
         success: function (data) {
             alert(data.message); // changed to match the controller's return
         },
