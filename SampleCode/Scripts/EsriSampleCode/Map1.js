@@ -8,7 +8,7 @@ import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
 import * as webMercatorUtils from "../../EsriAPI/4.30/@arcgis/core/geometry/support/webMercatorUtils.js";
 import Query from "../../EsriAPI/4.30/@arcgis/core/rest/support/Query.js";
 import MapImageLayer from "../../EsriAPI/4.30/@arcgis/core/layers/MapImageLayer.js";
-
+import * as project from "../../EsriAPI/4.30/@arcgis/core/geometry/projection.js";
 
 const map = new Map({ basemap: "osm" });
 
@@ -54,7 +54,7 @@ async function getPolygonByAttribute(field, value) {
     query.where = `${field} = '${value}'`;
     query.returnGeometry = true;
     query.outfields = ["*"];
-    query.outSpatialReference = view.spatialReference;
+    query.outSpatialReference = arseFLayer.spatialReference;
 
     const result = await arseFLayer.queryFeatures(query);
     return result.features.length ? result.features[0].geometry : null;
@@ -62,8 +62,7 @@ async function getPolygonByAttribute(field, value) {
 }
 
 // Generate a unique random point inside the polygon
-async function generateValidPointInPolygon(polygon) {
-    debugger;
+async function generateValidPointInPolygon(polygon) {    
     const extent = polygon.extent;
     let attempts = 0;
     const maxAttempts = 1000;
@@ -120,28 +119,19 @@ async function createDarkhastPoint(nCode) {
         symbol: {
             type: "simple-marker",
             color: "red",
-            size: 10
+            size: 5
         }
     });
 
     graphicsLayer.add(pointGraphic);
     debugger;
-    // Convert randomPoint x y to WGS84 lat/log
-    const utmPoint = webMercatorUtils.webMercatorToGeographic(randomPoint);
+    // آماده کردن WKT (همان SRID لایه)
+    const wkt = `POINT(${randomPoint.x} ${randomPoint.y} 0)`;
 
-    // Define SpatialRefrence
-    proj4.defs("EPSG:3857", "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +no_defs");
-    proj4.defs("EPSG:32639", "+proj=utm +zone=39 +datum=WGS84 +units=m +no_defs");
+    // اگر نیاز به WGS84 داشتید:
+    // const wgs84Point = project(randomPoint, { wkid: 4326 });
 
-    // Convert SpatialRefrence from WebMercator to UTM N39
-    const [xUTM, yUTM] = proj4("EPSG:3857", "EPSG:32639", [randomPoint.x, randomPoint.y]);
-
-    // Create geometry for set geometry's field value
-    const wkt = `POINT(${xUTM} ${yUTM} 0)`;
-
-    //console.log("Generated point geometry:", randomPoint.toJSON());
-    //console.log("Generated point geometry:", wkt);
-    return `POINT(${xUTM} ${yUTM} 0)`;
+    return wkt;
 }
 
 document.getElementById("btnSabtDarkhast").addEventListener("click", async () => {
@@ -188,8 +178,8 @@ document.getElementById("btnUpdate").addEventListener("click", async () => {
         url: '/Home/updateDarkhast',
         //data: darkhastNewValue, // Send data to the server
         data: JSON.stringify({
-            shodarkhast: 1531,       // your Id
-            address: shape,       // POINT(X Y)
+            id: 1097,       // your Id    
+            Shape: shape
         }),
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
