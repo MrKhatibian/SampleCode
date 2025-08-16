@@ -1,6 +1,7 @@
 ﻿using SampleCode.Models;
 using System;
 using System.Configuration;
+using System.Data.Spatial;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
@@ -76,18 +77,17 @@ namespace SampleCode.Controllers
                 if (feature == null)
                     return Json(new { success = false, message = "Not find Darkhast" });
 
-                // Update Field Value
-                feature.noedarkhast = darkhastNewValue.noedarkhast;
+                // Convert string WKT into DbGeometry
+                feature.Shape = DbGeometry.FromText(darkhastNewValue.address, 32639);
 
                 _dbContext.SaveChanges();
 
-                return Json(new { success = true, message = feature.noedarkhast });
+                return Json(new { success = true, message = "Successful" });
             }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
     }
 }
