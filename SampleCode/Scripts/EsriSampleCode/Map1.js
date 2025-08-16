@@ -178,8 +178,8 @@ document.getElementById("btnUpdate").addEventListener("click", async () => {
         url: '/Home/updateDarkhast',
         //data: darkhastNewValue, // Send data to the server
         data: JSON.stringify({
-            id: 1097,       // your Id    
-            Shape: shape
+            shodarkhast: 1097,       // your Id    
+            address: shape
         }),
         contentType: 'application/json; charset=utf-8',
         success: function (data) {

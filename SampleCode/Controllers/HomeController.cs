@@ -45,12 +45,12 @@ namespace SampleCode.Controllers
                 using (SqlConnection conn = new SqlConnection(connString))
                 {
                     conn.Open();
-                    message = "✅ Connection Successful: " + conn.ServerVersion;
+                    message = "Connection Successful: " + conn.ServerVersion;
                 }
             }
             catch (Exception ex)
             {
-                message = "❌ Connection failed: " + ex.Message;
+                message = "Connection failed: " + ex.Message;
             }
 
             return Json(new { result = message }, JsonRequestBehavior.AllowGet);
