@@ -101,8 +101,6 @@ async function generateValidPointInPolygon(polygon) {
     return null;
 }
 
-let wkt = "";
-
 // Main logic
 async function createDarkhastPoint(nCode) {
     debugger;
@@ -129,7 +127,7 @@ async function createDarkhastPoint(nCode) {
     graphicsLayer.add(pointGraphic);
     debugger;
     // Convert randomPoint x y to WGS84 lat/log
-    const utmPoint = webMercatorUtils.webMercatorToGeographic(randomPoint); 
+    const utmPoint = webMercatorUtils.webMercatorToGeographic(randomPoint);
 
     // Define SpatialRefrence
     proj4.defs("EPSG:3857", "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +no_defs");
@@ -139,14 +137,16 @@ async function createDarkhastPoint(nCode) {
     const [xUTM, yUTM] = proj4("EPSG:3857", "EPSG:32639", [randomPoint.x, randomPoint.y]);
 
     // Create geometry for set geometry's field value
-    wkt = `POINT(${xUTM} ${yUTM} 0)`;
+    const wkt = `POINT(${xUTM} ${yUTM} 0)`;
 
-    console.log("Generated point geometry:", randomPoint.toJSON());
-    console.log("Generated point geometry:", wkt);
+    //console.log("Generated point geometry:", randomPoint.toJSON());
+    //console.log("Generated point geometry:", wkt);
+    return `POINT(${xUTM} ${yUTM} 0)`;
 }
 
-document.getElementById("btnSabtDarkhast").addEventListener("click", () => {
-    createDarkhastPoint("501-8-4-28-0-0-0");
+document.getElementById("btnSabtDarkhast").addEventListener("click", async () => {
+    const shp = await createDarkhastPoint("501-8-4-28-0-0-0");
+    console.log("shp:", shp);
 })
 let data = { test: "Hi" };
 document.getElementById("testConnection").addEventListener("click", function () {
@@ -176,9 +176,11 @@ document.getElementById("testConnection").addEventListener("click", function () 
 });
 let darkhastNewValue = { shodarkhast: 1097, noedarkhast: "پروانه1" }
 
-document.getElementById("btnUpdate").addEventListener("click", () => {
+document.getElementById("btnUpdate").addEventListener("click", async () => {
     //alert("hi");
     debugger;
+    const shape = await createDarkhastPoint("501-8-4-28-0-0-0");
+
     $.ajax({
         cache: false,
         type: "POST",  // Changed from GET to POST
@@ -186,14 +188,14 @@ document.getElementById("btnUpdate").addEventListener("click", () => {
         url: '/Home/updateDarkhast',
         //data: darkhastNewValue, // Send data to the server
         data: JSON.stringify({
-            shodarkhast: 1097,       // your Id
-            Shape: wkt       // POINT(X Y)
+            shodarkhast: 1531,       // your Id
+            address: shape,       // POINT(X Y)
         }),
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
             alert(data.message); // changed to match the controller's return
         },
-        error: function (xhr, status, error) {
+        error: function (error) {
             alert("Error: " + error);
         }
     });
