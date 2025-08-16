@@ -12,7 +12,7 @@ namespace SampleCode
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Map", id = UrlParameter.Optional }
+                defaults: new { controller = "Home", action = "Map1", id = UrlParameter.Optional }
             );
         }
     }

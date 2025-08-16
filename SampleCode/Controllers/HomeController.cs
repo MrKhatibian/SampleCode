@@ -1,6 +1,8 @@
-﻿using System;
+﻿using SampleCode.Models;
+using System;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web.Mvc;
 
 namespace SampleCode.Controllers
@@ -53,5 +55,39 @@ namespace SampleCode.Controllers
             return Json(new { result = message }, JsonRequestBehavior.AllowGet);
 
         }
+
+
+        private readonly AmardShahrsaziMaryanajEntities _dbContext;
+        public HomeController()
+        {
+            _dbContext = new AmardShahrsaziMaryanajEntities();
+        }
+        // Update Darkhast Value
+        [HttpPost]
+        public ActionResult updateDarkhast(Darkhast darkhastNewValue)
+        {
+            if (darkhastNewValue is null)
+                return Json(new { success = false, message = "Invalid Data" });
+
+            try
+            {
+                // Your update logic here
+                var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.shodarkhast);
+                if (feature == null)
+                    return Json(new { success = false, message = "Not find Darkhast" });
+
+                // Update Field Value
+                feature.noedarkhast = darkhastNewValue.noedarkhast;
+
+                _dbContext.SaveChanges();
+
+                return Json(new { success = true, message = feature.noedarkhast });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
     }
 }
