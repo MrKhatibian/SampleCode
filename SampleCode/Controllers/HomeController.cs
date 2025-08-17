@@ -63,9 +63,17 @@ namespace SampleCode.Controllers
         {
             _dbContext = new AmardShahrsaziMaryanajEntities();
         }
+
+        public class darkhastValues
+        {
+            public int Shod { get; set; }
+            public string wkt { get; set; }
+            public int wkid { get; set; }
+        }
+
         // Update Darkhast Value
         [HttpPost]
-        public ActionResult updateDarkhast(Darkhast darkhastNewValue)
+        public ActionResult updateDarkhast(darkhastValues darkhastNewValue)
         {
             if (darkhastNewValue is null)
                 return Json(new { success = false, message = "Invalid Data" });
@@ -73,12 +81,12 @@ namespace SampleCode.Controllers
             try
             {
                 // Your update logic here
-                var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.shodarkhast);
+                var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.Shod);
                 if (feature == null)
                     return Json(new { success = false, message = "Not find Darkhast" });
 
                 // Convert string WKT into DbGeometry
-                feature.Shape = DbGeometry.FromText(darkhastNewValue.address, 32639);
+                feature.Shape = DbGeometry.FromText(darkhastNewValue.wkt, darkhastNewValue.wkid);
 
                 _dbContext.SaveChanges();
 

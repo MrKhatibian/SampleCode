@@ -1,6 +1,6 @@
-﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
-import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
-import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
+﻿import Map from "../../EsriAPI/4.30/@arcgis/core/Map.js";
+import MapView from "../../EsriAPI/4.30/@arcgis/core/views/MapView.js";
+import FeatureLayer from "../../EsriAPI/4.30/@arcgis/core/layers/FeatureLayer.js";
 import GraphicsLayer from "../../EsriAPI/4.30/@arcgis/core/layers/GraphicsLayer.js"
 import * as geometryEngine from "../../EsriAPI/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
@@ -47,9 +47,7 @@ const graphicsLayer = new GraphicsLayer();
 
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
 
-async function getPolygonByAttribute(field, value) {
-    debugger;
-
+async function getPolygonByAttribute(field, value) {    
     const query = arseFLayer.createQuery();
     query.where = `${field} = '${value}'`;
     query.returnGeometry = true;
@@ -101,8 +99,7 @@ async function generateValidPointInPolygon(polygon) {
 }
 
 // Main logic
-async function createDarkhastPoint(nCode) {
-    debugger;
+async function createDarkhastPoint(nCode) {    
     graphicsLayer.removeAll();
 
     const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
@@ -123,15 +120,18 @@ async function createDarkhastPoint(nCode) {
         }
     });
 
-    graphicsLayer.add(pointGraphic);
-    debugger;
-    // آماده کردن WKT (همان SRID لایه)
-    const wkt = `POINT(${randomPoint.x} ${randomPoint.y} 0)`;
+    graphicsLayer.add(pointGraphic);    
 
-    // اگر نیاز به WGS84 داشتید:
+    // Create shape for Point     
+    const shape = {
+        wkt: `POINT(${randomPoint.x} ${randomPoint.y} 0)`,
+        wkid: randomPoint.spatialReference.wkid
+    };
+
+    // If need for Projection
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 
-    return wkt;
+    return shape;
 }
 
 document.getElementById("btnSabtDarkhast").addEventListener("click", async () => {
@@ -164,13 +164,10 @@ document.getElementById("testConnection").addEventListener("click", function () 
     //        alert("Error: " + error);
     //    });
 });
-let darkhastNewValue = { shodarkhast: 1097, noedarkhast: "پروانه1" }
 
 document.getElementById("btnUpdate").addEventListener("click", async () => {
-    //alert("hi");
     debugger;
-    const shape = await createDarkhastPoint("501-8-4-28-0-0-0");
-
+    const {wkt, wkid} = await createDarkhastPoint("501-8-4-28-0-0-0");    
     $.ajax({
         cache: false,
         type: "POST",  // Changed from GET to POST
@@ -178,8 +175,9 @@ document.getElementById("btnUpdate").addEventListener("click", async () => {
         url: '/Home/updateDarkhast',
         //data: darkhastNewValue, // Send data to the server
         data: JSON.stringify({
-            shodarkhast: 1097,       // your Id    
-            address: shape
+            ShoD: 1097,       // your Id    
+            wkt: wkt,
+            wkid: wkid
         }),
         contentType: 'application/json; charset=utf-8',
         success: function (data) {
