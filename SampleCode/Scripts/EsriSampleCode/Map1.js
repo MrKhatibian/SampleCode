@@ -8,17 +8,30 @@ import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
 import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
 import Home from "../../EsriAPI/4.30/@arcgis/core/widgets/Home.js";
 import * as project from "../../EsriAPI/4.30/@arcgis/core/geometry/projection.js";
+import Extent from "../../EsriAPI/4.30/@arcgis/core/geometry/Extent.js";
 
 // === Map Init ===
 const map = new Map({
-    basemap: "osm"    
+    basemap: "osm"
 });
 
+
+// محدوده نمایش (Extent)
+const cityExtent = new Extent({
+    xmin: 48.440, ymin: 34.826,
+    xmax: 48.484, ymax: 34.842,
+    spatialReference: { wkid: 4326 }
+});
 const view = new MapView({
     map,
     container: "mapView",
     center: [48.464869, 34.834155],
     zoom: 14,
+    constraints: {
+        geometry: cityExtent,
+        minZoom: 14,
+        //maxZoom: 23
+    }
 });
 view.ui.remove("attribution");
 const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
@@ -42,7 +55,7 @@ const darkhastFLayer = new FeatureLayer({
 
 const arseFLayer = new FeatureLayer({ url: `${url}/1` });
 const graphicsLayer = new GraphicsLayer();
-let homeWidget = new Home({view: view});
+let homeWidget = new Home({ view: view });
 
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
 view.ui.add(homeWidget, "top-left")
