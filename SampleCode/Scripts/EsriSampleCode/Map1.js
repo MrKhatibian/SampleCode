@@ -6,10 +6,13 @@ import GraphicsLayer from "../../EsriAPI/4.30/@arcgis/core/layers/GraphicsLayer.
 import * as geometryEngine from "../../EsriAPI/4.30/@arcgis/core/geometry/geometryEngine.js";
 import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
 import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
+import Home from "../../EsriAPI/4.30/@arcgis/core/widgets/Home.js";
 import * as project from "../../EsriAPI/4.30/@arcgis/core/geometry/projection.js";
 
 // === Map Init ===
-const map = new Map({ basemap: "osm" });
+const map = new Map({
+    basemap: "osm"    
+});
 
 const view = new MapView({
     map,
@@ -17,9 +20,8 @@ const view = new MapView({
     center: [48.464869, 34.834155],
     zoom: 14,
 });
-
-const url =
-    "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
+view.ui.remove("attribution");
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
 
 // === Layers ===
 const darkhastFLayer = new FeatureLayer({
@@ -30,8 +32,8 @@ const darkhastFLayer = new FeatureLayer({
             {
                 type: "fields",
                 fieldInfos: [
-                    { fieldName: "shodarkhast", label: "Shomare Darkhast" },
-                    { fieldName: "noedarkhast", label: "Noe Darkhast" },
+                    { fieldName: "shodarkhast", label: "شماره درخواست" },
+                    { fieldName: "noedarkhast", label: "نوع درخواست" },
                 ],
             },
         ],
@@ -40,7 +42,10 @@ const darkhastFLayer = new FeatureLayer({
 
 const arseFLayer = new FeatureLayer({ url: `${url}/1` });
 const graphicsLayer = new GraphicsLayer();
+let homeWidget = new Home({view: view});
+
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
+view.ui.add(homeWidget, "top-left")
 
 // === Helpers ===
 async function getPolygonByAttribute(field, value) {
