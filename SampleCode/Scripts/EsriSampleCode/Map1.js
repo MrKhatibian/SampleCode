@@ -8,22 +8,38 @@ import Point from "../../EsriAPI/4.30/@arcgis/core/geometry/Point.js";
 import Graphic from "../../EsriAPI/4.30/@arcgis/core/Graphic.js";
 import Home from "../../EsriAPI/4.30/@arcgis/core/widgets/Home.js";
 import * as project from "../../EsriAPI/4.30/@arcgis/core/geometry/projection.js";
+import Extent from "../../EsriAPI/4.30/@arcgis/core/geometry/Extent.js";
+import Sketch from "../../EsriAPI/4.30/@arcgis/core/widgets/Sketch.js";
+import * as reactiveUtils from "../../EsriAPI/4.30/@arcgis/core/core/reactiveUtils.js";
 
 // === Map Init ===
 const map = new Map({
-    basemap: "osm"    
+    basemap: "osm"
 });
 
+
+// === View Extent ====
+const cityExtent = new Extent({
+    xmin: 48.440, ymin: 34.826,
+    xmax: 48.484, ymax: 34.842,
+    spatialReference: { wkid: 4326 }
+});
 const view = new MapView({
     map,
     container: "mapView",
     center: [48.464869, 34.834155],
     zoom: 14,
+    constraints: {
+        geometry: cityExtent,
+        minZoom: 14,
+        //maxZoom: 23
+    }
 });
 view.ui.remove("attribution");
-const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
 
 // === Layers ===
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
+
 const darkhastFLayer = new FeatureLayer({
     url: `${url}/0`,
     popupTemplate: {
@@ -42,10 +58,82 @@ const darkhastFLayer = new FeatureLayer({
 
 const arseFLayer = new FeatureLayer({ url: `${url}/1` });
 const graphicsLayer = new GraphicsLayer();
-let homeWidget = new Home({view: view});
 
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
-view.ui.add(homeWidget, "top-left")
+
+// === Add Home Widget ===
+// Wait until the layer is loaded before creating Home widget
+darkhastFLayer.when(() => {
+    let homeWidget = new Home({
+        view: view,
+        viewpoint: {
+            targetGeometry: darkhastFLayer.fullExtent
+        }
+    });
+
+    view.ui.add(homeWidget, "top-left");
+});
+
+// === Sketch Init ===
+const sketchLayer = new GraphicsLayer();
+map.add(sketchLayer);
+
+const sketch = new Sketch({
+    layer: sketchLayer,
+    view: view,
+    creationMode: "single",
+    visibleElements: {
+        selectionTools: { "rectangle": true },
+        settingsMenu: false
+    }
+});
+view.ui.add(sketch, "top-right");
+
+// دکمه برای فعال‌سازی انتخاب
+const btnSelect = document.createElement("button");
+btnSelect.innerText = "انتخاب محدوده";
+btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
+view.ui.add(btnSelect, "top-right");
+
+// وقتی روی دکمه کلیک شد، ابزار Rectangle فعال شود
+btnSelect.addEventListener("click", () => {
+    sketch.create("rectangle");
+});
+
+// وقتی رسم تمام شد
+reactiveUtils.when(() => sketch.state === "active", () => {
+    sketch.on("create", async (event) => {
+        if (event.state === "complete") {
+            const geometry = event.graphic.geometry;
+
+            // پاک‌کردن محدوده قبلی
+            sketchLayer.removeAll();
+            sketchLayer.add(event.graphic);
+
+            // جستجوی فیچرهای داخل محدوده
+            const query = darkhastFLayer.createQuery();
+            query.geometry = geometry;
+            query.spatialRelationship = "intersects";
+            query.returnGeometry = true;
+            query.outFields = ["*"];
+
+            const result = await darkhastFLayer.queryFeatures(query);
+
+            // نمایش انتخاب‌شده‌ها
+            graphicsLayer.removeAll();
+            result.features.forEach((f) => {
+                f.symbol = {
+                    type: "simple-fill",
+                    color: [0, 0, 255, 0.2],
+                    outline: { color: "blue", width: 2 }
+                };
+                graphicsLayer.add(f);
+            });
+
+            console.log("Selected features:", result.features);
+        }
+    });
+});
 
 // === Helpers ===
 async function getPolygonByAttribute(field, value) {
