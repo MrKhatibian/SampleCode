@@ -3,7 +3,7 @@ import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
-
+import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -15,7 +15,7 @@ arseILayer.when(() => {
     console.error("Error loading arseILayer:", error);
 });
 
-// Initialize Darkhast FeatureLayer
+// === Initialize Darkhast FeatureLayer ===
 const darkhastFLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
@@ -94,13 +94,14 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
+
 let featureTable;
 darkhastFLayer.when(() => {
     console.log("darkhastFLayer loaded successfully.");
-    if (darkhastFLayer.fullExtent) {
-        view.goTo(darkhastFLayer.fullExtent, { animate: false });
-        //view.extent = darkhastFLayer.fullExtent;
-    }
+    //if (darkhastFLayer.fullExtent) {
+    //    view.goTo(darkhastFLayer.fullExtent, { animate: false });
+    //    //view.extent = darkhastFLayer.fullExtent;
+    //}
 
     const allFields = darkhastFLayer.fields;
 
@@ -117,7 +118,7 @@ darkhastFLayer.when(() => {
         };
     });
 
-    // Initialize FeatureTable
+    // === Initialize FeatureTable ===
     featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
@@ -130,13 +131,13 @@ darkhastFLayer.when(() => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
-// Initialize Map
+// === Initialize Map ===
 const map = new Map({
     basemap: "osm",
     layers: [arseILayer, darkhastFLayer]
 });
 
-// Initialize View
+// === Initialize View ===
 let view = new MapView({
     container: "map",
     map: map,
@@ -147,6 +148,32 @@ view.when(() => {
     console.log("MapView is ready");
 }).catch((error) => {
     console.error("MapView failed to load:", error);
+});
+
+// Set View extent to Darkhst featureLayer extent
+view.whenLayerView(darkhastFLayer).then(function () {
+    view.goTo(darkhastFLayer.fullExtent, {
+        animate: false
+    }).catch(function (error) {
+        console.error("Extent projection error: ", error);
+    });
+});
+
+
+// === Remove osm Attribution ===
+view.ui.remove("attribution");
+
+// === Add Home Widget ===
+// Wait until the layer is loaded before creating Home widget
+darkhastFLayer.when(() => {
+    let homeWidget = new Home({
+        view: view,
+        viewpoint: {
+            targetGeometry: darkhastFLayer.fullExtent
+        }
+    });
+
+    view.ui.add(homeWidget, "top-left");
 });
 
 // Set Fields Name

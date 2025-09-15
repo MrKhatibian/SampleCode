@@ -58,10 +58,21 @@ const darkhastFLayer = new FeatureLayer({
 
 const arseFLayer = new FeatureLayer({ url: `${url}/1` });
 const graphicsLayer = new GraphicsLayer();
-let homeWidget = new Home({ view: view });
 
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
-view.ui.add(homeWidget, "top-left")
+
+// === Add Home Widget ===
+// Wait until the layer is loaded before creating Home widget
+darkhastFLayer.when(() => {
+    let homeWidget = new Home({
+        view: view,
+        viewpoint: {
+            targetGeometry: darkhastFLayer.fullExtent
+        }
+    });
+
+    view.ui.add(homeWidget, "top-left");
+});
 
 // === Sketch Init ===
 const sketchLayer = new GraphicsLayer();
