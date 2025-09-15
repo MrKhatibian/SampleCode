@@ -6,8 +6,8 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer",
-    sublayers: [{ id: 1 }]
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
+    sublayers: [{ id: 9 }]
 });
 arseILayer.when(() => {
     console.log("arseILayer loaded successfully.");
@@ -17,7 +17,7 @@ arseILayer.when(() => {
 
 // Initialize Darkhast FeatureLayer
 const darkhastFLayer = new FeatureLayer({
-    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer/0",
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
         type: "simple",  // autocasts as new SimpleRenderer()
         symbol: {
@@ -98,7 +98,8 @@ let featureTable;
 darkhastFLayer.when(() => {
     console.log("darkhastFLayer loaded successfully.");
     if (darkhastFLayer.fullExtent) {
-        view.goTo(darkhastFLayer.fullExtent);
+        view.goTo(darkhastFLayer.fullExtent, { animate: false });
+        //view.extent = darkhastFLayer.fullExtent;
     }
 
     const allFields = darkhastFLayer.fields;
