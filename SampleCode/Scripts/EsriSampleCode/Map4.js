@@ -179,20 +179,23 @@ darkhastFLayer.when(() => {
 
     view.ui.add(homeWidget, "top-left");
 });
-
+// === Initialize btn link Map to Table ===
 const btnSyncMap = document.getElementById("btnSyncMap");
 view.ui.add(btnSyncMap, "top-left");
 const calIcon = btnSyncMap.querySelector("calcite-icon");
 
-let linkMap2Table = false; // حالت اولیه
+let linkMap2Table = false;
 btnSyncMap.addEventListener("click", () => {
-    linkMap2Table = !linkMap2Table; // وضعیت رو برعکس کن
-
+    linkMap2Table = !linkMap2Table;
     if (linkMap2Table) {
         // Acttive 
         btnSyncMap.title = "Unlinked Map to Table";
         btnSyncMap.style.color = "green";        
         calIcon.icon = "online"; 
+
+        // Map extent changed
+        query.geometry = view.extent;
+        updateFeatures();
     } else {
         // Passive 
         btnSyncMap.title = "Linked Map to Table";
@@ -492,15 +495,6 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     }
 }
-
-// Event: map extent changed
-const mapExtent = document.getElementById("mapExtent");
-mapExtent.addEventListener('change', () => {
-    if (mapExtent.checked) {
-        query.geometry = view.extent;
-        updateFeatures();
-    }
-});
 
 view.watch("stationary", function (isStationary) {
     if (isStationary && linkMap2Table) {
