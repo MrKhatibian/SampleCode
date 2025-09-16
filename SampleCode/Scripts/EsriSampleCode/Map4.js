@@ -4,6 +4,7 @@ import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
+import Extent from "../../esriapi/4.30/@arcgis/core/geometry/Extent.js";
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -144,10 +145,9 @@ const map = new Map({
 // === Initialize View ===
 let view = new MapView({
     container: "map",
-    map: map,
-    //zoom: 14, // Zoom level
-    //center: [48.464869, 34.834155],
+    map: map,    
 });
+
 view.when(() => {
     console.log("MapView is ready");
 }).catch((error) => {
@@ -161,6 +161,12 @@ view.whenLayerView(darkhastFLayer).then(function () {
     }).catch(function (error) {
         console.error("Extent projection error: ", error);
     });
+    // Limited View Extent and Zoom level
+    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
+    view.constraints = {
+        geometry: cityExtent,
+        minZoom: 14
+    };
 });
 
 // Remove osm Attribution
