@@ -4,6 +4,8 @@ import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
+import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
+import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -97,11 +99,7 @@ const darkhastFLayer = new FeatureLayer({
 
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");
-    //if (darkhastFLayer.fullExtent) {
-    //    view.goTo(darkhastFLayer.fullExtent, { animate: false });
-    //    //view.extent = darkhastFLayer.fullExtent;
-    //}
+    console.log("darkhastFLayer loaded successfully.");    
 
     const allFields = darkhastFLayer.fields;
 
@@ -126,7 +124,15 @@ darkhastFLayer.when(() => {
         tableTemplate: {
             columnTemplates: columnTemplates
         }
+
     });
+    // Override Zoom to selection for set mapview sacle
+    const originalZoom = featureTable.zoomToSelection.bind(featureTable);
+
+    featureTable.zoomToSelection = async function () {
+        view.zoom = 18;        
+        originalZoom(); // call original method
+    };
 }).catch((error) => {
     console.error("Error loading darkhastFLayer:", error);
 });
@@ -140,10 +146,9 @@ const map = new Map({
 // === Initialize View ===
 let view = new MapView({
     container: "map",
-    map: map,
-    //zoom: 14, // Zoom level
-    //center: [48.464869, 34.834155],
+    map: map,    
 });
+
 view.when(() => {
     console.log("MapView is ready");
 }).catch((error) => {
@@ -157,13 +162,19 @@ view.whenLayerView(darkhastFLayer).then(function () {
     }).catch(function (error) {
         console.error("Extent projection error: ", error);
     });
+
+    // Limited View Extent and Zoom level
+    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
+    view.constraints = {
+        geometry: cityExtent,
+        minZoom: 14
+    };
 });
 
-
-// === Remove osm Attribution ===
+// Remove osm Attribution
 view.ui.remove("attribution");
 
-// === Add Home Widget ===
+// === Add btn Home Widget ===
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -175,6 +186,85 @@ darkhastFLayer.when(() => {
 
     view.ui.add(homeWidget, "top-left");
 });
+
+// === Add btn linkMap2Table ===
+const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
+view.ui.add(btnLinkMap2Table, "top-left");
+const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
+
+let linkMap2Table = false;
+btnLinkMap2Table.addEventListener("click", () => {
+    linkMap2Table = !linkMap2Table;
+    if (linkMap2Table) {
+        // Acttive 
+        btnLinkMap2Table.title = "Unlinked Map to Table";
+        btnLinkMap2Table.style.color = "green";        
+        calIcon.icon = "online"; 
+
+        // Map extent changed
+        query.geometry = view.extent;
+        updateFeatures();
+    } else {
+        // Passive 
+        btnLinkMap2Table.title = "Linked Map to Table";
+        btnLinkMap2Table.style.color = "red";
+        calIcon.icon = "offline";
+    }
+});
+
+// === Initialize Sketch ===
+const sketchLayer = new GraphicsLayer();
+map.add(sketchLayer);
+
+const sketch = new Sketch({
+    layer: sketchLayer,
+    view: view,
+    creationMode: "single",
+    visibleElements: {
+        createTools: {
+            point: false,
+            polyline: false,
+            circle: false,
+            rectangle: false
+        },
+        selectionTools: {
+            "rectangle-selection": false,
+            "lasso-selection": false
+        },
+        settingsMenu: false
+    }
+});
+//view.ui.add(sketch, "top-right");
+//sketch.visible = false;
+const btnSketch = document.getElementById("btnSketch");
+view.ui.add("btnSketch", "top-left")
+let sketchFlag = false;
+btnSketch.addEventListener("click", () => {
+    sketchFlag = !sketchFlag;
+    if (sketchFlag) {
+        // Acttive 
+        //sketch.visible = true;
+        btnSketch.title = "Sketch Off";
+        btnSketch.style.color = "green";
+        sketch.create("polygon") ;
+        //calIcon.icon = "online";
+
+        // Map extent changed
+        //query.geometry = view.extent;
+        //updateFeatures();
+    } else {
+        // Passive 
+        //sketch.visible = false;
+        btnSketch.title = "Sketch On";
+        btnSketch.style.color = "red";
+        sketch.cancel();
+        sketchLayer.removeAll();
+        //calIcon.icon = "offline";
+        
+    }
+});
+
+
 
 // Set Fields Name
 let fieldsName = {
@@ -197,7 +287,7 @@ let filterValues = {
     marhaleh: "",
     noe_parvaneh: "",
     mantaghe: null,
-    mahdodeh: null,
+    hoze: null,
     //ebtal: 0,
 };
 
@@ -231,8 +321,8 @@ function buildWhereClause() {
     if (filterValues.mantaghe) {
         clauses.push(`${fieldsName.mantaghe} = N'${filterValues.mantaghe}'`);
     }
-    if (filterValues.mahdodeh) {
-        clauses.push(`${fieldsName.mahdodeh} = N'${filterValues.mahdodeh}'`);
+    if (filterValues.hoze) {
+        clauses.push(`${fieldsName.mahdodeh} = N'${filterValues.hoze}'`);
     }
     return clauses.join(" AND ");
 }
@@ -275,7 +365,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
  * @param {any} features //add objec FeatureSet.features
  * @returns Object 
  */
-function getComboBoxValues(features) {
+function getComboBoxValues(features) {    
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
@@ -315,7 +405,7 @@ const dicCombo2Field = {
   */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
-function fillComboboxes(comboboxes) {
+function fillComboboxes(comboboxes) {    
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
@@ -363,13 +453,13 @@ comboMantaghe.addEventListener("change", function () {
     updateFeatures();
 });
 comboMahdodeh.addEventListener("change", function () {
-    filterValues.mahdodeh = this.value;
+    filterValues.hoze = this.value;
     updateFeatures();
 });
-comboMahdodeh.addEventListener("change", function () {
-    filterValues.mahdodeh = this.value;
-    updateFeatures();
-});
+//comboMahdodeh.addEventListener("change", function () {
+//    filterValues.hoze = this.value;
+//    updateFeatures();
+//});
 startDateSend.addEventListener("change", () => {    
     const dateStr = startDateSend.value;
 
@@ -441,7 +531,7 @@ function convert2shamsi(date) {
 }
 
 // Main update function: apply extent and definitionExpression
-async function updateFeatures() {
+async function updateFeatures() {    
     where = buildWhereClause();
     try {
         // 1. Build query
@@ -453,7 +543,7 @@ async function updateFeatures() {
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
 
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {
+        view.whenLayerView(darkhastFLayer).then(function (layerView) {            
             //extent = view.extent;
             layerView.filter = {
                 geometry: query.geometry,
@@ -468,17 +558,8 @@ async function updateFeatures() {
     }
 }
 
-// Event: map extent changed
-const mapExtent = document.getElementById("mapExtent");
-mapExtent.addEventListener('change', () => {
-    if (mapExtent.checked) {
-        query.geometry = view.extent;
-        updateFeatures();
-    }
-});
-
 view.watch("stationary", function (isStationary) {
-    if (isStationary && mapExtent.checked) {
+    if (isStationary && linkMap2Table) {
         query.geometry = view.extent;
         updateFeatures();
     }
