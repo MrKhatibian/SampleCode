@@ -235,6 +235,33 @@ const sketch = new Sketch({
     }
 });
 view.ui.add(sketch, "top-right");
+sketch.visible = false;
+const btnSketch = document.getElementById("btnSketch");
+view.ui.add("btnSketch", "top-left")
+let sketchFlag = false;
+btnSketch.addEventListener("click", () => {
+    sketchFlag = !sketchFlag;
+    if (sketchFlag) {
+        // Acttive 
+        sketch.visible = true;
+        btnSketch.title = "Sketch Off";
+        btnSketch.style.color = "green";
+        //calIcon.icon = "online";
+
+        // Map extent changed
+        //query.geometry = view.extent;
+        //updateFeatures();
+    } else {
+        // Passive 
+        sketch.visible = false;
+        btnSketch.title = "Sketch On";
+        btnSketch.style.color = "red";
+        //calIcon.icon = "offline";
+        
+    }
+});
+
+
 
 // Set Fields Name
 let fieldsName = {
