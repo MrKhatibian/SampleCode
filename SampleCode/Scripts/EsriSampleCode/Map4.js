@@ -97,11 +97,7 @@ const darkhastFLayer = new FeatureLayer({
 
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");
-    //if (darkhastFLayer.fullExtent) {
-    //    view.goTo(darkhastFLayer.fullExtent, { animate: false });
-    //    //view.extent = darkhastFLayer.fullExtent;
-    //}
+    console.log("darkhastFLayer loaded successfully.");    
 
     const allFields = darkhastFLayer.fields;
 
@@ -126,7 +122,15 @@ darkhastFLayer.when(() => {
         tableTemplate: {
             columnTemplates: columnTemplates
         }
+
     });
+    // Override Zoom to selection for set mapview sacle
+    const originalZoom = featureTable.zoomToSelection.bind(featureTable);
+
+    featureTable.zoomToSelection = async function () {
+        view.zoom = 18;        
+        originalZoom(); // call original method
+    };
 }).catch((error) => {
     console.error("Error loading darkhastFLayer:", error);
 });
