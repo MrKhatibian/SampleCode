@@ -163,11 +163,10 @@ view.whenLayerView(darkhastFLayer).then(function () {
     });
 });
 
-
-// === Remove osm Attribution ===
+// Remove osm Attribution
 view.ui.remove("attribution");
 
-// === Add Home Widget ===
+// === Add btn Home Widget ===
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -179,18 +178,19 @@ darkhastFLayer.when(() => {
 
     view.ui.add(homeWidget, "top-left");
 });
-// === Initialize btn link Map to Table ===
-const btnSyncMap = document.getElementById("btnSyncMap");
-view.ui.add(btnSyncMap, "top-left");
-const calIcon = btnSyncMap.querySelector("calcite-icon");
+
+// === Add btn linkMap2Table ===
+const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
+view.ui.add(btnLinkMap2Table, "top-left");
+const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
 
 let linkMap2Table = false;
-btnSyncMap.addEventListener("click", () => {
+btnLinkMap2Table.addEventListener("click", () => {
     linkMap2Table = !linkMap2Table;
     if (linkMap2Table) {
         // Acttive 
-        btnSyncMap.title = "Unlinked Map to Table";
-        btnSyncMap.style.color = "green";        
+        btnLinkMap2Table.title = "Unlinked Map to Table";
+        btnLinkMap2Table.style.color = "green";        
         calIcon.icon = "online"; 
 
         // Map extent changed
@@ -198,8 +198,8 @@ btnSyncMap.addEventListener("click", () => {
         updateFeatures();
     } else {
         // Passive 
-        btnSyncMap.title = "Linked Map to Table";
-        btnSyncMap.style.color = "red";
+        btnLinkMap2Table.title = "Linked Map to Table";
+        btnLinkMap2Table.style.color = "red";
         calIcon.icon = "offline";
     }
 });
