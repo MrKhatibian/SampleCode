@@ -4,7 +4,8 @@ import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
 import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.js";
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
-import Extent from "../../esriapi/4.30/@arcgis/core/geometry/Extent.js";
+import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
+import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -211,6 +212,30 @@ btnLinkMap2Table.addEventListener("click", () => {
     }
 });
 
+// === Initialize Sketch ===
+const sketchLayer = new GraphicsLayer();
+map.add(sketchLayer);
+
+const sketch = new Sketch({
+    layer: sketchLayer,
+    view: view,
+    creationMode: "single",
+    visibleElements: {
+        createTools: {
+            point: false,
+            polyline: false,
+            circle: false,
+            rectangle: false
+        },
+        selectionTools: {
+            "rectangle-selection": false,
+            "lasso-selection": false
+        },
+        settingsMenu: false
+    }
+});
+view.ui.add(sketch, "top-right");
+
 // Set Fields Name
 let fieldsName = {
     sDateSend: "date_rooz",
@@ -243,8 +268,7 @@ let where = buildWhereClause();
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
  */
-function buildWhereClause() {
-    debugger
+function buildWhereClause() {    
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterValues.sDateSend) {
@@ -311,8 +335,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
  * @param {any} features //add objec FeatureSet.features
  * @returns Object 
  */
-function getComboBoxValues(features) {
-    debugger
+function getComboBoxValues(features) {    
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
@@ -352,8 +375,7 @@ const dicCombo2Field = {
   */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
-function fillComboboxes(comboboxes) {
-    debugger
+function fillComboboxes(comboboxes) {    
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
@@ -369,7 +391,6 @@ function fillComboboxes(comboboxes) {
  * @returns update Comboboxes and selected value
  */
 function updateComboValues(combo, values, selectValue) {
-    debugger
     if (!Array.isArray(values)) {
         console.warn(`Invalid values for combo: ${combo.id}`);
         return;
@@ -406,7 +427,6 @@ comboMahdodeh.addEventListener("change", function () {
     updateFeatures();
 });
 //comboMahdodeh.addEventListener("change", function () {
-//    debugger
 //    filterValues.hoze = this.value;
 //    updateFeatures();
 //});
@@ -481,8 +501,7 @@ function convert2shamsi(date) {
 }
 
 // Main update function: apply extent and definitionExpression
-async function updateFeatures() {
-    debugger
+async function updateFeatures() {    
     where = buildWhereClause();
     try {
         // 1. Build query
@@ -494,8 +513,7 @@ async function updateFeatures() {
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
 
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {
-            debugger
+        view.whenLayerView(darkhastFLayer).then(function (layerView) {            
             //extent = view.extent;
             layerView.filter = {
                 geometry: query.geometry,

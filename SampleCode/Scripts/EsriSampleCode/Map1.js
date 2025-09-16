@@ -38,7 +38,7 @@ const view = new MapView({
 view.ui.remove("attribution");
 
 // === Layers ===
-const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajNN/MapServer";
+const url = "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer";
 
 const darkhastFLayer = new FeatureLayer({
     url: `${url}/0`,
@@ -83,7 +83,17 @@ const sketch = new Sketch({
     view: view,
     creationMode: "single",
     visibleElements: {
-        selectionTools: { "rectangle": true },
+        //selectionTools: { "rectangle": true },
+        //settingsMenu: false,
+        createTools: {
+            point: false,
+            polyline: false,
+            circle: false,
+            rectangle: false
+        },
+        selectionTools: {
+            "rectangle-selection": false,
+        },
         settingsMenu: false
     }
 });
