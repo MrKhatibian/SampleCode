@@ -180,6 +180,27 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
+const btnSyncMap = document.getElementById("btnSyncMap");
+view.ui.add(btnSyncMap, "top-left");
+const calIcon = btnSyncMap.querySelector("calcite-icon");
+
+let linkMap2Table = false; // حالت اولیه
+btnSyncMap.addEventListener("click", () => {
+    linkMap2Table = !linkMap2Table; // وضعیت رو برعکس کن
+
+    if (linkMap2Table) {
+        // Acttive 
+        btnSyncMap.title = "Unlinked Map to Table";
+        btnSyncMap.style.color = "green";        
+        calIcon.icon = "online"; 
+    } else {
+        // Passive 
+        btnSyncMap.title = "Linked Map to Table";
+        btnSyncMap.style.color = "red";
+        calIcon.icon = "offline";
+    }
+});
+
 // Set Fields Name
 let fieldsName = {
     sDateSend: "date_rooz",
@@ -482,7 +503,7 @@ mapExtent.addEventListener('change', () => {
 });
 
 view.watch("stationary", function (isStationary) {
-    if (isStationary && mapExtent.checked) {
+    if (isStationary && linkMap2Table) {
         query.geometry = view.extent;
         updateFeatures();
     }
