@@ -161,6 +161,7 @@ view.whenLayerView(darkhastFLayer).then(function () {
     }).catch(function (error) {
         console.error("Extent projection error: ", error);
     });
+
     // Limited View Extent and Zoom level
     const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
     view.constraints = {
@@ -231,7 +232,7 @@ let filterValues = {
     marhaleh: "",
     noe_parvaneh: "",
     mantaghe: null,
-    mahdodeh: null,
+    hoze: null,
     //ebtal: 0,
 };
 
@@ -242,7 +243,8 @@ let where = buildWhereClause();
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
  */
-function buildWhereClause() {    
+function buildWhereClause() {
+    debugger
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterValues.sDateSend) {
@@ -265,8 +267,8 @@ function buildWhereClause() {
     if (filterValues.mantaghe) {
         clauses.push(`${fieldsName.mantaghe} = N'${filterValues.mantaghe}'`);
     }
-    if (filterValues.mahdodeh) {
-        clauses.push(`${fieldsName.mahdodeh} = N'${filterValues.mahdodeh}'`);
+    if (filterValues.hoze) {
+        clauses.push(`${fieldsName.mahdodeh} = N'${filterValues.hoze}'`);
     }
     return clauses.join(" AND ");
 }
@@ -310,6 +312,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
  * @returns Object 
  */
 function getComboBoxValues(features) {
+    debugger
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
@@ -350,6 +353,7 @@ const dicCombo2Field = {
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
+    debugger
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
@@ -365,6 +369,7 @@ function fillComboboxes(comboboxes) {
  * @returns update Comboboxes and selected value
  */
 function updateComboValues(combo, values, selectValue) {
+    debugger
     if (!Array.isArray(values)) {
         console.warn(`Invalid values for combo: ${combo.id}`);
         return;
@@ -397,13 +402,14 @@ comboMantaghe.addEventListener("change", function () {
     updateFeatures();
 });
 comboMahdodeh.addEventListener("change", function () {
-    filterValues.mahdodeh = this.value;
+    filterValues.hoze = this.value;
     updateFeatures();
 });
-comboMahdodeh.addEventListener("change", function () {
-    filterValues.mahdodeh = this.value;
-    updateFeatures();
-});
+//comboMahdodeh.addEventListener("change", function () {
+//    debugger
+//    filterValues.hoze = this.value;
+//    updateFeatures();
+//});
 startDateSend.addEventListener("change", () => {    
     const dateStr = startDateSend.value;
 
@@ -476,6 +482,7 @@ function convert2shamsi(date) {
 
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
+    debugger
     where = buildWhereClause();
     try {
         // 1. Build query
@@ -488,6 +495,7 @@ async function updateFeatures() {
         fillComboboxes(comboboxes);
 
         view.whenLayerView(darkhastFLayer).then(function (layerView) {
+            debugger
             //extent = view.extent;
             layerView.filter = {
                 geometry: query.geometry,
