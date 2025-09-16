@@ -234,8 +234,8 @@ const sketch = new Sketch({
         settingsMenu: false
     }
 });
-view.ui.add(sketch, "top-right");
-sketch.visible = false;
+//view.ui.add(sketch, "top-right");
+//sketch.visible = false;
 const btnSketch = document.getElementById("btnSketch");
 view.ui.add("btnSketch", "top-left")
 let sketchFlag = false;
@@ -243,9 +243,10 @@ btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
         // Acttive 
-        sketch.visible = true;
+        //sketch.visible = true;
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
+        sketch.create("polygon") ;
         //calIcon.icon = "online";
 
         // Map extent changed
@@ -253,9 +254,11 @@ btnSketch.addEventListener("click", () => {
         //updateFeatures();
     } else {
         // Passive 
-        sketch.visible = false;
+        //sketch.visible = false;
         btnSketch.title = "Sketch On";
         btnSketch.style.color = "red";
+        sketch.cancel();
+        sketchLayer.removeAll();
         //calIcon.icon = "offline";
         
     }
