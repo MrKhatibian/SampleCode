@@ -237,9 +237,17 @@ const sketch = new Sketch({
 });
 //view.ui.add(sketch, "top-right");
 //sketch.visible = false;
+
+// === Initilize btn Delete Sketch ===
+const btnDelSketch = document.getElementById("btnDelSketch");
+view.ui.add("btnDelSketch", "top-right");
+btnDelSketch.hidden = true;
+
+// === Initialize btn Sketch ===
 const btnSketch = document.getElementById("btnSketch");
 view.ui.add("btnSketch", "top-left")
 let sketchFlag = false;
+
 btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
@@ -247,7 +255,8 @@ btnSketch.addEventListener("click", () => {
         //sketch.visible = true;
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
-        sketch.create("polygon") ;
+        sketch.create("polygon");
+        btnDelSketch.hidden = false;
         //calIcon.icon = "online";
 
         // Map extent changed
@@ -260,12 +269,19 @@ btnSketch.addEventListener("click", () => {
         btnSketch.style.color = "red";
         sketch.cancel();
         sketchLayer.removeAll();
+        btnDelSketch.hidden = true;
         query.geometry = view.extent;
         updateFeatures();
         //calIcon.icon = "offline";
         
     }
 });
+
+// Event btn DelSketch
+btnDelSketch.addEventListener("click", () => {
+    btnSketch.click();
+});
+
 sketch.on("create", async (event) => {
     console.log("sketch drawing");
     if (event.state === "complete") {
