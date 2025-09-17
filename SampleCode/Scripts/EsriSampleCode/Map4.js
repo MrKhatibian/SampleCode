@@ -6,6 +6,7 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
+import * as reactiveUtils from "../../esriapi/4.30/@arcgis/core/core/reactiveUtils.js";
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -259,9 +260,75 @@ btnSketch.addEventListener("click", () => {
         btnSketch.style.color = "red";
         sketch.cancel();
         sketchLayer.removeAll();
+        query.geometry = view.extent;
+        updateFeatures();
         //calIcon.icon = "offline";
         
     }
+});
+sketch.on("create", async (event) => {
+    console.log("sketch drawing");
+    if (event.state === "complete") {
+        console.log("complete");
+        //const geometry = event.graphic.geometry;
+        query.geometry = event.graphic.geometry;
+        updateFeatures();
+    }
+});
+sketch.on("update", async (event) => {
+    console.log("sketch update");
+    if (event.state === "complete") {
+        debugger;
+        //if (event.graphics && event.graphics.length > 0) {
+        if (sketchLayer.graphics.length > 0) {
+            // وقتی فیچر هنوز وجود داره (ویرایش عادی)
+            query.geometry = event.graphics[0].geometry;
+            updateFeatures();
+        } else {
+            btnSketch.click();
+            // وقتی فیچر حذف شده (Delete زده شده)
+            //query.geometry = view.extent;
+
+        }
+        console.log("complete");
+        //query.geometry = event.graphics[0].geometry;
+        
+    }
+});
+reactiveUtils.when(() => sketch.state === "active", () => {    
+    
+
+    //sketch.on("create", async (event) => {
+    //    if (event.state === "complete") {
+    //        const geometry = event.graphic.geometry;
+
+    //        // پاک‌کردن محدوده قبلی
+    //        sketchLayer.removeAll();
+    //        sketchLayer.add(event.graphic);
+
+    //        // جستجوی فیچرهای داخل محدوده
+    //        const query = darkhastFLayer.createQuery();
+    //        query.geometry = geometry;
+    //        query.spatialRelationship = "intersects";
+    //        query.returnGeometry = true;
+    //        query.outFields = ["*"];
+
+    //        const result = await darkhastFLayer.queryFeatures(query);
+
+    //        // نمایش انتخاب‌شده‌ها
+    //        graphicsLayer.removeAll();
+    //        result.features.forEach((f) => {
+    //            f.symbol = {
+    //                type: "simple-fill",
+    //                color: [0, 0, 255, 0.2],
+    //                outline: { color: "blue", width: 2 }
+    //            };
+    //            graphicsLayer.add(f);
+    //        });
+
+    //        console.log("Selected features:", result.features);
+    //    }
+    //});
 });
 
 
