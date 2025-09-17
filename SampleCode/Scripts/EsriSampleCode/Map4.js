@@ -1,4 +1,5 @@
-﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
+﻿//#region Import
+import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
 import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
@@ -6,16 +7,28 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
-import * as reactiveUtils from "../../esriapi/4.30/@arcgis/core/core/reactiveUtils.js";
+//#endregion
 
+//#region Helper Functions
 
-// === Initialize Sleep Function ===
+// ===== Sleep =====
+/**
+ * Sleep function to hold a process
+ * @param {any} ms Sleeptime
+ * @returns
+ */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// === Initialize Loader ===
+// ===== Loader =====
+// Get Loader Element
 const loader = document.getElementById("loader");
+
+/**
+ * Loader display function
+ * @param {any} divId Loader display div
+ */
 function showLoader(divId) {
     const target = document.getElementById(divId);
 
@@ -28,11 +41,15 @@ function showLoader(divId) {
     target.appendChild(loader);
     loader.style.display = "flex";
 }
-
+/**
+ * Loader hide function
+ */
 function hideLoader() {
     loader.style.display = "none";
 }
+//#endregion
 
+//#region Basic map definitions
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -126,7 +143,7 @@ const darkhastFLayer = new FeatureLayer({
 
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");    
+    console.log("darkhastFLayer loaded successfully.");
 
     const allFields = darkhastFLayer.fields;
 
@@ -157,7 +174,7 @@ darkhastFLayer.when(() => {
     const originalZoom = featureTable.zoomToSelection.bind(featureTable);
 
     featureTable.zoomToSelection = async function () {
-        view.zoom = 18;        
+        view.zoom = 18;
         originalZoom(); // call original method
     };
 }).catch((error) => {
@@ -173,7 +190,7 @@ const map = new Map({
 // === Initialize View ===
 let view = new MapView({
     container: "map",
-    map: map,    
+    map: map,
 });
 
 view.when(() => {
@@ -225,8 +242,8 @@ btnLinkMap2Table.addEventListener("click", () => {
     if (linkMap2Table) {
         // Acttive 
         btnLinkMap2Table.title = "Unlinked Map to Table";
-        btnLinkMap2Table.style.color = "green";        
-        calIcon.icon = "online"; 
+        btnLinkMap2Table.style.color = "green";
+        calIcon.icon = "online";
 
         // Map extent changed
         query.geometry = view.extent;
@@ -297,7 +314,7 @@ btnSketch.addEventListener("click", () => {
         query.geometry = view.extent;
         updateFeatures();
         //calIcon.icon = "offline";
-        
+
     }
 });
 
@@ -306,78 +323,38 @@ btnDelSketch.addEventListener("click", () => {
     btnSketch.click();
 });
 
+// When Sketch creation is complete
 sketch.on("create", async (event) => {
-    console.log("sketch drawing");
     if (event.state === "complete") {
-        console.log("complete");                
         try {
-            //await sleep(5000);
-            query.geometry = event.graphic.geometry;
-            await updateFeatures();   // فرض: updateFeatures برمی‌گرده Promise
+            const geometry = event.graphic?.geometry;
+            if (geometry) {
+                query.geometry = geometry;
+                await updateFeatures();
+            }
         } catch (err) {
-            console.error("updateFeatures error:", err);
+            console.error("CreateFeatures error:", err);
         }
-        //query.geometry = event.graphic.geometry;
-        //updateFeatures();
     }
 });
+
+// When Sketch update is complete
 sketch.on("update", async (event) => {
-    console.log("sketch update");
     if (event.state === "complete") {
-        debugger;
-        //if (event.graphics && event.graphics.length > 0) {
-        if (sketchLayer.graphics.length > 0) {
-            // وقتی فیچر هنوز وجود داره (ویرایش عادی)
-            query.geometry = event.graphics[0].geometry;
-            updateFeatures();
-        } else {
-            btnSketch.click();
-            // وقتی فیچر حذف شده (Delete زده شده)
-            //query.geometry = view.extent;
-
-        }
-        console.log("complete");
-        //query.geometry = event.graphics[0].geometry;
-        
+        try {
+            if (sketchLayer.graphics.length > 0) { // When Sketch was cleared
+                const geometry = event.graphics[0]?.geometry;
+                if (geometry) {
+                    query.geometry = geometry;
+                    await updateFeatures();
+                }
+            } else { btnSketch.click(); }
+        } catch (err) {
+            console.error("UpdateFeatures error:", err);
+        }        
     }
 });
-reactiveUtils.when(() => sketch.state === "active", () => {    
-    
-
-    //sketch.on("create", async (event) => {
-    //    if (event.state === "complete") {
-    //        const geometry = event.graphic.geometry;
-
-    //        // پاک‌کردن محدوده قبلی
-    //        sketchLayer.removeAll();
-    //        sketchLayer.add(event.graphic);
-
-    //        // جستجوی فیچرهای داخل محدوده
-    //        const query = darkhastFLayer.createQuery();
-    //        query.geometry = geometry;
-    //        query.spatialRelationship = "intersects";
-    //        query.returnGeometry = true;
-    //        query.outFields = ["*"];
-
-    //        const result = await darkhastFLayer.queryFeatures(query);
-
-    //        // نمایش انتخاب‌شده‌ها
-    //        graphicsLayer.removeAll();
-    //        result.features.forEach((f) => {
-    //            f.symbol = {
-    //                type: "simple-fill",
-    //                color: [0, 0, 255, 0.2],
-    //                outline: { color: "blue", width: 2 }
-    //            };
-    //            graphicsLayer.add(f);
-    //        });
-
-    //        console.log("Selected features:", result.features);
-    //    }
-    //});
-});
-
-
+//#endregion
 
 // Set Fields Name
 let fieldsName = {
@@ -411,7 +388,7 @@ let where = buildWhereClause();
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
  */
-function buildWhereClause() {    
+function buildWhereClause() {
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterValues.sDateSend) {
@@ -478,7 +455,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
  * @param {any} features //add objec FeatureSet.features
  * @returns Object 
  */
-function getComboBoxValues(features) {    
+function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
@@ -518,7 +495,7 @@ const dicCombo2Field = {
   */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
-function fillComboboxes(comboboxes) {    
+function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
@@ -573,7 +550,7 @@ comboMahdodeh.addEventListener("change", function () {
 //    filterValues.hoze = this.value;
 //    updateFeatures();
 //});
-startDateSend.addEventListener("change", () => {    
+startDateSend.addEventListener("change", () => {
     const dateStr = startDateSend.value;
 
     if (!dateValidation(dateStr)) { return };
@@ -593,7 +570,7 @@ endDateSend.addEventListener("change", () => {
     filterValues.eDateSend = persianDate;
     updateFeatures();
 });
-function dateValidation(date) {    
+function dateValidation(date) {
     // Check if the date is empty
     if (!date) {
         console.warn("No date selected.");
@@ -615,7 +592,7 @@ function dateValidation(date) {
     }
     return true;
 }
-function convert2shamsi(date) {    
+function convert2shamsi(date) {
     const _date = new Date(date);
 
     if (isNaN(_date)) {
@@ -639,12 +616,12 @@ function convert2shamsi(date) {
         console.warn("Could not parse date parts:", parts);
         return null;
     }
-    const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;    
+    const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;
     return Number(persianDate);
 }
 
 // Main update function: apply extent and definitionExpression
-async function updateFeatures() {    
+async function updateFeatures() {
     where = buildWhereClause();
     showLoader("map");
     try {
