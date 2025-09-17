@@ -328,6 +328,8 @@ sketch.on("create", async (event) => {
         } catch (err) {
             console.error("CreateFeatures error:", err);
         }
+    } else if (event.state === "cancel") {
+        btnSketch.click();
     }
 });
 
