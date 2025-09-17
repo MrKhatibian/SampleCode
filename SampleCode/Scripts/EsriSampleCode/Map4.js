@@ -255,8 +255,10 @@ btnLinkMap2Table.addEventListener("click", () => {
         calIcon.icon = "offline";
     }
 });
+//#endregion
 
-// === Initialize Sketch ===
+//#region Sketch
+// ===== Initialize Sketch =====
 const sketchLayer = new GraphicsLayer();
 map.add(sketchLayer);
 
@@ -264,19 +266,19 @@ const sketch = new Sketch({
     layer: sketchLayer,
     view: view,
     creationMode: "single",
-    visibleElements: {
-        createTools: {
-            point: false,
-            polyline: false,
-            circle: false,
-            rectangle: false
-        },
-        selectionTools: {
-            "rectangle-selection": false,
-            "lasso-selection": false
-        },
-        settingsMenu: false
-    }
+    //visibleElements: {
+    //    createTools: {
+    //        point: false,
+    //        polyline: false,
+    //        circle: false,
+    //        rectangle: false
+    //    },
+    //    selectionTools: {
+    //        "rectangle-selection": false,
+    //        "lasso-selection": false
+    //    },
+    //    settingsMenu: false
+    //}
 });
 
 // === Initilize btn Delete Sketch ===
@@ -292,29 +294,20 @@ let sketchFlag = false;
 btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
-        // Acttive 
-        //sketch.visible = true;
+        // Acttive         
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
         sketch.create("polygon");
-        btnDelSketch.hidden = false;
-        //calIcon.icon = "online";
-
-        // Map extent changed
-        //query.geometry = view.extent;
-        //updateFeatures();
+        btnDelSketch.hidden = false;      
     } else {
-        // Passive 
-        //sketch.visible = false;
+        // Passive         
         btnSketch.title = "Sketch On";
         btnSketch.style.color = "red";
         sketch.cancel();
         sketchLayer.removeAll();
         btnDelSketch.hidden = true;
-        query.geometry = view.extent;
-        updateFeatures();
-        //calIcon.icon = "offline";
-
+        query.geometry = arseILayer.extent;
+        updateFeatures();        
     }
 });
 
@@ -622,8 +615,8 @@ function convert2shamsi(date) {
 
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
-    where = buildWhereClause();
     showLoader("map");
+    where = buildWhereClause();   
     try {
         // 1. Build query
         query.where = where;
@@ -646,9 +639,7 @@ async function updateFeatures() {
 
     } catch (error) {
         console.error("Error syncing layer:", error);
-    } finally {
-        hideLoader();
-    }
+    } finally { hideLoader(); }
 }
 
 view.watch("stationary", function (isStationary) {
@@ -670,6 +661,7 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
         mahdodeh: null,
         //ebtal: 0,
     };
+    query.geometry = arseILayer.extent;
     startDateSend.value = "";
     endDateSend.value = "";
     updateFeatures();
