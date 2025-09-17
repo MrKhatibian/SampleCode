@@ -7,6 +7,32 @@ import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
 import * as reactiveUtils from "../../esriapi/4.30/@arcgis/core/core/reactiveUtils.js";
+
+
+// === Initialize Sleep Function ===
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// === Initialize Loader ===
+const loader = document.getElementById("loader");
+function showLoader(divId) {
+    const target = document.getElementById(divId);
+
+    // Parent position must be relative.
+    if (getComputedStyle(target).position === "static") {
+        target.style.position = "relative";
+    }
+
+    // Add a loader inside the same div
+    target.appendChild(loader);
+    loader.style.display = "flex";
+}
+
+function hideLoader() {
+    loader.style.display = "none";
+}
+
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -235,8 +261,6 @@ const sketch = new Sketch({
         settingsMenu: false
     }
 });
-//view.ui.add(sketch, "top-right");
-//sketch.visible = false;
 
 // === Initilize btn Delete Sketch ===
 const btnDelSketch = document.getElementById("btnDelSketch");
@@ -285,10 +309,16 @@ btnDelSketch.addEventListener("click", () => {
 sketch.on("create", async (event) => {
     console.log("sketch drawing");
     if (event.state === "complete") {
-        console.log("complete");
-        //const geometry = event.graphic.geometry;
-        query.geometry = event.graphic.geometry;
-        updateFeatures();
+        console.log("complete");                
+        try {
+            //await sleep(5000);
+            query.geometry = event.graphic.geometry;
+            await updateFeatures();   // فرض: updateFeatures برمی‌گرده Promise
+        } catch (err) {
+            console.error("updateFeatures error:", err);
+        }
+        //query.geometry = event.graphic.geometry;
+        //updateFeatures();
     }
 });
 sketch.on("update", async (event) => {
@@ -616,6 +646,7 @@ function convert2shamsi(date) {
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {    
     where = buildWhereClause();
+    showLoader("map");
     try {
         // 1. Build query
         query.where = where;
@@ -626,7 +657,7 @@ async function updateFeatures() {
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
 
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {            
+        view.whenLayerView(darkhastFLayer).then(function (layerView) {
             //extent = view.extent;
             layerView.filter = {
                 geometry: query.geometry,
@@ -638,6 +669,8 @@ async function updateFeatures() {
 
     } catch (error) {
         console.error("Error syncing layer:", error);
+    } finally {
+        hideLoader();
     }
 }
 
