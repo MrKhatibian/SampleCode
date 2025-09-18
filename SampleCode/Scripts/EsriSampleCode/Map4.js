@@ -1,4 +1,5 @@
-﻿import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
+﻿//#region Import
+import Map from "../../esriapi/4.30/@arcgis/core/Map.js";
 import MapView from "../../esriapi/4.30/@arcgis/core/views/MapView.js";
 import FeatureLayer from "../../esriapi/4.30/@arcgis/core/layers/FeatureLayer.js";
 import FeatureTable from "../../esriapi/4.30/@arcgis/core/widgets/FeatureTable.js";
@@ -6,6 +7,49 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
+//#endregion
+
+//#region Helper Functions
+
+// ===== Sleep =====
+/**
+ * Sleep function to hold a process
+ * @param {any} ms Sleeptime
+ * @returns
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ===== Loader =====
+// Get Loader Element
+const loader = document.getElementById("loader");
+
+/**
+ * Loader display function
+ * @param {any} divId Loader display div
+ */
+function showLoader(divId) {
+    const target = document.getElementById(divId);
+
+    // Parent position must be relative.
+    if (getComputedStyle(target).position === "static") {
+        target.style.position = "relative";
+    }
+
+    // Add a loader inside the same div
+    target.appendChild(loader);
+    loader.style.display = "flex";
+}
+/**
+ * Loader hide function
+ */
+function hideLoader() {
+    loader.style.display = "none";
+}
+//#endregion
+
+//#region Basic map definitions
 // Initialize Arse ImageLayer
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
@@ -99,7 +143,7 @@ const darkhastFLayer = new FeatureLayer({
 
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");    
+    console.log("darkhastFLayer loaded successfully.");
 
     const allFields = darkhastFLayer.fields;
 
@@ -130,7 +174,7 @@ darkhastFLayer.when(() => {
     const originalZoom = featureTable.zoomToSelection.bind(featureTable);
 
     featureTable.zoomToSelection = async function () {
-        view.zoom = 18;        
+        view.zoom = 18;
         originalZoom(); // call original method
     };
 }).catch((error) => {
@@ -146,7 +190,7 @@ const map = new Map({
 // === Initialize View ===
 let view = new MapView({
     container: "map",
-    map: map,    
+    map: map,
 });
 
 view.when(() => {
@@ -198,8 +242,8 @@ btnLinkMap2Table.addEventListener("click", () => {
     if (linkMap2Table) {
         // Acttive 
         btnLinkMap2Table.title = "Unlinked Map to Table";
-        btnLinkMap2Table.style.color = "green";        
-        calIcon.icon = "online"; 
+        btnLinkMap2Table.style.color = "green";
+        calIcon.icon = "online";
 
         // Map extent changed
         query.geometry = view.extent;
@@ -234,11 +278,17 @@ const sketch = new Sketch({
         settingsMenu: false
     }
 });
-//view.ui.add(sketch, "top-right");
-//sketch.visible = false;
+
+// === Initilize btn Delete Sketch ===
+const btnDelSketch = document.getElementById("btnDelSketch");
+view.ui.add("btnDelSketch", "top-right");
+btnDelSketch.hidden = true;
+
+// === Initialize btn Sketch ===
 const btnSketch = document.getElementById("btnSketch");
 view.ui.add("btnSketch", "top-left")
 let sketchFlag = false;
+
 btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
@@ -246,7 +296,8 @@ btnSketch.addEventListener("click", () => {
         //sketch.visible = true;
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
-        sketch.create("polygon") ;
+        sketch.create("polygon");
+        btnDelSketch.hidden = false;
         //calIcon.icon = "online";
 
         // Map extent changed
@@ -259,12 +310,51 @@ btnSketch.addEventListener("click", () => {
         btnSketch.style.color = "red";
         sketch.cancel();
         sketchLayer.removeAll();
+        btnDelSketch.hidden = true;
+        query.geometry = view.extent;
+        updateFeatures();
         //calIcon.icon = "offline";
-        
+
     }
 });
 
+// Event btn DelSketch
+btnDelSketch.addEventListener("click", () => {
+    btnSketch.click();
+});
 
+// When Sketch creation is complete
+sketch.on("create", async (event) => {
+    if (event.state === "complete") {
+        try {
+            const geometry = event.graphic?.geometry;
+            if (geometry) {
+                query.geometry = geometry;
+                await updateFeatures();
+            }
+        } catch (err) {
+            console.error("CreateFeatures error:", err);
+        }
+    }
+});
+
+// When Sketch update is complete
+sketch.on("update", async (event) => {
+    if (event.state === "complete") {
+        try {
+            if (sketchLayer.graphics.length > 0) { // When Sketch was cleared
+                const geometry = event.graphics[0]?.geometry;
+                if (geometry) {
+                    query.geometry = geometry;
+                    await updateFeatures();
+                }
+            } else { btnSketch.click(); }
+        } catch (err) {
+            console.error("UpdateFeatures error:", err);
+        }        
+    }
+});
+//#endregion
 
 // Set Fields Name
 let fieldsName = {
@@ -298,7 +388,7 @@ let where = buildWhereClause();
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
  */
-function buildWhereClause() {    
+function buildWhereClause() {
     const clauses = [];
     //clauses.push(`Ebtal = 0`);
     if (filterValues.sDateSend) {
@@ -365,7 +455,7 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
  * @param {any} features //add objec FeatureSet.features
  * @returns Object 
  */
-function getComboBoxValues(features) {    
+function getComboBoxValues(features) {
     const result = {};
     const seenMap = {};
     const keys = ["noedarkhast", "marhaleh", "noe_parvaneh", "mantaghe", "hoze"];
@@ -405,7 +495,7 @@ const dicCombo2Field = {
   */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
-function fillComboboxes(comboboxes) {    
+function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
         //const fieldName = "noedarkhast"; // get the key for comboBoxValues
@@ -460,7 +550,7 @@ comboMahdodeh.addEventListener("change", function () {
 //    filterValues.hoze = this.value;
 //    updateFeatures();
 //});
-startDateSend.addEventListener("change", () => {    
+startDateSend.addEventListener("change", () => {
     const dateStr = startDateSend.value;
 
     if (!dateValidation(dateStr)) { return };
@@ -480,7 +570,7 @@ endDateSend.addEventListener("change", () => {
     filterValues.eDateSend = persianDate;
     updateFeatures();
 });
-function dateValidation(date) {    
+function dateValidation(date) {
     // Check if the date is empty
     if (!date) {
         console.warn("No date selected.");
@@ -502,7 +592,7 @@ function dateValidation(date) {
     }
     return true;
 }
-function convert2shamsi(date) {    
+function convert2shamsi(date) {
     const _date = new Date(date);
 
     if (isNaN(_date)) {
@@ -526,13 +616,14 @@ function convert2shamsi(date) {
         console.warn("Could not parse date parts:", parts);
         return null;
     }
-    const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;    
+    const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;
     return Number(persianDate);
 }
 
 // Main update function: apply extent and definitionExpression
-async function updateFeatures() {    
+async function updateFeatures() {
     where = buildWhereClause();
+    showLoader("map");
     try {
         // 1. Build query
         query.where = where;
@@ -543,7 +634,7 @@ async function updateFeatures() {
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
 
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {            
+        view.whenLayerView(darkhastFLayer).then(function (layerView) {
             //extent = view.extent;
             layerView.filter = {
                 geometry: query.geometry,
@@ -555,6 +646,8 @@ async function updateFeatures() {
 
     } catch (error) {
         console.error("Error syncing layer:", error);
+    } finally {
+        hideLoader();
     }
 }
 

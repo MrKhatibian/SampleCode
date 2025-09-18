@@ -17,6 +17,19 @@
             height: 50vh;
             direction: ltr;
         }
+        #loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            pointer-events: all;
+        }
     </style>
     <script>
         // Must be at the very top, before imports
@@ -29,6 +42,11 @@
 </head>
 
 <body class="p-4">
+    <!-- Loader قابل استفاده مجدد -->
+    <div id="loader" style="display:none;">
+        <calcite-loader active label="در حال پردازش..." type="indeterminate"></calcite-loader>
+    </div>
+
     <div id="contFilter" class="container">
         <div class="row h-25">
             <div class="col-4">
@@ -56,7 +74,7 @@
                     <div class="row">
                         <div class="col-6">
                             <label class="form-label">تاریخ شروع:</label>
-                            <input class="form-control" type="date" id="startDateSend">                           
+                            <input class="form-control" type="date" id="startDateSend">
                         </div>
                         <div class="col-6">
                             <label class="form-label">تاریخ پایان:</label>
@@ -95,14 +113,17 @@
             <!--نقشه-->
             <div class="col-8 pb-5">
                 <div class="row">
-                    <h5 class="col">نقشه</h5>                    
+                    <h5 class="col">نقشه</h5>
                 </div>
                 <div id="map"></div>
-                <div id="btnLinkMap2Table" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Linked Map to Table">                    
+                <div id="btnLinkMap2Table" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Linked Map to Table">
                     <calcite-icon icon="offline" scale="s" />
                 </div>
-                <div id="btnSketch" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Sketch On">                    
+                <div id="btnSketch" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Sketch On">
                     <calcite-icon icon="lasso-select" scale="s" />
+                </div>
+                <div id="btnDelSketch" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Delete Sketch">
+                    <calcite-icon icon="trash" scale="s" />
                 </div>
             </div>
         </div>
@@ -121,6 +142,6 @@
                 <div id="attributeTable"></div>
             </div>
         </div>
-    </div>    
+    </div>
 </body>
 
