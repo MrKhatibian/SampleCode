@@ -440,7 +440,7 @@ const comboNoeKarbari = document.getElementById("comboNoeKarbari");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 
-//
+// Get Date Value
 const startDateSend = document.getElementById("startDateSend");
 const endDateSend = document.getElementById("endDateSend");
 
@@ -474,6 +474,10 @@ function getComboBoxValues(features) {
             }
         }
     }
+    // Sort Value
+    //for (const key of keys) {
+    //    result[key] = [""].concat([...seenMap[key]].sort());
+    //}
     return result;
 }
 
@@ -519,7 +523,13 @@ function updateComboValues(combo, values, selectValue) {
         option.text = value;
         combo.appendChild(option);
     });
-    combo.value = selectValue;
+
+    // Select combox Value
+    if (values.includes(selectValue)) {
+        combo.value = selectValue;
+    } else {
+        combo.selectedIndex = 0;
+    }
 }
 //#endregion
 
