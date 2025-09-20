@@ -7,6 +7,7 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
+import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 //#endregion
 
 //#region Helper Functions
@@ -615,38 +616,61 @@ function convert2shamsi(date) {
     return Number(persianDate);
 }
 
+/**
+ * Get Geometry
+ * @param {any} view for View extent
+ * @param {any} sketchLayer for Sketch extent
+ * @returns geometry 
+ */
+function getEffectiveGeometry(view, sketchLayer) {
+    if (sketchLayer.graphics.length > 0) {               
+        return geometryEngine.intersect(sketchLayer.graphics.getItemAt(0).geometry, view.extent);
+    } else if (linkMap2Table) {        
+        return view.extent;
+    } else {
+        return darkhastFLayer.fullExtent;
+    }
+}
+
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
-    showLoader("map");
-    where = buildWhereClause();   
-    try {
-        // 1. Build query
+    showLoader("map");       
+    try {                
+        // ===== 1. Get Value ======
+        where = buildWhereClause();                
+        const getGeometry = getEffectiveGeometry(view, sketchLayer);
+
+        // ===== 2. Set Filter ======
+        // Geometric filter applied
+        const layerView = await view.whenLayerView(darkhastFLayer);
+        layerView.filter = {
+            geometry: getGeometry,
+            spatialRelationship: "intersects"
+        };
+        // Attribute filter applied
+        darkhastFLayer.definitionExpression = where;
+        // FeatureTable filter applied
+        featureTable.filterGeometry = getGeometry;
+        
+
+        // ===== 3. Build query =====
         query.where = where;
-        // 2. Execute query - wait for it to complete
+        query.geometry = getGeometry;
+
+        // Execute query - wait for it to complete
         darkhastFSet = await darkhastFLayer.queryFeatures(query);
-        darkhastFeatures = darkhastFSet.features;
+        darkhastFeatures = darkhastFSet.features;        
         // Set Data To Comboboxes
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
-
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {
-            //extent = view.extent;
-            layerView.filter = {
-                geometry: query.geometry,
-                spatialRelationship: "intersects",
-            };
-        });
-        featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
-        darkhastFLayer.definitionExpression = where;
-
     } catch (error) {
         console.error("Error syncing layer:", error);
     } finally { hideLoader(); }
 }
 
+// When View Event changed
 view.watch("stationary", function (isStationary) {
-    if (isStationary && linkMap2Table) {
-        query.geometry = view.extent;
+    if (isStationary && linkMap2Table) {        
         updateFeatures();
     }
 });
