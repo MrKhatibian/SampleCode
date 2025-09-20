@@ -51,7 +51,7 @@ function hideLoader() {
 //#endregion
 
 //#region Basic map definitions
-// Initialize Arse ImageLayer
+// ===== Initialize Arse ImageLayer =====
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
     sublayers: [{ id: 9 }]
@@ -62,7 +62,7 @@ arseILayer.when(() => {
     console.error("Error loading arseILayer:", error);
 });
 
-// === Initialize Darkhast FeatureLayer ===
+// ===== Initialize Darkhast FeatureLayer =====
 const darkhastFLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
@@ -109,17 +109,15 @@ const darkhastFLayer = new FeatureLayer({
                     width: 3
                 }
             },
-            visualVariables: [
-                {
-                    type: "color",
-                    field: "cluster_count",
-                    stops: [
-                        { value: 1, color: "black" },
-                        { value: 2, color: "#BEE8FF" },
-                        { value: 100, color: "#002673" }
-                    ]
-                }
-            ]
+            visualVariables: [{
+                type: "color",
+                field: "cluster_count",
+                stops: [
+                    { value: 1, color: "black" },
+                    { value: 2, color: "#BEE8FF" },
+                    { value: 100, color: "#002673" }
+                ]
+            }]
         },
         labelingInfo: [{
             deconflictionStrategy: "none",
@@ -141,10 +139,9 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
-
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");
+    //console.log("darkhastFLayer loaded successfully.");
 
     const allFields = darkhastFLayer.fields;
 
@@ -157,11 +154,11 @@ darkhastFLayer.when(() => {
             type: "field",
             fieldName: field.name,
             label: field.alias || field.name,
-            visible: index < 10 // فقط 10 تای اول قابل مشاهده باشند
+            visible: index < 10 // Top 10 Visiable
         };
     });
 
-    // === Initialize FeatureTable ===
+    // ===== Initialize FeatureTable =====    
     featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
@@ -182,44 +179,49 @@ darkhastFLayer.when(() => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
-// === Initialize Map ===
+// ===== Initialize Map =====
 const map = new Map({
     basemap: "osm",
     layers: [arseILayer, darkhastFLayer]
 });
 
-// === Initialize View ===
+// ===== Initialize View =====
 let view = new MapView({
     container: "map",
     map: map,
 });
+// Remove osm Attribution
+view.ui.remove("attribution");
 
-view.when(() => {
-    console.log("MapView is ready");
-}).catch((error) => {
-    console.error("MapView failed to load:", error);
-});
+//view.when(() => {
+//    console.log("MapView is ready");
+//}).catch((error) => {
+//    console.error("MapView failed to load:", error);
+//});
 
 // Set View extent to Darkhst featureLayer extent
 view.whenLayerView(darkhastFLayer).then(function () {
-    view.goTo(darkhastFLayer.fullExtent, {
+    let layer = arseILayer;
+    if (darkhastFLayer) {
+        layer = darkhastFLayer
+    }
+    view.goTo(layer.fullExtent, {
         animate: false
     }).catch(function (error) {
         console.error("Extent projection error: ", error);
     });
 
     // Limited View Extent and Zoom level
-    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
+    const cityExtent = layer.fullExtent; // dynamic extent
     view.constraints = {
         geometry: cityExtent,
         minZoom: 14
     };
 });
 
-// Remove osm Attribution
-view.ui.remove("attribution");
 
-// === Add btn Home Widget ===
+
+// ===== Add btn Home Widget =====
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -232,7 +234,7 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-// === Add btn linkMap2Table ===
+// ===== Add btn linkMap2Table =====
 const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
 view.ui.add(btnLinkMap2Table, "top-left");
 const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
@@ -352,6 +354,7 @@ sketch.on("update", async (event) => {
 });
 //#endregion
 
+//#region Attribute managment
 // Set Fields Name
 let fieldsName = {
     sDateSend: "date_rooz",
@@ -376,9 +379,6 @@ let filterValues = {
     hoze: null,
     //ebtal: 0,
 };
-
-//Creat Where
-let where = buildWhereClause();
 
 /**
  * Build WHERE clause for filtering
@@ -413,6 +413,9 @@ function buildWhereClause() {
     return clauses.join(" AND ");
 }
 
+//Creat Where
+let where = buildWhereClause();
+
 // Build query
 const query = darkhastFLayer.createQuery();
 query.where = where; // for attributes
@@ -432,14 +435,14 @@ try {
     console.error("Initial queryFeatures failed:", err);
 }
 
-// Create the combo box (HTML <select> element)
+// Get Combobox Elements
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 const comboMarhale = document.getElementById("comboMarhale");
 const comboNoeKarbari = document.getElementById("comboNoeKarbari");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 
-//
+// Get Date Value
 const startDateSend = document.getElementById("startDateSend");
 const endDateSend = document.getElementById("endDateSend");
 
@@ -473,6 +476,10 @@ function getComboBoxValues(features) {
             }
         }
     }
+    // Sort Value
+    //for (const key of keys) {
+    //    result[key] = [""].concat([...seenMap[key]].sort());
+    //}
     return result;
 }
 
@@ -488,7 +495,7 @@ const dicCombo2Field = {
 /**
  * Fill Comboboxes
  * @param {any} comboboxes Combobox object
-  */
+ */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
@@ -503,7 +510,7 @@ function fillComboboxes(comboboxes) {
  * Update combo box with unique values
  * @param {any} combo Combobox object
  * @param {any} values Combobox values
- * @param {any} selectValue Delect Combobox value
+ * @param {any} selectValue Select Combobox value
  * @returns update Comboboxes and selected value
  */
 function updateComboValues(combo, values, selectValue) {
@@ -518,10 +525,18 @@ function updateComboValues(combo, values, selectValue) {
         option.text = value;
         combo.appendChild(option);
     });
-    combo.value = selectValue;
-}
 
-// Event: comboNoeDarkhast changed
+    // Select combox Value
+    if (values.includes(selectValue)) {
+        combo.value = selectValue;
+    } else {
+        combo.selectedIndex = 0;
+    }
+}
+//#endregion
+
+//#region Events
+//Comboxes changed
 comboNoeDarkhast.addEventListener("change", function () {
     filterValues.noedarkhast = this.value;
     updateFeatures();
@@ -542,10 +557,6 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.hoze = this.value;
     updateFeatures();
 });
-//comboMahdodeh.addEventListener("change", function () {
-//    filterValues.hoze = this.value;
-//    updateFeatures();
-//});
 startDateSend.addEventListener("change", () => {
     const dateStr = startDateSend.value;
 
@@ -566,6 +577,21 @@ endDateSend.addEventListener("change", () => {
     filterValues.eDateSend = persianDate;
     updateFeatures();
 });
+
+// View changed
+view.watch("stationary", function (isStationary) {
+    if (isStationary && linkMap2Table) {
+        updateFeatures();
+    }
+});
+//#endregion
+
+// #region Date
+/**
+ * 
+ * @param {any} date
+ * @returns
+ */
 function dateValidation(date) {
     // Check if the date is empty
     if (!date) {
@@ -615,7 +641,9 @@ function convert2shamsi(date) {
     const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;
     return Number(persianDate);
 }
+//#endregion
 
+//#region Main Logic
 /**
  * Get Geometry
  * @param {any} view for View extent
@@ -667,13 +695,6 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     } finally { hideLoader(); }
 }
-
-// When View Event changed
-view.watch("stationary", function (isStationary) {
-    if (isStationary && linkMap2Table) {        
-        updateFeatures();
-    }
-});
 
 // Clear Filters
 document.getElementById("btnClearFilters").addEventListener("click", () => {
@@ -759,3 +780,4 @@ document.getElementById("btnMapScreenshot").addEventListener("click", async () =
         console.error("❌ خطا در گرفتن اسکرین‌شات:", err);
     }
 });
+//#endregion
