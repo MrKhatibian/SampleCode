@@ -352,6 +352,7 @@ sketch.on("update", async (event) => {
 });
 //#endregion
 
+//#region Attribute managment
 // Set Fields Name
 let fieldsName = {
     sDateSend: "date_rooz",
@@ -376,9 +377,6 @@ let filterValues = {
     hoze: null,
     //ebtal: 0,
 };
-
-//Creat Where
-let where = buildWhereClause();
 
 /**
  * Build WHERE clause for filtering
@@ -413,6 +411,9 @@ function buildWhereClause() {
     return clauses.join(" AND ");
 }
 
+//Creat Where
+let where = buildWhereClause();
+
 // Build query
 const query = darkhastFLayer.createQuery();
 query.where = where; // for attributes
@@ -432,7 +433,7 @@ try {
     console.error("Initial queryFeatures failed:", err);
 }
 
-// Create the combo box (HTML <select> element)
+// Get Combobox Elements
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 const comboMarhale = document.getElementById("comboMarhale");
 const comboNoeKarbari = document.getElementById("comboNoeKarbari");
@@ -488,7 +489,7 @@ const dicCombo2Field = {
 /**
  * Fill Comboboxes
  * @param {any} comboboxes Combobox object
-  */
+ */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
@@ -503,7 +504,7 @@ function fillComboboxes(comboboxes) {
  * Update combo box with unique values
  * @param {any} combo Combobox object
  * @param {any} values Combobox values
- * @param {any} selectValue Delect Combobox value
+ * @param {any} selectValue Select Combobox value
  * @returns update Comboboxes and selected value
  */
 function updateComboValues(combo, values, selectValue) {
@@ -520,8 +521,10 @@ function updateComboValues(combo, values, selectValue) {
     });
     combo.value = selectValue;
 }
+//#endregion
 
-// Event: comboNoeDarkhast changed
+//#region Events
+//Comboxes changed
 comboNoeDarkhast.addEventListener("change", function () {
     filterValues.noedarkhast = this.value;
     updateFeatures();
@@ -542,10 +545,6 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.hoze = this.value;
     updateFeatures();
 });
-//comboMahdodeh.addEventListener("change", function () {
-//    filterValues.hoze = this.value;
-//    updateFeatures();
-//});
 startDateSend.addEventListener("change", () => {
     const dateStr = startDateSend.value;
 
@@ -566,6 +565,21 @@ endDateSend.addEventListener("change", () => {
     filterValues.eDateSend = persianDate;
     updateFeatures();
 });
+
+// View changed
+view.watch("stationary", function (isStationary) {
+    if (isStationary && linkMap2Table) {
+        updateFeatures();
+    }
+});
+//#endregion
+
+// #region Date
+/**
+ * 
+ * @param {any} date
+ * @returns
+ */
 function dateValidation(date) {
     // Check if the date is empty
     if (!date) {
@@ -615,7 +629,9 @@ function convert2shamsi(date) {
     const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;
     return Number(persianDate);
 }
+//#endregion
 
+//#region Main Logic
 /**
  * Get Geometry
  * @param {any} view for View extent
@@ -667,13 +683,6 @@ async function updateFeatures() {
         console.error("Error syncing layer:", error);
     } finally { hideLoader(); }
 }
-
-// When View Event changed
-view.watch("stationary", function (isStationary) {
-    if (isStationary && linkMap2Table) {        
-        updateFeatures();
-    }
-});
 
 // Clear Filters
 document.getElementById("btnClearFilters").addEventListener("click", () => {
@@ -759,3 +768,4 @@ document.getElementById("btnMapScreenshot").addEventListener("click", async () =
         console.error("❌ خطا در گرفتن اسکرین‌شات:", err);
     }
 });
+//#endregion
