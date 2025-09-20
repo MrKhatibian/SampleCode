@@ -51,7 +51,7 @@ function hideLoader() {
 //#endregion
 
 //#region Basic map definitions
-// Initialize Arse ImageLayer
+// ===== Initialize Arse ImageLayer =====
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
     sublayers: [{ id: 9 }]
@@ -62,7 +62,7 @@ arseILayer.when(() => {
     console.error("Error loading arseILayer:", error);
 });
 
-// === Initialize Darkhast FeatureLayer ===
+// ===== Initialize Darkhast FeatureLayer =====
 const darkhastFLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
@@ -109,17 +109,15 @@ const darkhastFLayer = new FeatureLayer({
                     width: 3
                 }
             },
-            visualVariables: [
-                {
-                    type: "color",
-                    field: "cluster_count",
-                    stops: [
-                        { value: 1, color: "black" },
-                        { value: 2, color: "#BEE8FF" },
-                        { value: 100, color: "#002673" }
-                    ]
-                }
-            ]
+            visualVariables: [{
+                type: "color",
+                field: "cluster_count",
+                stops: [
+                    { value: 1, color: "black" },
+                    { value: 2, color: "#BEE8FF" },
+                    { value: 100, color: "#002673" }
+                ]
+            }]
         },
         labelingInfo: [{
             deconflictionStrategy: "none",
@@ -141,10 +139,9 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
-
 let featureTable;
 darkhastFLayer.when(() => {
-    console.log("darkhastFLayer loaded successfully.");
+    //console.log("darkhastFLayer loaded successfully.");
 
     const allFields = darkhastFLayer.fields;
 
@@ -157,11 +154,11 @@ darkhastFLayer.when(() => {
             type: "field",
             fieldName: field.name,
             label: field.alias || field.name,
-            visible: index < 10 // فقط 10 تای اول قابل مشاهده باشند
+            visible: index < 10 // Top 10 Visiable
         };
     });
 
-    // === Initialize FeatureTable ===
+    // ===== Initialize FeatureTable =====    
     featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
@@ -182,44 +179,49 @@ darkhastFLayer.when(() => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
-// === Initialize Map ===
+// ===== Initialize Map =====
 const map = new Map({
     basemap: "osm",
     layers: [arseILayer, darkhastFLayer]
 });
 
-// === Initialize View ===
+// ===== Initialize View =====
 let view = new MapView({
     container: "map",
     map: map,
 });
+// Remove osm Attribution
+view.ui.remove("attribution");
 
-view.when(() => {
-    console.log("MapView is ready");
-}).catch((error) => {
-    console.error("MapView failed to load:", error);
-});
+//view.when(() => {
+//    console.log("MapView is ready");
+//}).catch((error) => {
+//    console.error("MapView failed to load:", error);
+//});
 
 // Set View extent to Darkhst featureLayer extent
 view.whenLayerView(darkhastFLayer).then(function () {
-    view.goTo(darkhastFLayer.fullExtent, {
+    let layer = arseILayer;
+    if (darkhastFLayer) {
+        layer = darkhastFLayer
+    }
+    view.goTo(layer.fullExtent, {
         animate: false
     }).catch(function (error) {
         console.error("Extent projection error: ", error);
     });
 
     // Limited View Extent and Zoom level
-    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
+    const cityExtent = layer.fullExtent; // dynamic extent
     view.constraints = {
         geometry: cityExtent,
         minZoom: 14
     };
 });
 
-// Remove osm Attribution
-view.ui.remove("attribution");
 
-// === Add btn Home Widget ===
+
+// ===== Add btn Home Widget =====
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -232,7 +234,7 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-// === Add btn linkMap2Table ===
+// ===== Add btn linkMap2Table =====
 const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
 view.ui.add(btnLinkMap2Table, "top-left");
 const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
