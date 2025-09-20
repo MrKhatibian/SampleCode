@@ -7,6 +7,7 @@ import MapImageLayer from "../../esriapi/4.30/@arcgis/core/layers/MapImageLayer.
 import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
+import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 //#endregion
 
 //#region Helper Functions
@@ -255,8 +256,10 @@ btnLinkMap2Table.addEventListener("click", () => {
         calIcon.icon = "offline";
     }
 });
+//#endregion
 
-// === Initialize Sketch ===
+//#region Sketch
+// ===== Initialize Sketch =====
 const sketchLayer = new GraphicsLayer();
 map.add(sketchLayer);
 
@@ -264,19 +267,19 @@ const sketch = new Sketch({
     layer: sketchLayer,
     view: view,
     creationMode: "single",
-    visibleElements: {
-        createTools: {
-            point: false,
-            polyline: false,
-            circle: false,
-            rectangle: false
-        },
-        selectionTools: {
-            "rectangle-selection": false,
-            "lasso-selection": false
-        },
-        settingsMenu: false
-    }
+    //visibleElements: {
+    //    createTools: {
+    //        point: false,
+    //        polyline: false,
+    //        circle: false,
+    //        rectangle: false
+    //    },
+    //    selectionTools: {
+    //        "rectangle-selection": false,
+    //        "lasso-selection": false
+    //    },
+    //    settingsMenu: false
+    //}
 });
 
 // === Initilize btn Delete Sketch ===
@@ -292,29 +295,20 @@ let sketchFlag = false;
 btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
-        // Acttive 
-        //sketch.visible = true;
+        // Acttive         
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
         sketch.create("polygon");
-        btnDelSketch.hidden = false;
-        //calIcon.icon = "online";
-
-        // Map extent changed
-        //query.geometry = view.extent;
-        //updateFeatures();
+        btnDelSketch.hidden = false;      
     } else {
-        // Passive 
-        //sketch.visible = false;
+        // Passive         
         btnSketch.title = "Sketch On";
         btnSketch.style.color = "red";
         sketch.cancel();
         sketchLayer.removeAll();
         btnDelSketch.hidden = true;
-        query.geometry = view.extent;
-        updateFeatures();
-        //calIcon.icon = "offline";
-
+        query.geometry = arseILayer.extent;
+        updateFeatures();        
     }
 });
 
@@ -335,6 +329,8 @@ sketch.on("create", async (event) => {
         } catch (err) {
             console.error("CreateFeatures error:", err);
         }
+    } else if (event.state === "cancel") {
+        btnSketch.click();
     }
 });
 
@@ -620,40 +616,61 @@ function convert2shamsi(date) {
     return Number(persianDate);
 }
 
-// Main update function: apply extent and definitionExpression
-async function updateFeatures() {
-    where = buildWhereClause();
-    showLoader("map");
-    try {
-        // 1. Build query
-        query.where = where;
-        // 2. Execute query - wait for it to complete
-        darkhastFSet = await darkhastFLayer.queryFeatures(query);
-        darkhastFeatures = darkhastFSet.features;
-        // Set Data To Comboboxes
-        comboBoxValues = getComboBoxValues(darkhastFeatures);
-        fillComboboxes(comboboxes);
-
-        view.whenLayerView(darkhastFLayer).then(function (layerView) {
-            //extent = view.extent;
-            layerView.filter = {
-                geometry: query.geometry,
-                spatialRelationship: "intersects",
-            };
-        });
-        featureTable.filterGeometry = query.geometry;// ensures it only shows data within the map view
-        darkhastFLayer.definitionExpression = where;
-
-    } catch (error) {
-        console.error("Error syncing layer:", error);
-    } finally {
-        hideLoader();
+/**
+ * Get Geometry
+ * @param {any} view for View extent
+ * @param {any} sketchLayer for Sketch extent
+ * @returns geometry 
+ */
+function getEffectiveGeometry(view, sketchLayer) {
+    if (sketchLayer.graphics.length > 0) {               
+        return geometryEngine.intersect(sketchLayer.graphics.getItemAt(0).geometry, view.extent);
+    } else if (linkMap2Table) {        
+        return view.extent;
+    } else {
+        return darkhastFLayer.fullExtent;
     }
 }
 
+// Main update function: apply extent and definitionExpression
+async function updateFeatures() {
+    showLoader("map");       
+    try {                
+        // ===== 1. Get Value ======
+        where = buildWhereClause();                
+        const getGeometry = getEffectiveGeometry(view, sketchLayer);
+
+        // ===== 2. Set Filter ======
+        // Geometric filter applied
+        const layerView = await view.whenLayerView(darkhastFLayer);
+        layerView.filter = {
+            geometry: getGeometry,
+            spatialRelationship: "intersects"
+        };
+        // Attribute filter applied
+        darkhastFLayer.definitionExpression = where;
+        // FeatureTable filter applied
+        featureTable.filterGeometry = getGeometry;
+        
+
+        // ===== 3. Build query =====
+        query.where = where;
+        query.geometry = getGeometry;
+
+        // Execute query - wait for it to complete
+        darkhastFSet = await darkhastFLayer.queryFeatures(query);
+        darkhastFeatures = darkhastFSet.features;        
+        // Set Data To Comboboxes
+        comboBoxValues = getComboBoxValues(darkhastFeatures);
+        fillComboboxes(comboboxes);
+    } catch (error) {
+        console.error("Error syncing layer:", error);
+    } finally { hideLoader(); }
+}
+
+// When View Event changed
 view.watch("stationary", function (isStationary) {
-    if (isStationary && linkMap2Table) {
-        query.geometry = view.extent;
+    if (isStationary && linkMap2Table) {        
         updateFeatures();
     }
 });
@@ -670,6 +687,7 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
         mahdodeh: null,
         //ebtal: 0,
     };
+    query.geometry = arseILayer.extent;
     startDateSend.value = "";
     endDateSend.value = "";
     updateFeatures();
