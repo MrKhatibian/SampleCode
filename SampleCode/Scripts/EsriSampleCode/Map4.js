@@ -525,13 +525,13 @@ function updateComboValues(combo, values, selectValue) {
         option.text = value;
         combo.appendChild(option);
     });
-
+    combo.value = selectValue;
     // Select combox Value
-    if (values.includes(selectValue)) {
-        combo.value = selectValue;
-    } else {
-        combo.selectedIndex = 0;
-    }
+    //if (values.includes(selectValue)) {
+        
+    //} else {
+    //    combo.selectedIndex = 0;
+    //}
 }
 //#endregion
 
@@ -714,6 +714,7 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
     updateFeatures();
 });
 
+
 // Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
     exportTableToCSV(darkhastFeatures);
@@ -724,9 +725,17 @@ async function exportTableToCSV(features) {
             alert("No features to export.");
             return;
         }
+        
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);  
+        //.filter(col => col.visible) //Not have property visible
+            
+        if (!visibleFields.length > 0) {
+            console.log("No visible fields to export.");
+            return;
+        }
 
         // Convert to CSV
-        const csv = convertFeaturesToCSV(features);
+        const csv = convertFeaturesToCSV(features, visibleFields);
         const BOM = "\uFEFF";
         const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -737,15 +746,16 @@ async function exportTableToCSV(features) {
         link.click();
         document.body.removeChild(link);
     } catch (err) {
-        console.error("Export failed", err);
+        console.error("Export CSV failed", err);
     }
 }
-function convertFeaturesToCSV(features) {
-    ;
-    const fields = Object.keys(features[0].attributes);
-    const header = fields.join(",");
+function convertFeaturesToCSV(features, visibleFields) {
+    const getValueFields = visibleFields.map(col => col.fieldName);
+    const getCSVFields = visibleFields.map(col => col.label || col.fieldName)
+
+    const header = getCSVFields.join(",");
     const rows = features.map(f => {
-        return fields.map(field => `"${f.attributes[field]}"`).join(",");
+        return getValueFields.map(field => `"${f.attributes[field]}"`).join(",");
     });
     return [header, ...rows].join("\r\n");
 }
