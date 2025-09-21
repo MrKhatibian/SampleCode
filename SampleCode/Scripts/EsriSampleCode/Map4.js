@@ -721,7 +721,7 @@ document.getElementById("btnCSV").addEventListener("click", function () {
 async function exportTableToCSV(features) {
     try {
         if (!features.length) {
-            alert("No features to export.");
+            alert("No features for export.");
             return;
         }
         
@@ -749,15 +749,22 @@ async function exportTableToCSV(features) {
     }
 }
 function convertFeaturesToCSV(features, visibleFields) {
-    const getValueFields = visibleFields.map(col => col.fieldName);
-    const getCSVFields = visibleFields.map(col => col.label || col.fieldName)
+    // Created headers
+    const headers = visibleFields.map(col => col.label || col.fieldName);
 
-    const header = getCSVFields.join(",");    
+    // Get data 
     const rows = features.map(f => {
-        return getValueFields.map(field => `"${f.attributes[field]}"`).join(",");
+        let row = visibleFields.map(col => {
+            let value = f.attributes[col.fieldName];
+            // For unacceptable values
+            return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
+        });
+        return row.join(",");
     });
-    return [header, ...rows].join("\r\n");
+
+    return [headers.join(","), ...rows].join("\r\n");
 }
+
 
 //Export Excel
 document.getElementById("btnExcel").addEventListener("click", () => {
@@ -766,8 +773,19 @@ document.getElementById("btnExcel").addEventListener("click", () => {
 
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
     try {     
+        if (!features.length) {
+            alert("No features for export.");
+            return;
+        }
+        
         // Get header and data
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        // Validation for visibleFields
+        if (!visibleFields.length > 0) {
+            console.log("No visible fields to export.");
+            return;
+        }
+
         const headers = visibleFields.map(col => col.label || col.fieldName);
         const data = features.map(f => {
             let row = {};
