@@ -525,13 +525,13 @@ function updateComboValues(combo, values, selectValue) {
         option.text = value;
         combo.appendChild(option);
     });
-
+    combo.value = selectValue;
     // Select combox Value
-    if (values.includes(selectValue)) {
-        combo.value = selectValue;
-    } else {
-        combo.selectedIndex = 0;
-    }
+    //if (values.includes(selectValue)) {
+        
+    //} else {
+    //    combo.selectedIndex = 0;
+    //}
 }
 //#endregion
 
@@ -721,12 +721,20 @@ document.getElementById("btnCSV").addEventListener("click", function () {
 async function exportTableToCSV(features) {
     try {
         if (!features.length) {
-            alert("No features to export.");
+            alert("No features for export.");
+            return;
+        }
+        
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);  
+        //.filter(col => col.visible) //Not have property visible
+            
+        if (!visibleFields.length > 0) {
+            console.log("No visible fields to export.");
             return;
         }
 
         // Convert to CSV
-        const csv = convertFeaturesToCSV(features);
+        const csv = convertFeaturesToCSV(features, visibleFields);
         const BOM = "\uFEFF";
         const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -737,30 +745,69 @@ async function exportTableToCSV(features) {
         link.click();
         document.body.removeChild(link);
     } catch (err) {
-        console.error("Export failed", err);
+        console.error("Export CSV failed", err);
     }
 }
-function convertFeaturesToCSV(features) {
-    ;
-    const fields = Object.keys(features[0].attributes);
-    const header = fields.join(",");
+function convertFeaturesToCSV(features, visibleFields) {
+    // Created headers
+    const headers = visibleFields.map(col => col.label || col.fieldName);
+
+    // Get data 
     const rows = features.map(f => {
-        return fields.map(field => `"${f.attributes[field]}"`).join(",");
+        let row = visibleFields.map(col => {
+            let value = f.attributes[col.fieldName];
+            // For unacceptable values
+            return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
+        });
+        return row.join(",");
     });
-    return [header, ...rows].join("\r\n");
+
+    return [headers.join(","), ...rows].join("\r\n");
 }
+
 
 //Export Excel
 document.getElementById("btnExcel").addEventListener("click", () => {
     exportEditedFeaturesToExcel(darkhastFeatures)
 });
+
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
-    try {
-        const data = features.map((f) => f.attributes);
-        const worksheet = XLSX.utils.json_to_sheet(data);
+    try {     
+        if (!features.length) {
+            alert("No features for export.");
+            return;
+        }
+        
+        // Get header and data
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        // Validation for visibleFields
+        if (!visibleFields.length > 0) {
+            console.log("No visible fields to export.");
+            return;
+        }
+
+        const headers = visibleFields.map(col => col.label || col.fieldName);
+        const data = features.map(f => {
+            let row = {};
+            visibleFields.forEach(col => {
+                row[col.label || col.fieldName] = f.attributes[col.fieldName];
+            });
+            return row;
+        });
+
+        // Created Sheet
+        const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+        // Set in first row started
+        XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+
+        // Make Workbook
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "‌Export");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
+
+        // Save it
         XLSX.writeFile(workbook, filename);
+
     } catch (error) {
         console.error("Export failed", error);
     }
