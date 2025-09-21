@@ -714,7 +714,6 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
     updateFeatures();
 });
 
-
 // Export CSV
 document.getElementById("btnCSV").addEventListener("click", function () {
     exportTableToCSV(darkhastFeatures);
@@ -753,7 +752,7 @@ function convertFeaturesToCSV(features, visibleFields) {
     const getValueFields = visibleFields.map(col => col.fieldName);
     const getCSVFields = visibleFields.map(col => col.label || col.fieldName)
 
-    const header = getCSVFields.join(",");
+    const header = getCSVFields.join(",");    
     const rows = features.map(f => {
         return getValueFields.map(field => `"${f.attributes[field]}"`).join(",");
     });
@@ -764,13 +763,33 @@ function convertFeaturesToCSV(features, visibleFields) {
 document.getElementById("btnExcel").addEventListener("click", () => {
     exportEditedFeaturesToExcel(darkhastFeatures)
 });
+
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
-    try {
-        const data = features.map((f) => f.attributes);
-        const worksheet = XLSX.utils.json_to_sheet(data);
+    try {     
+        // Get header and data
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        const headers = visibleFields.map(col => col.label || col.fieldName);
+        const data = features.map(f => {
+            let row = {};
+            visibleFields.forEach(col => {
+                row[col.label || col.fieldName] = f.attributes[col.fieldName];
+            });
+            return row;
+        });
+
+        // Created Sheet
+        const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+
+        // Set in first row started
+        XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+
+        // Make Workbook
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "‌Export");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
+
+        // Save it
         XLSX.writeFile(workbook, filename);
+
     } catch (error) {
         console.error("Export failed", error);
     }
