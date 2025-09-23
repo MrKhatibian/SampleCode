@@ -720,16 +720,12 @@ document.getElementById("btnCSV").addEventListener("click", function () {
 });
 async function exportTableToCSV(features) {
     try {
-        if (!features.length) {
-            console.log("No features for export.");
-            return;
-        }
-        
+        // Get visibleFields for set dynamic header
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);  
         //.filter(col => col.visible) //Not have property visible
-            
-        if (!visibleFields.length) {
-            console.log("No visible fields to export.");
+
+        // Validation for visibleFields & featurs
+        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
             return;
         }
 
@@ -749,11 +745,11 @@ async function exportTableToCSV(features) {
     }
 }
 function convertFeaturesToCSV(features, visibleFields) {
-    // Created headers
-    const headers = visibleFields.map(col => col.label || col.fieldName);
 
-    // Get data 
-    const rows = features.map(f => {
+    // Get Header & Data
+    const headers = visibleFields.map(col => col.label || col.fieldName);
+    
+    const data = features.map(f => {
         let row = visibleFields.map(col => {
             let value = f.attributes[col.fieldName];
             // For unacceptable values
@@ -762,7 +758,7 @@ function convertFeaturesToCSV(features, visibleFields) {
         return row.join(",");
     });
 
-    return [headers.join(","), ...rows].join("\r\n");
+    return [headers.join(","), ...data].join("\r\n");
 }
 
 
@@ -772,21 +768,17 @@ document.getElementById("btnExcel").addEventListener("click", () => {
 });
 
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
-    try {     
-        if (!features.length) {
-            console.log("No features for export.");
-            return;
-        }
-        
-        // Get header and data
+    try {       
+        // Get visibleFields for set dynamic header
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-        // Validation for visibleFields
-        if (!visibleFields.length) {
-            console.log("No visible fields to export.");
+
+        // Validation for visibleFields & featurs
+        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
             return;
         }
-
+        // Get Header & Data
         const headers = visibleFields.map(col => col.label || col.fieldName);
+        
         const data = features.map(f => {
             let row = {};
             visibleFields.forEach(col => {
@@ -811,6 +803,27 @@ function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
     } catch (error) {
         console.error("Export failed", error);
     }
+}
+
+/**
+ * Validation for features and visibleFields
+ * @param {any} features FeatureLayer
+ * @param {any} visibleFields Array
+ * @returns ture/false
+ */
+function featuresAndVisiblefieldsValidation(features, visibleFields) {
+    // Validation for Features
+    if (!features.length) {
+        console.log("No features for export.");
+        return false;
+    }
+
+    // Validation for visibleFields
+    if (!visibleFields.length) {
+        console.log("No visible fields to export.");
+        return false;
+    }
+    return true;
 }
 
 //Export Image 
