@@ -52033,6 +52033,7 @@
     <Content Include="Models\AmardShahrsaziMaryanaj.edmx.diagram">
       <DependentUpon>AmardShahrsaziMaryanaj.edmx</DependentUpon>
     </Content>
+    <Content Include=".github\PULL_REQUEST_TEMPLATE.md" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\EsriSampleCode\Map5.js" />
     <Content Include="Scripts\EsriSampleCode\Map4.js" />
