@@ -1,38 +1,38 @@
-﻿# ✅ چک‌لیست بررسی کیفیت کد و توابع
+﻿# ✅ Code and Function Quality Checklist
 
-## نام‌گذاری
-- [ ] نام تابع دقیقاً بیانگر کار آن هست
-- [ ] از نام‌های اختصاری و مبهم استفاده نشده
+## Naming
+- [ ] Function names clearly describe their purpose
+- [ ] No ambiguous or unclear abbreviations are used
 
-## اندازه و ساختار
-- [ ] تابع کوتاه و متمرکز هست (مثلاً کمتر از 30-40 خط)
-- [ ] تابع فقط یک مسئولیت داره (SRP)
+## Size and Structure
+- [ ] Function is short and focused (e.g., less than 30-40 lines)
+- [ ] Function has a single responsibility (SRP)
 
-## ورودی/خروجی
-- [ ] تعداد پارامترها قابل مدیریت هست (≤3 یا نهایتاً ≤5)
-- [ ] ورودی‌ها اعتبارسنجی می‌شن
-- [ ] مقدار برگشتی واضح و قابل پیش‌بینی هست
+## Input/Output
+- [ ] Number of parameters is manageable (≤3, max 5)
+- [ ] Inputs are validated
+- [ ] Return values are clear and predictable
 
-## پیچیدگی
-- [ ] شرط‌ها و حلقه‌ها بیش از حد تو در تو نیستن
-- [ ] میشه تابع رو به توابع کوچک‌تر تقسیم کرد
+## Complexity
+- [ ] Conditions and loops are not overly nested
+- [ ] Function can be broken into smaller functions if needed
 
-## مدیریت خطا
-- [ ] در شرایط خطا، تابع رفتار مناسبی داره (try/catch یا return منطقی)
-- [ ] پیام خطا واضح و قابل فهمه
+## Error Handling
+- [ ] Function handles errors properly (try/catch or logical return)
+- [ ] Error messages are clear and understandable
 
-## مستندسازی
-- [ ] توضیحات (Docstring یا JSDoc) نوشته شده
-- [ ] برای پارامترها و خروجی توضیح داده شده
+## Documentation
+- [ ] Docstring / JSDoc is provided
+- [ ] Parameters and return values are explained
 
-## خوانایی
-- [ ] کد به راحتی قابل فهم برای یک نفر جدید هست
-- [ ] از استانداردهای تیمی (Style Guide) پیروی می‌کنه
+## Readability
+- [ ] Code is easy to understand for a new developer
+- [ ] Follows team coding standards / style guide
 
-## تست‌پذیری
-- [ ] تابع Unit Test داره یا به راحتی قابل تست هست
-- [ ] به وابستگی‌های سخت (DB، API، File System) گره نخورده
+## Testability
+- [ ] Function has unit tests or is easily testable
+- [ ] No hard dependencies (DB, API, File System)
 
-## عملکرد
-- [ ] الگوریتم مناسب و بهینه انتخاب شده
-- [ ] در داده‌های زیاد یا شرایط خاص کند یا مشکل‌زا نمی‌شه
+## Performance
+- [ ] Algorithm is appropriate and efficient
+- [ ] Works well with large data and edge cases
