@@ -721,14 +721,14 @@ document.getElementById("btnCSV").addEventListener("click", function () {
 async function exportTableToCSV(features) {
     try {
         if (!features.length) {
-            alert("No features for export.");
+            console.log("No features for export.");
             return;
         }
         
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);  
         //.filter(col => col.visible) //Not have property visible
             
-        if (!visibleFields.length > 0) {
+        if (!visibleFields.length) {
             console.log("No visible fields to export.");
             return;
         }
@@ -774,14 +774,14 @@ document.getElementById("btnExcel").addEventListener("click", () => {
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
     try {     
         if (!features.length) {
-            alert("No features for export.");
+            console.log("No features for export.");
             return;
         }
         
         // Get header and data
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
         // Validation for visibleFields
-        if (!visibleFields.length > 0) {
+        if (!visibleFields.length) {
             console.log("No visible fields to export.");
             return;
         }
