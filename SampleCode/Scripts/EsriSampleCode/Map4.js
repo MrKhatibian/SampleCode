@@ -794,10 +794,7 @@ function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
             });
             return row;
         });
-        if (!data.length) {
-            console.log("No data for export.");
-            return;
-        }
+
         // Created Sheet
         const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
 
