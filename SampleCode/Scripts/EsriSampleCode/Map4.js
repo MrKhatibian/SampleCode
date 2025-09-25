@@ -715,57 +715,6 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
 });
 
 /**
- * Get Headers and Data for export
- * @param {FeatureTable} featureTable - FeatureTable instance
- * @param {Array} features - FeatureLayer.features
- * @returns {{ headers: string[], rows: Object[] }}
- */
-function getHeadersAndRows(featureTable, features) {
-    try {       
-        // Validation for featureTable
-        if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
-            throw new Error("Invalid featureTable object. Missing 'columns.items'.");
-        }
-        // Validation for features
-        if (!Array.isArray(features)) {
-            throw new Error("Invalid parameter: features must be an array.");
-        }
-
-        // Visible fields in feature table
-        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-        if (visibleFields.length === 0) {
-            console.warn("No visible fields found. Returning empty result.");
-            return { headers: [], rows: [] };
-        }
-
-        // Headers
-        const headers = visibleFields.map(col => col.label || col.fieldName);
-
-        // Rows
-        if (features.length === 0) {
-            console.warn("No features provided. Returning empty result.");
-            return { headers, rows: [] };
-        }
-        const rows = features.map(f => {
-            let row = {};
-            visibleFields.forEach(col => {
-                row[col.label || col.fieldName] =
-                    f.attributes && f.attributes[col.fieldName] !== undefined
-                        ? f.attributes[col.fieldName]
-                        : null; // default value
-            });
-            return row;
-        });
-
-        return { headers, rows };
-    } catch (error) {
-        console.error("Error in getHeadersAndRows:", error.message);        
-        return { headers: [], rows: [] };
-    }
-}
-
-
-/**
  * Validation for features and visibleFields
  * @param {any} features FeatureLayer
  * @param {any} visibleFields Array
@@ -786,13 +735,65 @@ function featuresAndVisiblefieldsValidation(features, visibleFields) {
     return true;
 }
 
+/**
+ * Get Headers and Data for export
+ * @param {FeatureTable} featureTable - FeatureTable instance
+ * @param {Array} features - FeatureLayer.features
+ * @returns {{ headers: string[], rows: Object[] }}
+ */
+function getHeadersAndRows(featureTable, features) {
+    try {debugger
+        // Validation
+        if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
+            throw new Error("Validation failed, featureTable must be object and Missing 'columns.items'.");
+        }        
+        if (!Array.isArray(features)) {
+            throw new Error("Validation failed, features must be an array.");
+        }
+
+        // Visible fields in feature table
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        if (visibleFields.length === 0) {
+            throw new Error("No visible fields found, Returning empty result.");            
+        }
+
+        // Headers
+        const headers = visibleFields.map(col => col.label || col.fieldName);
+
+        // Rows
+        if (features.length === 0) {
+            console.warn("No features provided. Returning empty Rows.");
+            return { headers, rows: [] };
+        }
+        const rows = features.map((f, i) => {
+            if (!f || !f.attributes) {
+                console.warn(`Feature at index ${i} is invalid or missing attributes.`);
+                return {};
+            }
+            let row = {};
+            visibleFields.forEach(col => {
+                row[col.label || col.fieldName] =
+                    f.attributes && f.attributes[col.fieldName] !== undefined
+                        ? f.attributes[col.fieldName]
+                        : null; // default value
+            });
+            return row;
+        });
+
+        return { headers, rows };
+    } catch (error) {
+        console.error("Error in getHeadersAndRows:", error.message);        
+        return { headers: [], rows: [] };
+    }
+}
+
 // ====== CSV Export ====== //
 document.getElementById("btnCSV").addEventListener("click", function () {
-    try {             
-        const { csvHeaders, csvRows } = getHeadersAndRows(featureTable, features);
-        exportCSV(csvHeaders, csvRows);
-    } catch (e) {
-
+    try {debugger
+        const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
+        exportCSV(headers, rows);
+    } catch (error) {
+        console.error("Error in btnCSV Clicked:", error.message);
     }
 });
 
@@ -804,31 +805,34 @@ document.getElementById("btnCSV").addEventListener("click", function () {
  * @param {string} filename Default is: Export
  */
 function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
-    try {
+    try {debugger
         // Validation
         if (!Array.isArray(headers) || headers.length === 0) {
-            throw new Error("Validation failed: 'headers' must be a non-empty array.");
+            throw new Error("Validation failed, 'headers' must be a non-empty array.");
         }
-        if (!Array.isArray(rows) || rows.length === 0) {
-            throw new Error("Validation failed: 'rows' must be an array.");
+        if (!Array.isArray(rows)) {
+            throw new Error("Validation failed, 'rows' must be an array.");
         }
         if (typeof delimiter !== "string" || delimiter.length === 0) {
-            throw new Error("Validation failed: 'delimiter' must be a non-empty string.");
+            throw new Error("Validation failed, 'delimiter' must be a non-empty string.");
         }
         if (typeof filename !== "string" || filename.trim().length === 0) {
-            throw new Error("Validation failed: 'filename' must be a non-empty string.");
+            throw new Error("Validation failed, 'filename' must be a non-empty string.");
         }
-
-        // Build CSV rows        
-        const csvRows = rows.map((row, i) => {
-            if (typeof row !== "object" || row === null) {
-                throw new Error(`Validation failed: Row at index ${i} is not a valid object.`);
-            }
-            return headers.map(h => {
-                const value = row[h];
-                return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
-            }).join(delimiter);
-        });
+        // Build CSV rows  
+        let csvRows = [];
+        if (rows.length !== 0) {
+            csvRows = rows.map((row, i) => {
+                if (typeof row !== "object" || row === null) {
+                    console.warn(`Row at index ${i} is not a valid object and Skipping.`);
+                    return headers.map(() => "").join(delimiter); // empty row
+                }
+                return headers.map(h => {
+                    const value = row[h];
+                    return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
+                }).join(delimiter);
+            });
+        } else { console.warn("Rows is an empty array.") }                     
 
         // Full CSV data
         const fullData = [headers.join(delimiter), ...csvRows].join("\r\n");
@@ -845,26 +849,10 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    } catch (err) {
-        console.error("Export CSV failed:", err.message);
+    } catch (error) {
+        console.error("Error in exportCSV:", error.message);
     }
 }
-function convertFeaturesToCSV(features, visibleFields) {
-
-    // Get Header & Data
-    const headers = visibleFields.map(col => col.label || col.fieldName);
-
-    const data = features.map(f => {
-        let row = visibleFields.map(col => {
-            let value = f.attributes[col.fieldName];
-            // For unacceptable values
-            return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
-        });
-        return row;
-    });
-    return [headers.join(","), ...data].join("\r\n");
-}
-
 
 // ====== Excel Export ====== //
 document.getElementById("btnExcel").addEventListener("click", () => {
