@@ -606,8 +606,8 @@ function convert2shamsi(date) {
 //#region Main Logic
 /**
  * Get Geometry
- * @param {any} view for View extent
- * @param {any} sketchLayer for Sketch extent
+ * @param {Object} view (MapView)for View extent
+ * @param {Object} sketchLayer (GraphicLayer) for Sketch extent
  * @returns geometry 
  */
 function getEffectiveGeometry(view, sketchLayer) {
