@@ -10,46 +10,6 @@ import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
 //#endregion
 
-//#region Helper Functions
-
-// ====== Sleep ======
-/**
- * Sleep function to hold a process
- * @param {any} ms Sleeptime
- * @returns
- */
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// ====== Loader ======
-// Get Loader Element
-const loader = document.getElementById("loader");
-
-/**
- * Loader display function
- * @param {any} divId Loader display div
- */
-function showLoader(divId) {
-    const target = document.getElementById(divId);
-
-    // Parent position must be relative.
-    if (getComputedStyle(target).position === "static") {
-        target.style.position = "relative";
-    }
-
-    // Add a loader inside the same div
-    target.appendChild(loader);
-    loader.style.display = "flex";
-}
-/**
- * Loader hide function
- */
-function hideLoader() {
-    loader.style.display = "none";
-}
-//#endregion
-
 //#region Basic map definitions
 // ====== Initialize Arse ImageLayer ======
 const arseILayer = new MapImageLayer({
@@ -535,7 +495,7 @@ function updateComboValues(combo, values, selectValue) {
 }
 //#endregion
 
-//#region Events
+//#region Filtering Events
 //Comboxes changed
 comboNoeDarkhast.addEventListener("change", function () {
     filterValues.noedarkhast = this.value;
@@ -586,7 +546,7 @@ view.watch("stationary", function (isStationary) {
 });
 //#endregion
 
-// #region Date
+//#region Date
 /**
  * 
  * @param {any} date
@@ -696,6 +656,9 @@ async function updateFeatures() {
     } finally { hideLoader(); }
 }
 
+//#endregion
+
+//#region Export buttons Haldler
 // ====== Clear Filters ======
 document.getElementById("btnClearFilters").addEventListener("click", () => {
     filterValues = {
@@ -714,79 +677,6 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
     updateFeatures();
 });
 
-/**
- * Validation for features and visibleFields
- * @param {any} features FeatureLayer
- * @param {any} visibleFields Array
- * @returns ture/false
- */
-function featuresAndVisiblefieldsValidation(features, visibleFields) {
-    // Validation for Features
-    if (!features.length) {
-        console.log("No features for export.");
-        return false;
-    }
-
-    // Validation for visibleFields
-    if (!visibleFields.length) {
-        console.log("No visible fields to export.");
-        return false;
-    }
-    return true;
-}
-
-/**
- * Get Headers and Data for export
- * @param {FeatureTable} featureTable - FeatureTable instance
- * @param {Array} features - FeatureLayer.features
- * @returns {{ headers: string[], rows: Object[] }}
- */
-function getHeadersAndRows(featureTable, features) {
-    try {
-        // Validation
-        if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
-            throw new Error("Validation failed, featureTable must be object and Missing 'columns.items'.");
-        }
-        if (!Array.isArray(features)) {
-            throw new Error("Validation failed, features must be an array.");
-        }
-
-        // Visible fields in feature table
-        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-        if (visibleFields.length === 0) {
-            throw new Error("No visible fields found, Returning empty result.");
-        }
-
-        // Headers
-        const headers = visibleFields.map(col => col.label || col.fieldName);
-
-        // Rows
-        if (features.length === 0) {
-            console.warn("No features provided. Returning empty Rows.");
-            return { headers, rows: [] };
-        }
-        const rows = features.map((f, i) => {
-            if (!f || !f.attributes) {
-                console.warn(`Feature at index ${i} is invalid or missing attributes.`);
-                return {};
-            }
-            let row = {};
-            visibleFields.forEach(col => {
-                row[col.label || col.fieldName] =
-                    f.attributes && f.attributes[col.fieldName] !== undefined
-                        ? f.attributes[col.fieldName]
-                        : null; // default value
-            });
-            return row;
-        });
-
-        return { headers, rows };
-    } catch (error) {
-        console.error("Error in getHeadersAndRows:", error.message);
-        return { headers: [], rows: [] };
-    }
-}
-
 // ====== CSV Export ====== //
 document.getElementById("btnCSV").addEventListener("click", function () {
     try {
@@ -796,7 +686,6 @@ document.getElementById("btnCSV").addEventListener("click", function () {
         console.error("Error in btnCSV Clicked:", error.message);
     }
 });
-
 /**
  * Export to CSV from Data in featuresTable
  * @param {Array} headers
@@ -855,15 +744,14 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
 }
 
 // ====== Excel Export ====== //
-document.getElementById("btnExcel").addEventListener("click", () => {    
-    try {debugger
+document.getElementById("btnExcel").addEventListener("click", () => {
+    try {        
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
         exportExcel(headers, rows);
     } catch (error) {
         console.error("Error in btnExcel Clicked:", error.message);
     }
 });
-
 /**
  * Export to Excel from Data in featuresTable
  * @param {Array} headers
@@ -871,7 +759,7 @@ document.getElementById("btnExcel").addEventListener("click", () => {
  * @param {string} filename Default is: Export
  */
 function exportExcel(headers, rows, filename = "Export") {
-    try {debugger
+    try {        
         // Validation
         if (!Array.isArray(headers) || headers.length === 0) {
             throw new Error("Validation failed, 'headers' must be a non-empty array.");
@@ -905,7 +793,7 @@ function exportExcel(headers, rows, filename = "Export") {
     }
 }
 
-//Export Image 
+// ====== Map Image Export ======
 document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
     try {
         const screenshot = await view.takeScreenshot({ format: "png" });
@@ -915,8 +803,103 @@ document.getElementById("btnMapScreenshot").addEventListener("click", async () =
         link.download = "map.png";
         link.click();
 
-    } catch (err) {
-        console.error("❌ خطا در گرفتن اسکرین‌شات:", err);
+    } catch (error) {
+        console.error("Error in Map Image Export", error.message);
     }
 });
+
+//#endregion
+
+//#region Helper Functions
+
+// ====== Get Headers and Rows ======
+/**
+ * Get Headers and Rows for export
+ * @param {Object} featureTable - FeatureTable instance
+ * @param {Array} features - FeatureLayer.features
+ * @returns {{ headers: string[], rows: Object[] }}
+ */
+function getHeadersAndRows(featureTable, features) {
+    try {
+        // Validation
+        if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
+            throw new Error("Validation failed, featureTable must be object and Missing 'columns.items'.");
+        }
+        if (!Array.isArray(features)) {
+            throw new Error("Validation failed, features must be an array.");
+        }
+
+        // Visible fields in feature table
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        if (visibleFields.length === 0) {
+            throw new Error("No visible fields found, Returning empty result.");
+        }
+
+        // Headers
+        const headers = visibleFields.map(col => col.label || col.fieldName);
+
+        // Rows
+        if (features.length === 0) {
+            console.warn("No features provided. Returning empty Rows.");
+            return { headers, rows: [] };
+        }
+        const rows = features.map((f, i) => {
+            if (!f || !f.attributes) {
+                console.warn(`Feature at index ${i} is invalid or missing attributes.`);
+                return {};
+            }
+            let row = {};
+            visibleFields.forEach(col => {
+                row[col.label || col.fieldName] =
+                    f.attributes && f.attributes[col.fieldName] !== undefined
+                        ? f.attributes[col.fieldName]
+                        : null; // default value
+            });
+            return row;
+        });
+
+        return { headers, rows };
+    } catch (error) {
+        console.error("Error in getHeadersAndRows:", error.message);
+        return { headers: [], rows: [] };
+    }
+}
+
+// ====== Sleep ======
+/**
+ * Sleep function to hold a process
+ * @param {any} ms Sleeptime
+ * @returns
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ====== Loader ======
+// Get Loader Element
+const loader = document.getElementById("loader");
+/**
+ * Loader display function
+ * @param {string} divId Loader display div
+ */
+function showLoader(divId) {
+    const target = document.getElementById(divId);
+
+    // Parent position must be relative.
+    if (getComputedStyle(target).position === "static") {
+        target.style.position = "relative";
+    }
+
+    // Add a loader inside the same div
+    target.appendChild(loader);
+    loader.style.display = "flex";
+}
+
+/**
+ * Loader hide function
+ */
+function hideLoader() {
+    loader.style.display = "none";
+}
+
 //#endregion
