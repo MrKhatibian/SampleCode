@@ -716,23 +716,54 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
 
 /**
  * Get Headers and Data for export
- * @param {any} features (FeatureLayer) data from feature layer
- * @param {any} visibleFields (Array) visible header from featurs table 
- * @returns headers(array) and jsonData(object)
+ * @param {FeatureTable} featureTable - FeatureTable instance
+ * @param {Array} features - FeatureLayer.features
+ * @returns {{ headers: string[], rows: Object[] }}
  */
-function getHeaderAndData(features, visibleFields) {
-    // Get Header & Data
-    const headers = visibleFields.map(col => col.label || col.fieldName);
+function getHeadersAndRows(featureTable, features) {
+    try {       
+        // Validation for featureTable
+        if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
+            throw new Error("Invalid featureTable object. Missing 'columns.items'.");
+        }
+        // Validation for features
+        if (!Array.isArray(features)) {
+            throw new Error("Invalid parameter: features must be an array.");
+        }
 
-    const jsonData = features.map(f => {
-        let row = {};
-        visibleFields.forEach(col => {
-            row[col.label || col.fieldName] = f.attributes[col.fieldName];
+        // Visible fields in feature table
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        if (visibleFields.length === 0) {
+            console.warn("No visible fields found. Returning empty result.");
+            return { headers: [], rows: [] };
+        }
+
+        // Headers
+        const headers = visibleFields.map(col => col.label || col.fieldName);
+
+        // Rows
+        if (features.length === 0) {
+            console.warn("No features provided. Returning empty result.");
+            return { headers, rows: [] };
+        }
+        const rows = features.map(f => {
+            let row = {};
+            visibleFields.forEach(col => {
+                row[col.label || col.fieldName] =
+                    f.attributes && f.attributes[col.fieldName] !== undefined
+                        ? f.attributes[col.fieldName]
+                        : null; // default value
+            });
+            return row;
         });
-        return row;
-    });
-    return { headers, jsonData };
+
+        return { headers, rows };
+    } catch (error) {
+        console.error("Error in getHeadersAndRows:", error.message);        
+        return { headers: [], rows: [] };
+    }
 }
+
 
 /**
  * Validation for features and visibleFields
@@ -757,20 +788,9 @@ function featuresAndVisiblefieldsValidation(features, visibleFields) {
 
 // ====== CSV Export ====== //
 document.getElementById("btnCSV").addEventListener("click", function () {
-    try {
-        // Validation for visibleFields & featurs
-        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
-            return;
-        }
-
-        // Get visibleFields from feature table for set dynamic header
-        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-        //.filter(col => col.visible) //Not have property visible
-
-        const { headers,  } = getHeaderAndData(features, visibleFields);
-
-
-        exportCSV(headers, rows);
+    try {             
+        const { csvHeaders, csvRows } = getHeadersAndRows(featureTable, features);
+        exportCSV(csvHeaders, csvRows);
     } catch (e) {
 
     }
