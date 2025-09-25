@@ -12,7 +12,7 @@ import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geomet
 
 //#region Helper Functions
 
-// ===== Sleep =====
+// ====== Sleep ======
 /**
  * Sleep function to hold a process
  * @param {any} ms Sleeptime
@@ -22,7 +22,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// ===== Loader =====
+// ====== Loader ======
 // Get Loader Element
 const loader = document.getElementById("loader");
 
@@ -51,7 +51,7 @@ function hideLoader() {
 //#endregion
 
 //#region Basic map definitions
-// ===== Initialize Arse ImageLayer =====
+// ====== Initialize Arse ImageLayer ======
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
     sublayers: [{ id: 9 }]
@@ -62,7 +62,7 @@ arseILayer.when(() => {
     console.error("Error loading arseILayer:", error);
 });
 
-// ===== Initialize Darkhast FeatureLayer =====
+// ====== Initialize Darkhast FeatureLayer ======
 const darkhastFLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
@@ -158,7 +158,7 @@ darkhastFLayer.when(() => {
         };
     });
 
-    // ===== Initialize FeatureTable =====    
+    // ====== Initialize FeatureTable ======    
     featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
@@ -179,13 +179,13 @@ darkhastFLayer.when(() => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
-// ===== Initialize Map =====
+// ====== Initialize Map ======
 const map = new Map({
     basemap: "osm",
     layers: [arseILayer, darkhastFLayer]
 });
 
-// ===== Initialize View =====
+// ====== Initialize View ======
 let view = new MapView({
     container: "map",
     map: map,
@@ -221,7 +221,7 @@ view.whenLayerView(darkhastFLayer).then(function () {
 
 
 
-// ===== Add btn Home Widget =====
+// ====== Add btn Home Widget ======
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -234,7 +234,7 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-// ===== Add btn linkMap2Table =====
+// ====== Add btn linkMap2Table ======
 const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
 view.ui.add(btnLinkMap2Table, "top-left");
 const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
@@ -261,7 +261,7 @@ btnLinkMap2Table.addEventListener("click", () => {
 //#endregion
 
 //#region Sketch
-// ===== Initialize Sketch =====
+// ====== Initialize Sketch ======
 const sketchLayer = new GraphicsLayer();
 map.add(sketchLayer);
 
@@ -301,7 +301,7 @@ btnSketch.addEventListener("click", () => {
         btnSketch.title = "Sketch Off";
         btnSketch.style.color = "green";
         sketch.create("polygon");
-        btnDelSketch.hidden = false;      
+        btnDelSketch.hidden = false;
     } else {
         // Passive         
         btnSketch.title = "Sketch On";
@@ -310,7 +310,7 @@ btnSketch.addEventListener("click", () => {
         sketchLayer.removeAll();
         btnDelSketch.hidden = true;
         query.geometry = arseILayer.extent;
-        updateFeatures();        
+        updateFeatures();
     }
 });
 
@@ -349,7 +349,7 @@ sketch.on("update", async (event) => {
             } else { btnSketch.click(); }
         } catch (err) {
             console.error("UpdateFeatures error:", err);
-        }        
+        }
     }
 });
 //#endregion
@@ -528,7 +528,7 @@ function updateComboValues(combo, values, selectValue) {
     combo.value = selectValue;
     // Select combox Value
     //if (values.includes(selectValue)) {
-        
+
     //} else {
     //    combo.selectedIndex = 0;
     //}
@@ -651,9 +651,9 @@ function convert2shamsi(date) {
  * @returns geometry 
  */
 function getEffectiveGeometry(view, sketchLayer) {
-    if (sketchLayer.graphics.length > 0) {               
+    if (sketchLayer.graphics.length > 0) {
         return geometryEngine.intersect(sketchLayer.graphics.getItemAt(0).geometry, view.extent);
-    } else if (linkMap2Table) {        
+    } else if (linkMap2Table) {
         return view.extent;
     } else {
         return darkhastFLayer.fullExtent;
@@ -662,13 +662,13 @@ function getEffectiveGeometry(view, sketchLayer) {
 
 // Main update function: apply extent and definitionExpression
 async function updateFeatures() {
-    showLoader("map");       
-    try {                
-        // ===== 1. Get Value ======
-        where = buildWhereClause();                
+    showLoader("map");
+    try {
+        // ====== 1. Get Value ======
+        where = buildWhereClause();
         const getGeometry = getEffectiveGeometry(view, sketchLayer);
 
-        // ===== 2. Set Filter ======
+        // ====== 2. Set Filter ======
         // Geometric filter applied
         const layerView = await view.whenLayerView(darkhastFLayer);
         layerView.filter = {
@@ -679,15 +679,15 @@ async function updateFeatures() {
         darkhastFLayer.definitionExpression = where;
         // FeatureTable filter applied
         featureTable.filterGeometry = getGeometry;
-        
 
-        // ===== 3. Build query =====
+
+        // ====== 3. Build query ======
         query.where = where;
         query.geometry = getGeometry;
 
         // Execute query - wait for it to complete
         darkhastFSet = await darkhastFLayer.queryFeatures(query);
-        darkhastFeatures = darkhastFSet.features;        
+        darkhastFeatures = darkhastFSet.features;
         // Set Data To Comboboxes
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
@@ -696,7 +696,7 @@ async function updateFeatures() {
     } finally { hideLoader(); }
 }
 
-// Clear Filters
+// ====== Clear Filters ======
 document.getElementById("btnClearFilters").addEventListener("click", () => {
     filterValues = {
         extent: null,
@@ -714,79 +714,155 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
     updateFeatures();
 });
 
-// Export CSV
+/**
+ * Get Headers and Data for export
+ * @param {any} features (FeatureLayer) data from feature layer
+ * @param {any} visibleFields (Array) visible header from featurs table 
+ * @returns headers(array) and jsonData(object)
+ */
+function getHeaderAndData(features, visibleFields) {
+    // Get Header & Data
+    const headers = visibleFields.map(col => col.label || col.fieldName);
+
+    const jsonData = features.map(f => {
+        let row = {};
+        visibleFields.forEach(col => {
+            row[col.label || col.fieldName] = f.attributes[col.fieldName];
+        });
+        return row;
+    });
+    return { headers, jsonData };
+}
+
+/**
+ * Validation for features and visibleFields
+ * @param {any} features FeatureLayer
+ * @param {any} visibleFields Array
+ * @returns ture/false
+ */
+function featuresAndVisiblefieldsValidation(features, visibleFields) {
+    // Validation for Features
+    if (!features.length) {
+        console.log("No features for export.");
+        return false;
+    }
+
+    // Validation for visibleFields
+    if (!visibleFields.length) {
+        console.log("No visible fields to export.");
+        return false;
+    }
+    return true;
+}
+
+// ====== CSV Export ====== //
 document.getElementById("btnCSV").addEventListener("click", function () {
-    exportTableToCSV(darkhastFeatures);
-});
-async function exportTableToCSV(features) {
     try {
-        if (!features.length) {
-            console.log("No features for export.");
-            return;
-        }
-        
-        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);  
-        //.filter(col => col.visible) //Not have property visible
-            
-        if (!visibleFields.length) {
-            console.log("No visible fields to export.");
+        // Validation for visibleFields & featurs
+        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
             return;
         }
 
-        // Convert to CSV
-        const csv = convertFeaturesToCSV(features, visibleFields);
-        const BOM = "\uFEFF";
-        const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+        // Get visibleFields from feature table for set dynamic header
+        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
+        //.filter(col => col.visible) //Not have property visible
+
+        const { headers,  } = getHeaderAndData(features, visibleFields);
+
+
+        exportCSV(headers, rows);
+    } catch (e) {
+
+    }
+});
+
+/**
+ * Export to CSV from Data in featuresTable
+ * @param {Array} headers
+ * @param {Array} rows
+ * @param {string} delimiter Default is: ','
+ * @param {string} filename Default is: Export
+ */
+function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
+    try {
+        // Validation
+        if (!Array.isArray(headers) || headers.length === 0) {
+            throw new Error("Validation failed: 'headers' must be a non-empty array.");
+        }
+        if (!Array.isArray(rows) || rows.length === 0) {
+            throw new Error("Validation failed: 'rows' must be an array.");
+        }
+        if (typeof delimiter !== "string" || delimiter.length === 0) {
+            throw new Error("Validation failed: 'delimiter' must be a non-empty string.");
+        }
+        if (typeof filename !== "string" || filename.trim().length === 0) {
+            throw new Error("Validation failed: 'filename' must be a non-empty string.");
+        }
+
+        // Build CSV rows        
+        const csvRows = rows.map((row, i) => {
+            if (typeof row !== "object" || row === null) {
+                throw new Error(`Validation failed: Row at index ${i} is not a valid object.`);
+            }
+            return headers.map(h => {
+                const value = row[h];
+                return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
+            }).join(delimiter);
+        });
+
+        // Full CSV data
+        const fullData = [headers.join(delimiter), ...csvRows].join("\r\n");
+        // Added file extension to file name
+        const filenameWithExt = `${filename}.csv`;
+
+        // Convert to CSV        
+        const BOM = "\uFEFF";// UTF-8 for Excel
+        const blob = new Blob([BOM + fullData], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "Export.csv");
+        link.href = url;
+        link.download = filenameWithExt;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     } catch (err) {
-        console.error("Export CSV failed", err);
+        console.error("Export CSV failed:", err.message);
     }
 }
 function convertFeaturesToCSV(features, visibleFields) {
-    // Created headers
+
+    // Get Header & Data
     const headers = visibleFields.map(col => col.label || col.fieldName);
 
-    // Get data 
-    const rows = features.map(f => {
+    const data = features.map(f => {
         let row = visibleFields.map(col => {
             let value = f.attributes[col.fieldName];
             // For unacceptable values
             return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
         });
-        return row.join(",");
+        return row;
     });
-
-    return [headers.join(","), ...rows].join("\r\n");
+    return [headers.join(","), ...data].join("\r\n");
 }
 
 
-//Export Excel
+// ====== Excel Export ====== //
 document.getElementById("btnExcel").addEventListener("click", () => {
     exportEditedFeaturesToExcel(darkhastFeatures)
 });
 
 function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
-    try {     
-        if (!features.length) {
-            console.log("No features for export.");
-            return;
-        }
-        
-        // Get header and data
+    try {
+        // Get visibleFields for set dynamic header
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-        // Validation for visibleFields
-        if (!visibleFields.length) {
-            console.log("No visible fields to export.");
+
+        // Validation for visibleFields & featurs
+        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
             return;
         }
-
+        // Get Header & Data
         const headers = visibleFields.map(col => col.label || col.fieldName);
+
         const data = features.map(f => {
             let row = {};
             visibleFields.forEach(col => {
@@ -812,6 +888,8 @@ function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
         console.error("Export failed", error);
     }
 }
+
+
 
 //Export Image 
 document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
