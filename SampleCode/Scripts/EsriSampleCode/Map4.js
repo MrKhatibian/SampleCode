@@ -742,11 +742,11 @@ function featuresAndVisiblefieldsValidation(features, visibleFields) {
  * @returns {{ headers: string[], rows: Object[] }}
  */
 function getHeadersAndRows(featureTable, features) {
-    try {debugger
+    try {
         // Validation
         if (!featureTable || !featureTable.columns || !featureTable.columns.items) {
             throw new Error("Validation failed, featureTable must be object and Missing 'columns.items'.");
-        }        
+        }
         if (!Array.isArray(features)) {
             throw new Error("Validation failed, features must be an array.");
         }
@@ -754,7 +754,7 @@ function getHeadersAndRows(featureTable, features) {
         // Visible fields in feature table
         const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
         if (visibleFields.length === 0) {
-            throw new Error("No visible fields found, Returning empty result.");            
+            throw new Error("No visible fields found, Returning empty result.");
         }
 
         // Headers
@@ -782,14 +782,14 @@ function getHeadersAndRows(featureTable, features) {
 
         return { headers, rows };
     } catch (error) {
-        console.error("Error in getHeadersAndRows:", error.message);        
+        console.error("Error in getHeadersAndRows:", error.message);
         return { headers: [], rows: [] };
     }
 }
 
 // ====== CSV Export ====== //
 document.getElementById("btnCSV").addEventListener("click", function () {
-    try {debugger
+    try {
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
         exportCSV(headers, rows);
     } catch (error) {
@@ -805,7 +805,7 @@ document.getElementById("btnCSV").addEventListener("click", function () {
  * @param {string} filename Default is: Export
  */
 function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
-    try {debugger
+    try {
         // Validation
         if (!Array.isArray(headers) || headers.length === 0) {
             throw new Error("Validation failed, 'headers' must be a non-empty array.");
@@ -832,7 +832,7 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
                     return `"${value != null ? String(value).replace(/"/g, '""') : ""}"`;
                 }).join(delimiter);
             });
-        } else { console.warn("Rows is an empty array.") }                     
+        } else { console.warn("Rows is an empty array.") }
 
         // Full CSV data
         const fullData = [headers.join(delimiter), ...csvRows].join("\r\n");
@@ -855,49 +855,55 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
 }
 
 // ====== Excel Export ====== //
-document.getElementById("btnExcel").addEventListener("click", () => {
-    exportEditedFeaturesToExcel(darkhastFeatures)
+document.getElementById("btnExcel").addEventListener("click", () => {    
+    try {debugger
+        const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
+        exportExcel(headers, rows);
+    } catch (error) {
+        console.error("Error in btnExcel Clicked:", error.message);
+    }
 });
 
-function exportEditedFeaturesToExcel(features, filename = "Export.xlsx") {
-    try {
-        // Get visibleFields for set dynamic header
-        const visibleFields = featureTable.columns.items.filter(col => !col.hidden);
-
-        // Validation for visibleFields & featurs
-        if (!featuresAndVisiblefieldsValidation(features, visibleFields)) {
-            return;
+/**
+ * Export to Excel from Data in featuresTable
+ * @param {Array} headers
+ * @param {Array} rows 
+ * @param {string} filename Default is: Export
+ */
+function exportExcel(headers, rows, filename = "Export") {
+    try {debugger
+        // Validation
+        if (!Array.isArray(headers) || headers.length === 0) {
+            throw new Error("Validation failed, 'headers' must be a non-empty array.");
         }
-        // Get Header & Data
-        const headers = visibleFields.map(col => col.label || col.fieldName);
+        if (!Array.isArray(rows)) {
+            throw new Error("Validation failed, 'rows' must be an array.");
+        }
+        if (typeof filename !== "string" || filename.trim().length === 0) {
+            throw new Error("Validation failed, 'filename' must be a non-empty string.");
+        }
 
-        const data = features.map(f => {
-            let row = {};
-            visibleFields.forEach(col => {
-                row[col.label || col.fieldName] = f.attributes[col.fieldName];
-            });
-            return row;
-        });
+        // Added file extension to file name
+        const filenameWithExt = `${filename}.xlsx`;
+
+        // Make Workbook
+        const workbook = XLSX.utils.book_new();
 
         // Created Sheet
-        const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
+        const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
 
         // Set in first row started
         XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
 
-        // Make Workbook
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
+        // Make Excel
+        XLSX.utils.book_append_sheet(workbook, worksheet, filename);
 
         // Save it
-        XLSX.writeFile(workbook, filename);
-
+        XLSX.writeFile(workbook, filenameWithExt);
     } catch (error) {
-        console.error("Export failed", error);
+        console.error("Error in exportExcel:", error.message);
     }
 }
-
-
 
 //Export Image 
 document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
