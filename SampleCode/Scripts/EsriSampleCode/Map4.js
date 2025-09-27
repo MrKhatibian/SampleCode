@@ -99,6 +99,7 @@ const darkhastFLayer = new FeatureLayer({
         }]
     }
 });
+
 let featureTable;
 darkhastFLayer.when(() => {
     //console.log("darkhastFLayer loaded successfully.");
@@ -150,6 +151,7 @@ let view = new MapView({
     container: "map",
     map: map,
 });
+
 // Remove osm Attribution
 view.ui.remove("attribution");
 
@@ -411,8 +413,8 @@ let comboBoxValues = getComboBoxValues(darkhastFeatures);
 
 /**
  * Get Values form map service and fill for his comboBox
- * @param {any} features //add objec FeatureSet.features
- * @returns Object 
+ * @param {Array} features //add objec FeatureSet.features
+ * @returns {Object}
  */
 function getComboBoxValues(features) {
     const result = {};
@@ -436,10 +438,6 @@ function getComboBoxValues(features) {
             }
         }
     }
-    // Sort Value
-    //for (const key of keys) {
-    //    result[key] = [""].concat([...seenMap[key]].sort());
-    //}
     return result;
 }
 
@@ -454,7 +452,7 @@ const dicCombo2Field = {
 
 /**
  * Fill Comboboxes
- * @param {any} comboboxes Combobox object
+ * @param {Object} comboboxes Combobox object
  */
 const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
 fillComboboxes(comboboxes);
@@ -468,9 +466,9 @@ function fillComboboxes(comboboxes) {
 
 /**
  * Update combo box with unique values
- * @param {any} combo Combobox object
- * @param {any} values Combobox values
- * @param {any} selectValue Select Combobox value
+ * @param {Object} combo Combobox object
+ * @param {Array} values Combobox values
+ * @param {string} selectValue Select Combobox value
  * @returns update Comboboxes and selected value
  */
 function updateComboValues(combo, values, selectValue) {
@@ -549,7 +547,7 @@ view.watch("stationary", function (isStationary) {
 //#region Date
 /**
  * 
- * @param {any} date
+ * @param {date} date
  * @returns
  */
 function dateValidation(date) {
