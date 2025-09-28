@@ -11,18 +11,14 @@ import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geomet
 //#endregion
 
 //#region Basic map definitions
-// ====== Initialize Arse ImageLayer ======
+
+// ---------- Initialize Arse ImageLayer ----------
 const arseILayer = new MapImageLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
     sublayers: [{ id: 9 }]
 });
-arseILayer.when(() => {
-    console.log("arseILayer loaded successfully.");
-}).catch((error) => {
-    console.error("Error loading arseILayer:", error);
-});
 
-// ====== Initialize Darkhast FeatureLayer ======
+// ---------- Initialize Darkhast FeatureLayer ----------
 const darkhastFLayer = new FeatureLayer({
     url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
     renderer: {
@@ -100,10 +96,10 @@ const darkhastFLayer = new FeatureLayer({
     }
 });
 
+// ---------- Initialize FeatureTable ----------
 let featureTable;
 darkhastFLayer.when(() => {
-    //console.log("darkhastFLayer loaded successfully.");
-
+    // Fields Manager
     const allFields = darkhastFLayer.fields;
 
     // filter geometry field for not showing
@@ -119,7 +115,7 @@ darkhastFLayer.when(() => {
         };
     });
 
-    // ====== Initialize FeatureTable ======    
+    // ---------- Initialize FeatureTable ----------    
     featureTable = new FeatureTable({
         container: "attributeTable",
         view: view,
@@ -129,6 +125,7 @@ darkhastFLayer.when(() => {
         }
 
     });
+
     // Override Zoom to selection for set mapview sacle
     const originalZoom = featureTable.zoomToSelection.bind(featureTable);
 
@@ -140,38 +137,27 @@ darkhastFLayer.when(() => {
     console.error("Error loading darkhastFLayer:", error);
 });
 
-// ====== Initialize Map ======
+// ---------- Initialize Map ----------
 const map = new Map({
     basemap: "osm",
     layers: [arseILayer, darkhastFLayer]
 });
 
-// ====== Initialize View ======
+// ---------- Initialize View ----------
 let view = new MapView({
     container: "map",
-    map: map,
+    map: map
 });
-
 // Remove osm Attribution
 view.ui.remove("attribution");
-
-//view.when(() => {
-//    console.log("MapView is ready");
-//}).catch((error) => {
-//    console.error("MapView failed to load:", error);
-//});
-
 // Set View extent to Darkhst featureLayer extent
 view.whenLayerView(darkhastFLayer).then(function () {
     let layer = arseILayer;
     if (darkhastFLayer) {
         layer = darkhastFLayer
     }
-    view.goTo(layer.fullExtent, {
-        animate: false
-    }).catch(function (error) {
-        console.error("Extent projection error: ", error);
-    });
+    view.goTo(layer.fullExtent, { animate: false })
+        .catch(function (error) { console.error("Extent projection error: ", error) });
 
     // Limited View Extent and Zoom level
     const cityExtent = layer.fullExtent; // dynamic extent
@@ -181,9 +167,7 @@ view.whenLayerView(darkhastFLayer).then(function () {
     };
 });
 
-
-
-// ====== Add btn Home Widget ======
+// ---------- Add btn Home Widget ----------
 // Wait until the layer is loaded before creating Home widget
 darkhastFLayer.when(() => {
     let homeWidget = new Home({
@@ -196,7 +180,7 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-// ====== Add btn linkMap2Table ======
+// ---------- Add btn linkMap2Table ----------
 const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
 view.ui.add(btnLinkMap2Table, "top-left");
 const calIcon = btnLinkMap2Table.querySelector("calcite-icon");
@@ -223,7 +207,8 @@ btnLinkMap2Table.addEventListener("click", () => {
 //#endregion
 
 //#region Sketch
-// ====== Initialize Sketch ======
+
+// ---------- Initialize Sketch ----------
 const sketchLayer = new GraphicsLayer();
 map.add(sketchLayer);
 
@@ -246,16 +231,16 @@ const sketch = new Sketch({
     //}
 });
 
-// === Initilize btn Delete Sketch ===
+// ---------- Initilize btn Delete Sketch ----------
 const btnDelSketch = document.getElementById("btnDelSketch");
 view.ui.add("btnDelSketch", "top-right");
 btnDelSketch.hidden = true;
 
-// === Initialize btn Sketch ===
+// ---------- Initialize btn Sketch ----------
 const btnSketch = document.getElementById("btnSketch");
 view.ui.add("btnSketch", "top-left")
 let sketchFlag = false;
-
+// Event btn Sketch
 btnSketch.addEventListener("click", () => {
     sketchFlag = !sketchFlag;
     if (sketchFlag) {
@@ -275,12 +260,10 @@ btnSketch.addEventListener("click", () => {
         updateFeatures();
     }
 });
-
 // Event btn DelSketch
 btnDelSketch.addEventListener("click", () => {
     btnSketch.click();
 });
-
 // When Sketch creation is complete
 sketch.on("create", async (event) => {
     if (event.state === "complete") {
@@ -297,7 +280,6 @@ sketch.on("create", async (event) => {
         btnSketch.click();
     }
 });
-
 // When Sketch update is complete
 sketch.on("update", async (event) => {
     if (event.state === "complete") {
@@ -314,10 +296,12 @@ sketch.on("update", async (event) => {
         }
     }
 });
+
 //#endregion
 
 //#region Attribute managment
-// Set Fields Name
+
+// ---------- Set Fields Name ----------
 let fieldsName = {
     sDateSend: "date_rooz",
     eDateSend: "date_rooz",
@@ -329,7 +313,7 @@ let fieldsName = {
     ebtal: "Ebtal"
 };
 
-// Global filter state
+// ---------- Global filter state ----------
 let filterValues = {
     extent: null,
     sDateSend: null,
@@ -342,6 +326,7 @@ let filterValues = {
     //ebtal: 0,
 };
 
+// ---------- Build Where Clause ----------
 /**
  * Build WHERE clause for filtering
  * @returns Where String for Filter Data
@@ -374,18 +359,17 @@ function buildWhereClause() {
     }
     return clauses.join(" AND ");
 }
-
-//Creat Where
+// Create Where for query
 let where = buildWhereClause();
 
-// Build query
+// ---------- Build query ----------
 const query = darkhastFLayer.createQuery();
 query.where = where; // for attributes
 query.geometry = view.extent;  // for Geometry
 query.spatialRelationship = "intersects";  // this is the default
 query.returnGeometry = true;
 query.outFields = ["*"];
-
+// Get features from FeatureLayer service
 let darkhastFSet;
 let darkhastFeatures = [];
 try {
@@ -397,24 +381,24 @@ try {
     console.error("Initial queryFeatures failed:", err);
 }
 
-// Get Combobox Elements
+// ---------- Get Combobox Elements ----------
 const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
 const comboMarhale = document.getElementById("comboMarhale");
 const comboNoeKarbari = document.getElementById("comboNoeKarbari");
 const comboMantaghe = document.getElementById("comboMantaghe");
 const comboMahdodeh = document.getElementById("comboMahdodeh");
 
-// Get Date Value
+// ---------- Get Date Value ----------
 const startDateSend = document.getElementById("startDateSend");
 const endDateSend = document.getElementById("endDateSend");
-
 // Set Data To Comboboxes
 let comboBoxValues = getComboBoxValues(darkhastFeatures);
 
+// ----------- Fill Combobox ----------
 /**
  * Get Values form map service and fill for his comboBox
  * @param {Array} features //add objec FeatureSet.features
- * @returns {Object}
+ * @returns {Object} result for value
  */
 function getComboBoxValues(features) {
     const result = {};
@@ -440,7 +424,6 @@ function getComboBoxValues(features) {
     }
     return result;
 }
-
 // Dictionary convert Combobox name to Field name
 const dicCombo2Field = {
     comboNoeDarkhast: "noedarkhast",
@@ -449,13 +432,10 @@ const dicCombo2Field = {
     comboMantaghe: "mantaghe",
     comboMahdodeh: "hoze"
 };
-
 /**
  * Fill Comboboxes
  * @param {Object} comboboxes Combobox object
  */
-const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
-fillComboboxes(comboboxes);
 function fillComboboxes(comboboxes) {
     for (let combobox of comboboxes) {
         const fieldName = dicCombo2Field[combobox.id]; // get the key for comboBoxValues
@@ -463,7 +443,8 @@ function fillComboboxes(comboboxes) {
         updateComboValues(combobox, comboBoxValues[fieldName], filterValues[fieldName]);
     }
 }
-
+const comboboxes = [comboNoeDarkhast, comboMarhale, comboNoeKarbari, comboMantaghe, comboMahdodeh];
+fillComboboxes(comboboxes);
 /**
  * Update combo box with unique values
  * @param {Object} combo Combobox object
@@ -483,18 +464,14 @@ function updateComboValues(combo, values, selectValue) {
         option.text = value;
         combo.appendChild(option);
     });
-    combo.value = selectValue;
-    // Select combox Value
-    //if (values.includes(selectValue)) {
-
-    //} else {
-    //    combo.selectedIndex = 0;
-    //}
+    combo.value = selectValue;    
 }
+
 //#endregion
 
 //#region Filtering Events
-//Comboxes changed
+
+// ---------- Comboxes changed ----------
 comboNoeDarkhast.addEventListener("change", function () {
     filterValues.noedarkhast = this.value;
     updateFeatures();
@@ -515,6 +492,19 @@ comboMahdodeh.addEventListener("change", function () {
     filterValues.hoze = this.value;
     updateFeatures();
 });
+
+// ---------- Map View changed ----------
+view.watch("stationary", function (isStationary) {
+    if (isStationary && linkMap2Table) {
+        updateFeatures();
+    }
+});
+
+//#endregion
+
+//#region Date
+
+// ---------- Date changed ----------
 startDateSend.addEventListener("change", () => {
     const dateStr = startDateSend.value;
 
@@ -536,15 +526,6 @@ endDateSend.addEventListener("change", () => {
     updateFeatures();
 });
 
-// View changed
-view.watch("stationary", function (isStationary) {
-    if (isStationary && linkMap2Table) {
-        updateFeatures();
-    }
-});
-//#endregion
-
-//#region Date
 /**
  * 
  * @param {date} date
@@ -599,14 +580,17 @@ function convert2shamsi(date) {
     const persianDate = `${yearPart.value}${monthPart.value}${dayPart.value}`;
     return Number(persianDate);
 }
+
 //#endregion
 
 //#region Main Logic
+
+// ---------- Get geometry -----------
 /**
  * Get Geometry
  * @param {Object} view (MapView)for View extent
  * @param {Object} sketchLayer (GraphicLayer) for Sketch extent
- * @returns geometry 
+ * @returns {Object} geometry 
  */
 function getEffectiveGeometry(view, sketchLayer) {
     if (sketchLayer.graphics.length > 0) {
@@ -618,15 +602,18 @@ function getEffectiveGeometry(view, sketchLayer) {
     }
 }
 
-// Main update function: apply extent and definitionExpression
+// ---------- Initialize updateFeatures function -----------
+/**
+ * Main update function: apply extent and definitionExpression
+ */
 async function updateFeatures() {
     showLoader("map");
     try {
-        // ====== 1. Get Value ======
+        // ---------- 1. Get Value ----------
         where = buildWhereClause();
         const getGeometry = getEffectiveGeometry(view, sketchLayer);
 
-        // ====== 2. Set Filter ======
+        // ---------- 2. Set Filter ----------
         // Geometric filter applied
         const layerView = await view.whenLayerView(darkhastFLayer);
         layerView.filter = {
@@ -638,15 +625,15 @@ async function updateFeatures() {
         // FeatureTable filter applied
         featureTable.filterGeometry = getGeometry;
 
-
-        // ====== 3. Build query ======
+        // ---------- 3. Build query ----------
         query.where = where;
         query.geometry = getGeometry;
 
         // Execute query - wait for it to complete
         darkhastFSet = await darkhastFLayer.queryFeatures(query);
         darkhastFeatures = darkhastFSet.features;
-        // Set Data To Comboboxes
+
+        // ---------- 4. Set Data To Comboboxes ----------
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
     } catch (error) {
@@ -657,7 +644,7 @@ async function updateFeatures() {
 //#endregion
 
 //#region Export buttons Haldler
-// ====== Clear Filters ======
+// ---------- Clear Filters ----------
 document.getElementById("btnClearFilters").addEventListener("click", () => {
     filterValues = {
         extent: null,
@@ -675,7 +662,7 @@ document.getElementById("btnClearFilters").addEventListener("click", () => {
     updateFeatures();
 });
 
-// ====== CSV Export ====== //
+// ---------- CSV Export ----------
 document.getElementById("btnCSV").addEventListener("click", function () {
     try {
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
@@ -741,7 +728,7 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
     }
 }
 
-// ====== Excel Export ====== //
+// ---------- Excel Export ----------
 document.getElementById("btnExcel").addEventListener("click", () => {
     try {        
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
@@ -791,7 +778,7 @@ function exportExcel(headers, rows, filename = "Export") {
     }
 }
 
-// ====== Map Image Export ======
+// ---------- Map Image Export ----------
 document.getElementById("btnMapScreenshot").addEventListener("click", async () => {
     try {
         const screenshot = await view.takeScreenshot({ format: "png" });
@@ -810,7 +797,7 @@ document.getElementById("btnMapScreenshot").addEventListener("click", async () =
 
 //#region Helper Functions
 
-// ====== Get Headers and Rows ======
+// ---------- Get Headers and Rows ----------
 /**
  * Get Headers and Rows for export
  * @param {Object} featureTable - FeatureTable instance
@@ -863,7 +850,7 @@ function getHeadersAndRows(featureTable, features) {
     }
 }
 
-// ====== Sleep ======
+// ---------- Sleep ----------
 /**
  * Sleep function to hold a process
  * @param {any} ms Sleeptime
@@ -873,9 +860,8 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// ====== Loader ======
-// Get Loader Element
-const loader = document.getElementById("loader");
+// ---------- Loader ----------
+const loader = document.getElementById("loader"); // Get Loader Element
 /**
  * Loader display function
  * @param {string} divId Loader display div
@@ -892,7 +878,6 @@ function showLoader(divId) {
     target.appendChild(loader);
     loader.style.display = "flex";
 }
-
 /**
  * Loader hide function
  */

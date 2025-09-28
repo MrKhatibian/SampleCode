@@ -3,19 +3,141 @@
 }
 <head>
     <title> ArcGIS api 4.30</title>
-
     <style>
-        #viewDiv {
-            padding: 0;
-            margin: 0;
-            height: 75vh;
+        .fs-12 {
+            font-size: 12px;
+        }
+
+        #attributeTable {
+            height: inherit;
+            direction: ltr;
+        }
+
+        #loader {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            pointer-events: all;
         }
     </style>
+    <script>
+        // Must be at the very top, before imports
+        window.dojoConfig = {
+            locale: "en"  // or "ar" for Arabic
+        };
+    </script>
     <script type="module" src="~/Scripts/EsriSampleCode/Map2.js"></script>
+
 </head>
 
-<body>
-    <div id="viewDiv"></div>
+<body dir="rtl" class="overflow-x-hidden">
+    <!-- Loader قابل استفاده مجدد -->
+    <div id="loader" style="display:none;">
+        <calcite-loader active label="در حال پردازش..." type="indeterminate"></calcite-loader>
+    </div>
+    <div class="row">
+
+        <div class="col-2">
+            <label class="form-label fs-12">نوع درخواست:</label>
+            <select class="form-select form-select-sm" id="comboNoeDarkhast"></select>
+        </div>
+
+        <div class="col-2">
+            <label class="form-label fs-12">مرحله:</label>
+            <select class="form-select form-select-sm" id="comboMarhale"></select>
+        </div>
+
+        @*<div class="col-2">
+                <label class="form-label fs-12">تاریخ شروع:</label>
+                <input class="form-control form-control-sm" type="date" id="startDateSend">
+            </div>
+
+            <div class="col-2">
+                <label class="form-label fs-12">تاریخ پایان:</label>
+                <input class="form-control form-control-sm" type="date" id="endDateSend">
+            </div>*@
+
+        <div class="col-2">
+            <label class="form-label fs-12">تاریخ شروع:</label>
+            <input class="form-control form-control-sm AmardDate" id="startDateSend">
+        </div>
+
+        <div class="col-2">
+            <label class="form-label fs-12">تاریخ پایان:</label>
+            <input class="form-control form-control-sm AmardDate" id="endDateSend">
+        </div>
+
+        <div class="col-2">
+            <label class="form-label fs-12">منطقه:</label>
+            <select class="form-select form-select-sm" id="comboMantaghe"></select>
+        </div>
+
+        <div class="col-2">
+            <label class="form-label fs-12">محدوده:</label>
+            <select class="form-select form-select-sm" id="comboMahdodeh"></select>
+        </div>
+
+        <div class="col-2">
+            <label class="form-label fs-12">نوع کاربری:</label>
+            <select class="form-select form-select-sm" id="comboNoeKarbari"></select>
+        </div>
+        <div class="col-7 d-flex align-items-end justify-content-center mt-2 gap-1">
+            <button class="btn btn-sm btn-primary fs-12" type="submit" id="btnCSV">خروجی CSV</button>
+            <button class="btn btn-sm btn-primary fs-12" type="submit" id="btnExcel">خروجی Excel</button>
+            <button class="btn btn-sm btn-primary fs-12" type="submit" id="btnMapScreenshot">خروجی تصویر نقشه</button>
+            <button class="btn btn-sm btn-danger fs-12" type="submit" id="btnClearFilters">پاک کردن فیلترها</button>
+            <a class="btn btn-sm btn-danger fs-12" id="showMap" onclick="ChangeMapView()"> پنهان کردن نقشه </a>
+
+        </div>
+        <div id="btnLinkMap2Table" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Linked Map to Table">
+            <calcite-icon icon="offline" scale="s" />
+        </div>
+        <div id="btnSketch" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Sketch On">
+            <calcite-icon icon="lasso-select" scale="s" />
+        </div>
+        <div id="btnDelSketch" style="color:red" class="esri-widget esri-widget--button  esri-interactive" title="Delete Sketch">
+            <calcite-icon icon="trash" scale="s" />
+        </div>
+    </div>
+
+
+
+    <div class="row mt-3 w-100 border-top" style="min-height: 400px;">
+        <div class="col" id="attributeTable"></div>
+        <div class="col-5 border-0" id="map"></div>
+    </div>
+
+    <script src="~/Scripts/gisScript/lib/Bootstrap5/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/Scripts/gisScript/lib/PersianDatePicker/persian-date.js"></script>
+    <script src="~/Scripts/gisScript/lib/PersianDatePicker/persian-datepicker.js"></script>
+
+    <script>
+        function ChangeMapView() {
+            var btn = document.getElementById("showMap");
+            var map = document.getElementById('map');
+            if (map.classList.contains('d-none')) {
+                map.classList.remove('d-none');
+
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-danger');
+                btn.innerHTML = "پنهان کردن نقشه"
+            } else {
+                map.classList.add('d-none');
+
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-success');
+                btn.innerHTML = "نمایش نقشه"
+            }
+        }
+
+    </script>
 </body>
 

@@ -21,7 +21,7 @@ import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geomet
 //#endregion
 
 //#region App state
-const state = {
+const gisState = {
     map: null,
     view: null,
     arseILayer: null,
@@ -60,14 +60,14 @@ const fieldsName = {
 async function init() {
     try {
         // Create base layers
-        state.arseILayer = new MapImageLayer({
+        gisState.arseILayer = new MapImageLayer({
             url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
             sublayers: [{ id: 9 }]
         });
-        state.arseILayer.when(() => console.log("arseILayer loaded"))
+        gisState.arseILayer.when(() => console.log("arseILayer loaded"))
             .catch(err => console.error("arseILayer load error", err));
 
-        state.darkhastFLayer = new FeatureLayer({
+        gisState.darkhastFLayer = new FeatureLayer({
             url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
             outFields: ["*"],
             popupTemplate: { title: "درخواست", content: "شماره: {shodarkhast}" },
@@ -93,27 +93,27 @@ async function init() {
         });
 
         // Create map + view
-        state.map = new Map({ basemap: "osm", layers: [state.arseILayer, state.darkhastFLayer] });
+        gisState.map = new Map({ basemap: "osm", layers: [gisState.arseILayer, gisState.darkhastFLayer] });
 
-        state.view = new MapView({ container: "map", map: state.map });
+        gisState.view = new MapView({ container: "map", map: gisState.map });
 
         // Remove attribution if exists
-        try { state.view.ui.remove("attribution"); } catch (e) { /* ignore */ }
+        try { gisState.view.ui.remove("attribution"); } catch (e) { /* ignore */ }
 
         // wait for view and primary layer to be ready
-        await state.view.when();
-        await state.darkhastFLayer.when();
+        await gisState.view.when();
+        await gisState.darkhastFLayer.when();
 
         // Fit to layer extent
-        const fullExtent = state.darkhastFLayer.fullExtent || state.arseILayer.fullExtent;
+        const fullExtent = gisState.darkhastFLayer.fullExtent || gisState.arseILayer.fullExtent;
         if (fullExtent) {
-            await state.view.goTo(fullExtent, { animate: false });
-            state.view.constraints = { geometry: fullExtent, minZoom: 14 };
+            await gisState.view.goTo(fullExtent, { animate: false });
+            gisState.view.constraints = { geometry: fullExtent, minZoom: 14 };
         }
 
         // Add Home widget
-        const home = new Home({ view: state.view, viewpoint: { targetGeometry: fullExtent } });
-        state.view.ui.add(home, "top-left");
+        const home = new Home({ view: gisState.view, viewpoint: { targetGeometry: fullExtent } });
+        gisState.view.ui.add(home, "top-left");
 
         // Build FeatureTable AFTER view is ready
         await createFeatureTable();
@@ -135,33 +135,33 @@ async function init() {
 
 async function createFeatureTable() {
     // prepare column templates by reading fields (remove geometry)
-    const fields = state.darkhastFLayer.fields || [];
+    const fields = gisState.darkhastFLayer.fields || [];
     const validFields = fields.filter(f => f.type !== "geometry");
     const columnTemplates = validFields.map((field, idx) => ({ type: "field", fieldName: field.name, label: field.alias || field.name, visible: idx < 10 }));
 
-    state.featureTable = new FeatureTable({ container: "attributeTable", view: state.view, layer: state.darkhastFLayer, tableTemplate: { columnTemplates } });
+    gisState.featureTable = new FeatureTable({ container: "attributeTable", view: gisState.view, layer: gisState.darkhastFLayer, tableTemplate: { columnTemplates } });
 
     // override zoomToSelection with safer approach: check view exists
-    if (state.featureTable && typeof state.featureTable.zoomToSelection === "function") {
-        const original = state.featureTable.zoomToSelection.bind(state.featureTable);
-        state.featureTable.zoomToSelection = async function () {
-            try { state.view.zoom = 18; } catch (e) { /* ignore */ }
+    if (gisState.featureTable && typeof gisState.featureTable.zoomToSelection === "function") {
+        const original = gisState.featureTable.zoomToSelection.bind(gisState.featureTable);
+        gisState.featureTable.zoomToSelection = async function () {
+            try { gisState.view.zoom = 18; } catch (e) { /* ignore */ }
             return original();
         };
     }
 }
 
 function setupSketch() {
-    state.sketchLayer = new GraphicsLayer();
-    state.map.add(state.sketchLayer);
+    gisState.sketchLayer = new GraphicsLayer();
+    gisState.map.add(gisState.sketchLayer);
 
-    state.sketch = new Sketch({ layer: state.sketchLayer, view: state.view, creationMode: "single" });
+    gisState.sketch = new Sketch({ layer: gisState.sketchLayer, view: gisState.view, creationMode: "single" });
 
     const btnSketch = document.getElementById("btnSketch");
     const btnDelSketch = document.getElementById("btnDelSketch");
 
-    if (btnDelSketch) { state.view.ui.add("btnDelSketch", "top-right"); btnDelSketch.hidden = true; }
-    if (btnSketch) { state.view.ui.add("btnSketch", "top-left"); }
+    if (btnDelSketch) { gisState.view.ui.add("btnDelSketch", "top-right"); btnDelSketch.hidden = true; }
+    if (btnSketch) { gisState.view.ui.add("btnSketch", "top-left"); }
 
     let sketchActive = false;
 
@@ -169,9 +169,9 @@ function setupSketch() {
         btnSketch.addEventListener("click", () => {
             sketchActive = !sketchActive;
             if (sketchActive) {
-                btnSketch.title = "Sketch Off"; btnSketch.style.color = "green"; state.sketch.create("polygon"); if (btnDelSketch) btnDelSketch.hidden = false;
+                btnSketch.title = "Sketch Off"; btnSketch.style.color = "green"; gisState.sketch.create("polygon"); if (btnDelSketch) btnDelSketch.hidden = false;
             } else {
-                btnSketch.title = "Sketch On"; btnSketch.style.color = "red"; state.sketch.cancel(); state.sketchLayer.removeAll(); if (btnDelSketch) btnDelSketch.hidden = true; state.linkMap2Table = false; // reset
+                btnSketch.title = "Sketch On"; btnSketch.style.color = "red"; gisState.sketch.cancel(); gisState.sketchLayer.removeAll(); if (btnDelSketch) btnDelSketch.hidden = true; updateFeatures() // reset
             }
         });
     }
@@ -180,7 +180,7 @@ function setupSketch() {
         btnDelSketch.addEventListener("click", () => { if (btnSketch) btnSketch.click(); });
     }
 
-    state.sketch.on("create", async event => {
+    gisState.sketch.on("create", async event => {
         if (event.state === "complete") {
             const geometry = event.graphic && event.graphic.geometry;
             if (geometry) {
@@ -191,9 +191,9 @@ function setupSketch() {
         }
     });
 
-    state.sketch.on("update", async event => {
+    gisState.sketch.on("update", async event => {
         if (event.state === "complete") {
-            if (state.sketchLayer.graphics.length > 0) {
+            if (gisState.sketchLayer.graphics.length > 0) {
                 const geometry = event.graphics && event.graphics[0] && event.graphics[0].geometry;
                 if (geometry) await updateFeatures({ geometry });
             } else {
@@ -207,12 +207,12 @@ function setupUI() {
     // Link map <-> table button
     const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
     const calIcon = btnLinkMap2Table && btnLinkMap2Table.querySelector("calcite-icon");
-    if (btnLinkMap2Table) state.view.ui.add(btnLinkMap2Table, "top-left");
+    if (btnLinkMap2Table) gisState.view.ui.add(btnLinkMap2Table, "top-left");
 
     if (btnLinkMap2Table) {
         btnLinkMap2Table.addEventListener("click", () => {
-            state.linkMap2Table = !state.linkMap2Table;
-            if (state.linkMap2Table) {
+            gisState.linkMap2Table = !gisState.linkMap2Table;
+            if (gisState.linkMap2Table) {
                 btnLinkMap2Table.title = "Unlinked Map to Table"; btnLinkMap2Table.style.color = "green"; if (calIcon) calIcon.icon = "online"; updateFeatures();
             } else {
                 btnLinkMap2Table.title = "Linked Map to Table"; btnLinkMap2Table.style.color = "red"; if (calIcon) calIcon.icon = "offline";
@@ -230,7 +230,7 @@ function setupUI() {
             // Map to state keys explicitly
             const dic = { combonoedarkhast: "noedarkhast", combomarhale: "marhaleh", combonoeparvaneh: "noe_parvaneh", combomantaghe: "mantaghe", combomahdodeh: "hoze" };
             const mapKey = dic[combo.id.toLowerCase()] || dic[combo.id.replace(/[^a-z]/gi, "").toLowerCase()];
-            if (mapKey) state.filterValues[mapKey] = combo.value;
+            if (mapKey) gisState.filterValues[mapKey] = combo.value;
             updateFeatures();
         });
     });
@@ -240,47 +240,47 @@ function setupUI() {
 
     if (startDateEl) startDateEl.addEventListener("change", () => {
         const dateStr = startDateEl.value;
-        if (!dateValidation(dateStr)) return; state.filterValues.sDateSend = convert2shamsi(dateStr); updateFeatures();
+        if (!dateValidation(dateStr)) return; gisState.filterValues.sDateSend = convert2shamsi(dateStr); updateFeatures();
     });
     if (endDateEl) endDateEl.addEventListener("change", () => {
-        const dateStr = endDateEl.value; if (!dateValidation(dateStr)) return; state.filterValues.eDateSend = convert2shamsi(dateStr); updateFeatures();
+        const dateStr = endDateEl.value; if (!dateValidation(dateStr)) return; gisState.filterValues.eDateSend = convert2shamsi(dateStr); updateFeatures();
     });
 
     // view stationary watcher
-    state.view.watch("stationary", isStationary => { if (isStationary && state.linkMap2Table) updateFeatures(); });
+    gisState.view.watch("stationary", isStationary => { if (isStationary && gisState.linkMap2Table) updateFeatures(); });
 
     // Clear filters
     const btnClear = document.getElementById("btnClearFilters");
     if (btnClear) btnClear.addEventListener("click", () => {
-        state.filterValues = { extent: null, sDateSend: null, eDateSend: null, noedarkhast: "", marhaleh: "", noe_parvaneh: "", mantaghe: null, hoze: null };
+        gisState.filterValues = { extent: null, sDateSend: null, eDateSend: null, noedarkhast: "", marhaleh: "", noe_parvaneh: "", mantaghe: null, hoze: null };
         const start = document.getElementById("startDateSend"); if (start) start.value = "";
         const end = document.getElementById("endDateSend"); if (end) end.value = "";
-        updateFeatures({ geometry: state.arseILayer ? state.arseILayer.extent : null });
+        updateFeatures({ geometry: gisState.arseILayer ? gisState.arseILayer.extent : null });
     });
 
     // CSV/Excel/Map export handlers
     const btnCSV = document.getElementById("btnCSV");
     if (btnCSV) btnCSV.addEventListener("click", () => {
         try {
-            const { headers, rows } = getHeadersAndRows(state.featureTable, state.darkhastFeatures);
+            const { headers, rows } = getHeadersAndRows(gisState.featureTable, gisState.darkhastFeatures);
             exportCSV(headers, rows);
         } catch (e) { console.error(e); }
     });
 
     const btnExcel = document.getElementById("btnExcel");
     if (btnExcel) btnExcel.addEventListener("click", () => {
-        try { const { headers, rows } = getHeadersAndRows(state.featureTable, state.darkhastFeatures); exportExcel(headers, rows); } catch (e) { console.error(e); }
+        try { const { headers, rows } = getHeadersAndRows(gisState.featureTable, gisState.darkhastFeatures); exportExcel(headers, rows); } catch (e) { console.error(e); }
     });
 
     const btnScreenshot = document.getElementById("btnMapScreenshot");
     if (btnScreenshot) btnScreenshot.addEventListener("click", async () => {
-        try { const screenshot = await state.view.takeScreenshot({ format: "png" }); const link = document.createElement("a"); link.href = screenshot.dataUrl; link.download = "map.png"; link.click(); } catch (e) { console.error(e); }
+        try { const screenshot = await gisState.view.takeScreenshot({ format: "png" }); const link = document.createElement("a"); link.href = screenshot.dataUrl; link.download = "map.png"; link.click(); } catch (e) { console.error(e); }
     });
 }
 
 function buildWhereClause() {
     const clauses = [];
-    const v = state.filterValues;
+    const v = gisState.filterValues;
     if (v.sDateSend) clauses.push(`${fieldsName.sDateSend} > ${escapeSqlValue(v.sDateSend)}`);
     if (v.eDateSend) clauses.push(`${fieldsName.eDateSend} < ${escapeSqlValue(v.eDateSend)}`);
     if (v.noedarkhast) clauses.push(`${fieldsName.noeDarkhast} = N'${escapeSqlString(v.noedarkhast)}'`);
@@ -301,24 +301,24 @@ async function updateFeatures(options = {}) {
         const geometry = options.geometry || getEffectiveGeometry();
 
         // apply filters to layerView (fast client-side filtering for view)
-        const layerView = await state.view.whenLayerView(state.darkhastFLayer);
+        const layerView = await gisState.view.whenLayerView(gisState.darkhastFLayer);
         layerView.filter = { geometry, spatialRelationship: "intersects" };
 
         // server-side filter for other consumers
-        state.darkhastFLayer.definitionExpression = where;
+        gisState.darkhastFLayer.definitionExpression = where;
 
         // feature table geometry filter
-        if (state.featureTable) state.featureTable.filterGeometry = geometry;
+        if (gisState.featureTable) gisState.featureTable.filterGeometry = geometry;
 
         // query features from the layer directly (fresh query)
-        const q = state.darkhastFLayer.createQuery();
+        const q = gisState.darkhastFLayer.createQuery();
         q.where = where; q.geometry = geometry; q.spatialRelationship = "intersects"; q.returnGeometry = true; q.outFields = ["*"];
 
-        const fset = await state.darkhastFLayer.queryFeatures(q);
-        state.darkhastFeatures = Array.isArray(fset.features) ? fset.features : [];
+        const fset = await gisState.darkhastFLayer.queryFeatures(q);
+        gisState.darkhastFeatures = Array.isArray(fset.features) ? fset.features : [];
 
         // update combobox values
-        state.comboBoxValues = getComboBoxValues(state.darkhastFeatures);
+        gisState.comboBoxValues = getComboBoxValues(gisState.darkhastFeatures);
         fillComboboxes();
     } catch (err) {
         console.error("updateFeatures error:", err);
@@ -326,11 +326,11 @@ async function updateFeatures(options = {}) {
 }
 
 function getEffectiveGeometry() {
-    if (state.sketchLayer && state.sketchLayer.graphics && state.sketchLayer.graphics.length > 0) {
-        try { return geometryEngine.intersect(state.sketchLayer.graphics.getItemAt(0).geometry, state.view.extent); } catch (e) { return state.sketchLayer.graphics.getItemAt(0).geometry; }
+    if (gisState.sketchLayer && gisState.sketchLayer.graphics && gisState.sketchLayer.graphics.length > 0) {
+        try { return geometryEngine.intersect(gisState.sketchLayer.graphics.getItemAt(0).geometry, gisState.view.extent); } catch (e) { return gisState.sketchLayer.graphics.getItemAt(0).geometry; }
     }
-    if (state.linkMap2Table) return state.view.extent;
-    return state.darkhastFLayer.fullExtent;
+    if (gisState.linkMap2Table) return gisState.view.extent;
+    return gisState.darkhastFLayer.fullExtent;
 }
 
 function getComboBoxValues(features) {
@@ -354,10 +354,10 @@ function fillComboboxes() {
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = "";
-        const values = state.comboBoxValues[key] || [""];
+        const values = gisState.comboBoxValues[key] || [""];
         for (const v of values) { const opt = document.createElement('option'); opt.value = v; opt.text = v; el.appendChild(opt); }
         // attempt to retain previous filter
-        if (state.filterValues[key] !== undefined) el.value = state.filterValues[key] || "";
+        if (gisState.filterValues[key] !== undefined) el.value = gisState.filterValues[key] || "";
     });
 }
 
