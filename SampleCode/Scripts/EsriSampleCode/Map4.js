@@ -133,8 +133,8 @@ darkhastFLayer.when(() => {
         view.zoom = 18;
         originalZoom(); // call original method
     };
-}).catch((error) => {
-    console.error("Error loading darkhastFLayer:", error);
+}).catch((err) => {
+    console.error("Error in loading darkhastFLayer:", err);
 });
 
 // ---------- Initialize Map ----------
@@ -157,7 +157,7 @@ view.whenLayerView(darkhastFLayer).then(function () {
         layer = darkhastFLayer
     }
     view.goTo(layer.fullExtent, { animate: false })
-        .catch(function (error) { console.error("Extent projection error: ", error) });
+        .catch(function (err) { console.error("Error in Extent projection: ", err) });
 
     // Limited View Extent and Zoom level
     const cityExtent = layer.fullExtent; // dynamic extent
@@ -274,7 +274,7 @@ sketch.on("create", async (event) => {
                 await updateFeatures();
             }
         } catch (err) {
-            console.error("CreateFeatures error:", err);
+            console.error("Error in create Sketch:", err);
         }
     } else if (event.state === "cancel") {
         btnSketch.click();
@@ -292,7 +292,7 @@ sketch.on("update", async (event) => {
                 }
             } else { btnSketch.click(); }
         } catch (err) {
-            console.error("UpdateFeatures error:", err);
+            console.error("Error in update Sketch:", err);
         }
     }
 });
@@ -378,7 +378,7 @@ try {
     // get Features from Featureset
     darkhastFeatures = darkhastFSet.features;
 } catch (err) {
-    console.error("Initial queryFeatures failed:", err);
+    console.error("Error in queryFeatures:", err);
 }
 
 // ---------- Get Combobox Elements ----------
@@ -636,8 +636,8 @@ async function updateFeatures() {
         // ---------- 4. Set Data To Comboboxes ----------
         comboBoxValues = getComboBoxValues(darkhastFeatures);
         fillComboboxes(comboboxes);
-    } catch (error) {
-        console.error("Error syncing layer:", error);
+    } catch (err) {
+        console.error("Error in update Features:", err);
     } finally { hideLoader(); }
 }
 
@@ -667,8 +667,8 @@ document.getElementById("btnCSV").addEventListener("click", function () {
     try {
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
         exportCSV(headers, rows);
-    } catch (error) {
-        console.error("Error in btnCSV Clicked:", error.message);
+    } catch (err) {
+        console.error("Error in btnCSV Clicked:", err.message);
     }
 });
 /**
@@ -723,8 +723,8 @@ function exportCSV(headers, rows, delimiter = ",", filename = "Export") {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    } catch (error) {
-        console.error("Error in exportCSV:", error.message);
+    } catch (err) {
+        console.error("Error in exportCSV:", err.message);
     }
 }
 
@@ -733,8 +733,8 @@ document.getElementById("btnExcel").addEventListener("click", () => {
     try {        
         const { headers, rows } = getHeadersAndRows(featureTable, darkhastFeatures);
         exportExcel(headers, rows);
-    } catch (error) {
-        console.error("Error in btnExcel Clicked:", error.message);
+    } catch (err) {
+        console.error("Error in btnExcel Clicked:", err.message);
     }
 });
 /**
@@ -773,8 +773,8 @@ function exportExcel(headers, rows, filename = "Export") {
 
         // Save it
         XLSX.writeFile(workbook, filenameWithExt);
-    } catch (error) {
-        console.error("Error in exportExcel:", error.message);
+    } catch (err) {
+        console.error("Error in exportExcel:", err.message);
     }
 }
 
@@ -788,8 +788,8 @@ document.getElementById("btnMapScreenshot").addEventListener("click", async () =
         link.download = "map.png";
         link.click();
 
-    } catch (error) {
-        console.error("Error in Map Image Export", error.message);
+    } catch (err) {
+        console.error("Error in Map Image Export", err.message);
     }
 });
 
@@ -844,8 +844,8 @@ function getHeadersAndRows(featureTable, features) {
         });
 
         return { headers, rows };
-    } catch (error) {
-        console.error("Error in getHeadersAndRows:", error.message);
+    } catch (err) {
+        console.error("Error in getHeadersAndRows:", err.message);
         return { headers: [], rows: [] };
     }
 }

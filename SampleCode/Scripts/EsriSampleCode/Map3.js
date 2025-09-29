@@ -17,7 +17,33 @@ import Home from "../../esriapi/4.30/@arcgis/core/widgets/Home.js";
 import GraphicsLayer from "../../esriapi/4.30/@arcgis/core/layers/GraphicsLayer.js";
 import Sketch from "../../esriapi/4.30/@arcgis/core/widgets/Sketch.js";
 import * as geometryEngine from "../../esriapi/4.30/@arcgis/core/geometry/geometryEngine.js";
-// NOTE: XLSX must be included globally (e.g. via script tag) if you keep using XLSX.utils
+//#endregion
+
+//#region Config
+const gisConfig = {
+    services: {
+        mapServer: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
+        mapImage: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
+        feature: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0"
+    },
+    fields: {
+        sDateSend: "date_rooz",
+        eDateSend: "date_rooz",
+        noeDarkhast: "noedarkhast",
+        marhale: "marhaleh",
+        noeKarbari: "noe_parvaneh",
+        mantaghe: "mantaghe",
+        mahdodeh: "hoze",
+        ebtal: "Ebtal"
+    },
+    comboMapping: {
+        comboNoeDarkhast: "noedarkhast",
+        comboMarhale: "marhaleh",
+        comboNoeKarbari: "noe_parvaneh",
+        comboMantaghe: "mantaghe",
+        comboMahdodeh: "hoze"
+    }
+};
 //#endregion
 
 //#region App state
@@ -44,31 +70,31 @@ const gisState = {
     }
 };
 
-const fieldsName = {
-    sDateSend: "date_rooz",
-    eDateSend: "date_rooz",
-    noeDarkhast: "noedarkhast",
-    marhale: "marhaleh",
-    noeKarbari: "",
-    mantaghe: "mantaghe",
-    mahdodeh: "hoze",
-    ebtal: "Ebtal"
-};
+//const fieldsName = {
+//    sDateSend: "date_rooz",
+//    eDateSend: "date_rooz",
+//    noeDarkhast: "noedarkhast",
+//    marhale: "marhaleh",
+//    noeKarbari: "",
+//    mantaghe: "mantaghe",
+//    mahdodeh: "hoze",
+//    ebtal: "Ebtal"
+//};
 
 //#endregion
 
+//#region Initialization
 async function init() {
     try {
         // Create base layers
         gisState.arseILayer = new MapImageLayer({
-            url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer",
+            url: gisConfig.services.mapServer,
             sublayers: [{ id: 9 }]
         });
-        gisState.arseILayer.when(() => console.log("arseILayer loaded"))
-            .catch(err => console.error("arseILayer load error", err));
 
         gisState.darkhastFLayer = new FeatureLayer({
-            url: "http://localhost:6080/arcgis/rest/services/Maryanaj/Maryanaj/MapServer/0",
+            url: gisConfig.services.mapServer,
+            //outFields: Object.values(CONFIG.fields),
             outFields: ["*"],
             popupTemplate: { title: "درخواست", content: "شماره: {shodarkhast}" },
             renderer: {
@@ -132,14 +158,26 @@ async function init() {
         console.error("Initialization failed:", err);
     }
 }
+//#endregion
 
+//#region FeatureTable
 async function createFeatureTable() {
     // prepare column templates by reading fields (remove geometry)
     const fields = gisState.darkhastFLayer.fields || [];
     const validFields = fields.filter(f => f.type !== "geometry");
-    const columnTemplates = validFields.map((field, idx) => ({ type: "field", fieldName: field.name, label: field.alias || field.name, visible: idx < 10 }));
+    const columnTemplates = validFields.map((field, idx) => ({
+        type: "field",
+        fieldName: field.name,
+        label: field.alias || field.name,
+        visible: idx < 10
+    }));
 
-    gisState.featureTable = new FeatureTable({ container: "attributeTable", view: gisState.view, layer: gisState.darkhastFLayer, tableTemplate: { columnTemplates } });
+    gisState.featureTable = new FeatureTable({
+        container: "attributeTable",
+        view: gisState.view,
+        layer: gisState.darkhastFLayer,
+        tableTemplate: { columnTemplates }
+    });
 
     // override zoomToSelection with safer approach: check view exists
     if (gisState.featureTable && typeof gisState.featureTable.zoomToSelection === "function") {
@@ -150,12 +188,18 @@ async function createFeatureTable() {
         };
     }
 }
+//#endregion
 
+//#region Sketch Tool
 function setupSketch() {
     gisState.sketchLayer = new GraphicsLayer();
     gisState.map.add(gisState.sketchLayer);
 
-    gisState.sketch = new Sketch({ layer: gisState.sketchLayer, view: gisState.view, creationMode: "single" });
+    gisState.sketch = new Sketch({
+        layer: gisState.sketchLayer,
+        view: gisState.view,
+        creationMode: "single"
+    });
 
     const btnSketch = document.getElementById("btnSketch");
     const btnDelSketch = document.getElementById("btnDelSketch");
@@ -169,9 +213,12 @@ function setupSketch() {
         btnSketch.addEventListener("click", () => {
             sketchActive = !sketchActive;
             if (sketchActive) {
-                btnSketch.title = "Sketch Off"; btnSketch.style.color = "green"; gisState.sketch.create("polygon"); if (btnDelSketch) btnDelSketch.hidden = false;
+                btnSketch.title = "Sketch Off"; btnSketch.style.color = "green"; gisState.sketch.create("polygon");
+                if (btnDelSketch) btnDelSketch.hidden = false;
             } else {
-                btnSketch.title = "Sketch On"; btnSketch.style.color = "red"; gisState.sketch.cancel(); gisState.sketchLayer.removeAll(); if (btnDelSketch) btnDelSketch.hidden = true; updateFeatures() // reset
+                btnSketch.title = "Sketch On"; btnSketch.style.color = "red"; gisState.sketch.cancel(); gisState.sketchLayer.removeAll();
+                if (btnDelSketch) btnDelSketch.hidden = true;
+                updateFeatures() // reset
             }
         });
     }
@@ -202,7 +249,9 @@ function setupSketch() {
         }
     });
 }
+//#endregion
 
+//#region UI Setup
 function setupUI() {
     // Link map <-> table button
     const btnLinkMap2Table = document.getElementById("btnLinkMap2Table");
@@ -213,27 +262,61 @@ function setupUI() {
         btnLinkMap2Table.addEventListener("click", () => {
             gisState.linkMap2Table = !gisState.linkMap2Table;
             if (gisState.linkMap2Table) {
-                btnLinkMap2Table.title = "Unlinked Map to Table"; btnLinkMap2Table.style.color = "green"; if (calIcon) calIcon.icon = "online"; updateFeatures();
+                btnLinkMap2Table.title = "Unlinked Map to Table";
+                btnLinkMap2Table.style.color = "green";
+                if (calIcon) calIcon.icon = "online";
+                updateFeatures();
             } else {
-                btnLinkMap2Table.title = "Linked Map to Table"; btnLinkMap2Table.style.color = "red"; if (calIcon) calIcon.icon = "offline";
+                btnLinkMap2Table.title = "Linked Map to Table";
+                btnLinkMap2Table.style.color = "red";
+                if (calIcon) calIcon.icon = "offline";
             }
         });
     }
 
     // Filter UI elements (defensive)
-    const comboIds = ["comboNoeDarkhast", "comboMarhale", "comboNoeKarbari", "comboMantaghe", "comboMahdodeh"];
-    const combos = comboIds.map(id => document.getElementById(id)).filter(Boolean);
+    //const comboIds = ["comboNoeDarkhast", "comboMarhale", "comboNoeKarbari", "comboMantaghe", "comboMahdodeh"];
 
-    combos.forEach(combo => {
-        combo.addEventListener("change", () => {
-            const fieldKey = combo.id.replace(/^combo/, "").toLowerCase();
-            // Map to state keys explicitly
-            const dic = { combonoedarkhast: "noedarkhast", combomarhale: "marhaleh", combonoeparvaneh: "noe_parvaneh", combomantaghe: "mantaghe", combomahdodeh: "hoze" };
-            const mapKey = dic[combo.id.toLowerCase()] || dic[combo.id.replace(/[^a-z]/gi, "").toLowerCase()];
-            if (mapKey) gisState.filterValues[mapKey] = combo.value;
-            updateFeatures();
-        });
+    //const combos = comboIds.map(id => document.getElementById(id)).filter(Boolean);
+
+    //combos.forEach(combo => {
+    //    combo.addEventListener("change", () => {
+    //        const fieldKey = combo.id.replace(/^combo/, "").toLowerCase();
+    //        // Map to state keys explicitly
+    //        const dic = { combonoedarkhast: "noedarkhast", combomarhale: "marhaleh", combonoeparvaneh: "noe_parvaneh", combomantaghe: "mantaghe", combomahdodeh: "hoze" };
+    //        const mapKey = dic[combo.id.toLowerCase()] || dic[combo.id.replace(/[^a-z]/gi, "").toLowerCase()];
+    //        if (mapKey) gisState.filterValues[mapKey] = combo.value;
+    //        updateFeatures();
+    //    });
+    //});
+    // ---------- Get Combobox Elements ----------
+    const comboNoeDarkhast = document.getElementById("comboNoeDarkhast");
+    const comboMarhale = document.getElementById("comboMarhale");
+    const comboNoeKarbari = document.getElementById("comboNoeKarbari");
+    const comboMantaghe = document.getElementById("comboMantaghe");
+    const comboMahdodeh = document.getElementById("comboMahdodeh");
+    // ---------- Comboxes changed ----------
+    comboNoeDarkhast.addEventListener("change", function () {
+        gisState.filterValues.noedarkhast = this.value;
+        updateFeatures();
     });
+    comboMarhale.addEventListener("change", function () {
+        gisState.filterValues.marhaleh = this.value;
+        updateFeatures();
+    });
+    comboNoeKarbari.addEventListener("change", function () {
+        gisState.filterValues.noe_parvaneh = this.value;
+        updateFeatures();
+    });
+    comboMantaghe.addEventListener("change", function () {
+        gisState.filterValues.mantaghe = this.value;
+        updateFeatures();
+    });
+    comboMahdodeh.addEventListener("change", function () {
+        gisState.filterValues.hoze = this.value;
+        updateFeatures();
+    });
+
 
     const startDateEl = document.getElementById("startDateSend");
     const endDateEl = document.getElementById("endDateSend");
@@ -277,23 +360,28 @@ function setupUI() {
         try { const screenshot = await gisState.view.takeScreenshot({ format: "png" }); const link = document.createElement("a"); link.href = screenshot.dataUrl; link.download = "map.png"; link.click(); } catch (e) { console.error(e); }
     });
 }
+//#endregion
 
+//#region Filters
 function buildWhereClause() {
-    const clauses = [];
     const v = gisState.filterValues;
-    if (v.sDateSend) clauses.push(`${fieldsName.sDateSend} > ${escapeSqlValue(v.sDateSend)}`);
-    if (v.eDateSend) clauses.push(`${fieldsName.eDateSend} < ${escapeSqlValue(v.eDateSend)}`);
-    if (v.noedarkhast) clauses.push(`${fieldsName.noeDarkhast} = N'${escapeSqlString(v.noedarkhast)}'`);
-    if (v.marhaleh) clauses.push(`${fieldsName.marhale} = N'${escapeSqlString(v.marhaleh)}'`);
-    if (v.noe_parvaneh) clauses.push(`${fieldsName.noeKarbari} = N'${escapeSqlString(v.noe_parvaneh)}'`);
-    if (v.mantaghe) clauses.push(`${fieldsName.mantaghe} = N'${escapeSqlString(v.mantaghe)}'`);
-    if (v.hoze) clauses.push(`${fieldsName.mahdodeh} = N'${escapeSqlString(v.hoze)}'`);
+    const f = gisConfig.fields;
+    const clauses = [];
+    if (v.sDateSend) clauses.push(`${f.sDateSend} > ${escapeSqlValue(v.sDateSend)}`);
+    if (v.eDateSend) clauses.push(`${f.eDateSend} < ${escapeSqlValue(v.eDateSend)}`);
+    if (v.noedarkhast) clauses.push(`${f.noeDarkhast} = N'${escapeSqlString(v.noedarkhast)}'`);
+    if (v.marhaleh) clauses.push(`${f.marhale} = N'${escapeSqlString(v.marhaleh)}'`);
+    if (v.noe_parvaneh) clauses.push(`${f.noeKarbari} = N'${escapeSqlString(v.noe_parvaneh)}'`);
+    if (v.mantaghe) clauses.push(`${f.mantaghe} = N'${escapeSqlString(v.mantaghe)}'`);
+    if (v.hoze) clauses.push(`${f.mahdodeh} = N'${escapeSqlString(v.hoze)}'`);
     return clauses.length ? clauses.join(" AND ") : "1=1";
 }
 
 function escapeSqlString(s) { return String(s).replace(/'/g, "''"); }
 function escapeSqlValue(v) { return Number(v) || v; }
+//#endregion
 
+//#region Update Features
 async function updateFeatures(options = {}) {
     showLoader("map");
     try {
@@ -312,7 +400,8 @@ async function updateFeatures(options = {}) {
 
         // query features from the layer directly (fresh query)
         const q = gisState.darkhastFLayer.createQuery();
-        q.where = where; q.geometry = geometry; q.spatialRelationship = "intersects"; q.returnGeometry = true; q.outFields = ["*"];
+        q.where = where; q.geometry = geometry; q.spatialRelationship = "intersects"; q.returnGeometry = true;
+        q.outFields = ["*"]; //q.outFields = Object.values(CONFIG.fields);
 
         const fset = await gisState.darkhastFLayer.queryFeatures(q);
         gisState.darkhastFeatures = Array.isArray(fset.features) ? fset.features : [];
@@ -327,39 +416,72 @@ async function updateFeatures(options = {}) {
 
 function getEffectiveGeometry() {
     if (gisState.sketchLayer && gisState.sketchLayer.graphics && gisState.sketchLayer.graphics.length > 0) {
-        try { return geometryEngine.intersect(gisState.sketchLayer.graphics.getItemAt(0).geometry, gisState.view.extent); } catch (e) { return gisState.sketchLayer.graphics.getItemAt(0).geometry; }
+        try { return geometryEngine.intersect(gisState.sketchLayer.graphics.getItemAt(0).geometry, gisState.view.extent); } 
+        catch (e) { return gisState.sketchLayer.graphics.getItemAt(0).geometry; }
     }
     if (gisState.linkMap2Table) return gisState.view.extent;
     return gisState.darkhastFLayer.fullExtent;
 }
+//#endregion
 
+//#region ComboBox Handling
+//function getComboBoxValues(features) {
+//    const result = { noedarkhast: [""], marhaleh: [""], noe_parvaneh: [""], mantaghe: [""], hoze: [""] };
+//    const seen = { noedarkhast: new Set(), marhaleh: new Set(), noe_parvaneh: new Set(), mantaghe: new Set(), hoze: new Set() };
+//    for (const f of features) {
+//        const a = f.attributes || {};
+//        if (a.noedarkhast && !seen.noedarkhast.has(a.noedarkhast)) { seen.noedarkhast.add(a.noedarkhast); result.noedarkhast.push(a.noedarkhast); }
+//        if (a.marhaleh && !seen.marhaleh.has(a.marhaleh)) { seen.marhaleh.add(a.marhaleh); result.marhaleh.push(a.marhaleh); }
+//        if (a.noe_parvaneh && !seen.noe_parvaneh.has(a.noe_parvaneh)) { seen.noe_parvaneh.add(a.noe_parvaneh); result.noe_parvaneh.push(a.noe_parvaneh); }
+//        if (a.mantaghe && !seen.mantaghe.has(a.mantaghe)) { seen.mantaghe.add(a.mantaghe); result.mantaghe.push(a.mantaghe); }
+//        if (a.hoze && !seen.hoze.has(a.hoze)) { seen.hoze.add(a.hoze); result.hoze.push(a.hoze); }
+//    }
+//    return result;
+//}
 function getComboBoxValues(features) {
-    const result = { noedarkhast: [""], marhaleh: [""], noe_parvaneh: [""], mantaghe: [""], hoze: [""] };
-    const seen = { noedarkhast: new Set(), marhaleh: new Set(), noe_parvaneh: new Set(), mantaghe: new Set(), hoze: new Set() };
+    const keys = Object.values(gisConfig.comboMapping);
+    const result = Object.fromEntries(keys.map(k => [k, [""]]));
+    const seen = Object.fromEntries(keys.map(k => [k, new Set()]));
     for (const f of features) {
         const a = f.attributes || {};
-        if (a.noedarkhast && !seen.noedarkhast.has(a.noedarkhast)) { seen.noedarkhast.add(a.noedarkhast); result.noedarkhast.push(a.noedarkhast); }
-        if (a.marhaleh && !seen.marhaleh.has(a.marhaleh)) { seen.marhaleh.add(a.marhaleh); result.marhaleh.push(a.marhaleh); }
-        if (a.noe_parvaneh && !seen.noe_parvaneh.has(a.noe_parvaneh)) { seen.noe_parvaneh.add(a.noe_parvaneh); result.noe_parvaneh.push(a.noe_parvaneh); }
-        if (a.mantaghe && !seen.mantaghe.has(a.mantaghe)) { seen.mantaghe.add(a.mantaghe); result.mantaghe.push(a.mantaghe); }
-        if (a.hoze && !seen.hoze.has(a.hoze)) { seen.hoze.add(a.hoze); result.hoze.push(a.hoze); }
+        keys.forEach(k => {
+            if (a[k] && !seen[k].has(a[k])) {
+                seen[k].add(a[k]);
+                result[k].push(a[k]);
+            }
+        });
     }
     return result;
 }
-
 // Fill combobox DOMs - expects specific ids
+//function fillComboboxes() {
+//    const mapping = { comboNoeDarkhast: 'noedarkhast', comboMarhale: 'marhaleh', comboNoeKarbari: 'noe_parvaneh', comboMantaghe: 'mantaghe', comboMahdodeh: 'hoze' };
+//    Object.entries(mapping).forEach(([id, key]) => {
+//        const el = document.getElementById(id);
+//        if (!el) return;
+//        el.innerHTML = "";
+//        const values = gisState.comboBoxValues[key] || [""];
+//        for (const v of values) { const opt = document.createElement('option'); opt.value = v; opt.text = v; el.appendChild(opt); }
+//        // attempt to retain previous filter
+//        if (gisState.filterValues[key] !== undefined) el.value = gisState.filterValues[key] || "";
+//    });
+//}
 function fillComboboxes() {
-    const mapping = { comboNoeDarkhast: 'noedarkhast', comboMarhale: 'marhaleh', comboNoeKarbari: 'noe_parvaneh', comboMantaghe: 'mantaghe', comboMahdodeh: 'hoze' };
-    Object.entries(mapping).forEach(([id, key]) => {
+    Object.entries(gisConfig.comboMapping).forEach(([id, key]) => {
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = "";
         const values = gisState.comboBoxValues[key] || [""];
-        for (const v of values) { const opt = document.createElement('option'); opt.value = v; opt.text = v; el.appendChild(opt); }
-        // attempt to retain previous filter
+        values.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v;
+            opt.text = v;
+            el.appendChild(opt);
+        });
         if (gisState.filterValues[key] !== undefined) el.value = gisState.filterValues[key] || "";
     });
 }
+//#endregion
 
 // Date helpers
 function dateValidation(date) {
@@ -386,6 +508,7 @@ function convert2shamsi(date) {
     }
 }
 
+//#region Export Helpers
 // Export helpers (kept mostly as-is, with safer validations)
 function getHeadersAndRows(featureTable, features) {
     if (!featureTable || !featureTable.columns || !featureTable.columns.items) throw new Error('featureTable is missing');
@@ -427,11 +550,13 @@ function exportExcel(headers, rows, filename = 'Export') {
         XLSX.writeFile(wb, `${filename}.xlsx`);
     } catch (e) { console.error('exportExcel error', e); }
 }
+//#endregion
 
-// Loader
+//#region Loader
 const loader = document.getElementById("loader");
 function showLoader(divId) { const target = document.getElementById(divId); if (!target || !loader) return; if (getComputedStyle(target).position === 'static') target.style.position = 'relative'; try { target.appendChild(loader); } catch (e) { } loader.style.display = 'flex'; }
 function hideLoader() { if (loader) loader.style.display = 'none'; }
+//#endregion
 
 // utility
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
