@@ -1,0 +1,142 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش چند شیتی با Bootstrap 5</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: "Tahoma", sans-serif;
+            direction: rtl;
+            background: #f3f4f6;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dropdown-menu {
+            padding: 10px;
+            min-width: 250px;
+        }
+
+            .dropdown-menu label {
+                display: flex;
+                align-items: center;
+                padding: 5px;
+                cursor: pointer;
+            }
+
+        .select-all-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
+            .select-all-row:hover {
+                background: #eef2f7;
+            }
+
+        .btn-loading i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-list-check"></i> انتخاب گزارش‌ها
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="dropdownBtn">
+            <li>
+                <div class="select-all-row" id="selectAllRow">
+                    <span><i class="fa fa-check-double"></i> انتخاب همه</span>
+                    <input type="checkbox" id="chkSelectAll">
+                </div>
+            </li>
+            <li><label><input type="checkbox" value="گزارش عملکرد" checked> گزارش عملکرد</label></li>
+            <li><label><input type="checkbox" value="گزارش مالی" checked> گزارش مالی</label></li>
+            <li><label><input type="checkbox" value="گزارش پروژه‌ها"> گزارش پروژه‌ها</label></li>
+            <li><label><input type="checkbox" value="گزارش کاربران"> گزارش کاربران</label></li>
+            <li><label><input type="checkbox" value="گزارش پشتیبانی"> گزارش پشتیبانی</label></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <button class="btn btn-primary w-100" id="btnReport">
+                    <i class="fa fa-file-lines"></i> نمایش گزارش
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const checkboxes = Array.from(document.querySelectorAll(".dropdown-menu input[type='checkbox']:not(#chkSelectAll)"));
+            const chkSelectAll = document.getElementById("chkSelectAll");
+            const btnReport = document.getElementById("btnReport");
+
+            // داده نمونه
+            const dataMap = {
+                "گزارش عملکرد": [["نام", "سن"], ["علی", 25], ["زهرا", 30]],
+                "گزارش مالی": [["ماه", "درآمد"], ["فروردین", 5000], ["اردیبهشت", 6000]],
+                "گزارش پروژه‌ها": [["پروژه", "وضعیت"], ["A", "فعال"], ["B", "تکمیل"]],
+                "گزارش کاربران": [["کاربر", "ایمیل"], ["user1", "a@mail.com"], ["user2", "b@mail.com"]],
+                "گزارش پشتیبانی": [["تیکت", "وضعیت"], [101, "باز"], [102, "بسته"]]
+            };
+
+            // انتخاب همه
+            chkSelectAll.addEventListener("change", function () {
+                const checked = chkSelectAll.checked;
+                checkboxes.forEach(c => c.checked = checked);
+            });
+
+            // بروزرسانی تیک انتخاب همه
+            checkboxes.forEach(c => {
+                c.addEventListener("change", function () {
+                    chkSelectAll.checked = checkboxes.every(chk => chk.checked);
+                });
+            });
+
+            // لودینگ دکمه
+            function setBtnLoading(btn, isLoading, text) {
+                if (isLoading) {
+                    btn.disabled = true;
+                    btn.dataset.originalText = btn.innerHTML;
+                    btn.innerHTML = (text || "در حال پردازش") + ' <i class="fa fa-spinner fa-spin"></i>';
+                } else {
+                    btn.disabled = false;
+                    if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+                }
+            }
+
+            // دکمه گزارش -> Excel
+            btnReport.addEventListener("click", function () {
+                const selected = checkboxes.filter(c => c.checked).map(c => c.value);
+                if (selected.length === 0) return;
+
+                setBtnLoading(btnReport, true, "در حال پردازش");
+
+                setTimeout(() => {
+                    const wb = XLSX.utils.book_new();
+                    selected.forEach(name => {
+                        const ws = XLSX.utils.aoa_to_sheet(dataMap[name] || []);
+                        XLSX.utils.book_append_sheet(wb, ws, name);
+                    });
+                    XLSX.writeFile(wb, "گزارش.xlsx");
+                    setBtnLoading(btnReport, false);
+                }, 1000);
+            });
+        });
+    </script>
+
+</body>
+</html>
