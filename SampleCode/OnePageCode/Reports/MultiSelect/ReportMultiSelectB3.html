@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش چند شیتی با Vanilla JS</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: "Tahoma", sans-serif;
+            direction: rtl;
+            background: #f3f4f6;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #fff;
+            min-width: 250px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 6px;
+            z-index: 100;
+        }
+
+        .dropdown.open .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu label {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .select-all-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
+            .select-all-row:hover {
+                background: #eef2f7;
+            }
+
+        .btn-loading i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dropdown" id="dropdown">
+        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownBtn">
+            <i class="fa fa-list-check"></i> انتخاب گزارش‌ها <span class="caret"></span>
+        </button>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+            <div class="select-all-row" id="selectAllRow">
+                <span><i class="fa fa-check-double"></i> انتخاب همه</span>
+                <input type="checkbox" id="chkSelectAll">
+            </div>
+            <label><input type="checkbox" value="گزارش عملکرد" checked> گزارش عملکرد</label>
+            <label><input type="checkbox" value="گزارش مالی" checked> گزارش مالی</label>
+            <label><input type="checkbox" value="گزارش پروژه‌ها"> گزارش پروژه‌ها</label>
+            <label><input type="checkbox" value="گزارش کاربران"> گزارش کاربران</label>
+            <label><input type="checkbox" value="گزارش پشتیبانی"> گزارش پشتیبانی</label>
+            <div style="border-top:1px solid #eee; margin:10px 0;"></div>
+            <button class="btn btn-primary btn-block" id="btnReport">
+                <i class="fa fa-file-lines"></i> نمایش گزارش
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dropdown = document.getElementById("dropdown");
+            const dropdownBtn = document.getElementById("dropdownBtn");
+            const dropdownMenu = document.getElementById("dropdownMenu");
+            const checkboxes = Array.from(dropdownMenu.querySelectorAll("input[type='checkbox']:not(#chkSelectAll)"));
+            const chkSelectAll = document.getElementById("chkSelectAll");
+            const btnReport = document.getElementById("btnReport");
+
+            // داده نمونه برای هر چک‌باکس
+            const dataMap = {
+                "گزارش عملکرد": [["نام", "سن"], ["علی", 25], ["زهرا", 30]],
+                "گزارش مالی": [["ماه", "درآمد"], ["فروردین", 5000], ["اردیبهشت", 6000]],
+                "گزارش پروژه‌ها": [["پروژه", "وضعیت"], ["A", "فعال"], ["B", "تکمیل"]],
+                "گزارش کاربران": [["کاربر", "ایمیل"], ["user1", "a@mail.com"], ["user2", "b@mail.com"]],
+                "گزارش پشتیبانی": [["تیکت", "وضعیت"], [101, "باز"], [102, "بسته"]]
+            };
+
+            // باز و بسته کردن منو
+            dropdownBtn.addEventListener("click", function (e) {
+                dropdown.classList.toggle("open");
+            });
+
+            // بستن منو با کلیک بیرون
+            document.addEventListener("click", function (e) {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove("open");
+                }
+            });
+
+            // انتخاب همه
+            chkSelectAll.addEventListener("change", function () {
+                const checked = chkSelectAll.checked;
+                checkboxes.forEach(c => c.checked = checked);
+            });
+
+            // بروزرسانی تیک انتخاب همه
+            checkboxes.forEach(c => {
+                c.addEventListener("change", function () {
+                    chkSelectAll.checked = checkboxes.every(chk => chk.checked);
+                });
+            });
+
+            // حالت لودینگ دکمه
+            function setBtnLoading(btn, isLoading, text) {
+                if (isLoading) {
+                    btn.disabled = true;
+                    btn.dataset.originalText = btn.innerHTML;
+                    btn.innerHTML = (text || "در حال پردازش") + ' <i class="fa fa-spinner fa-spin"></i>';
+                } else {
+                    btn.disabled = false;
+                    if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
+                }
+            }
+
+            // دکمه گزارش -> ساخت Excel
+            btnReport.addEventListener("click", function () {
+                const selected = checkboxes.filter(c => c.checked).map(c => c.value);
+                if (selected.length === 0) return;
+
+                setBtnLoading(btnReport, true, "در حال پردازش");
+
+                setTimeout(() => {
+                    const wb = XLSX.utils.book_new();
+                    selected.forEach(name => {
+                        const ws = XLSX.utils.aoa_to_sheet(dataMap[name] || []);
+                        XLSX.utils.book_append_sheet(wb, ws, name);
+                    });
+                    XLSX.writeFile(wb, "گزارش.xlsx");
+                    setBtnLoading(btnReport, false);
+                }, 1000);
+            });
+
+        });
+    </script>
+
+</body>
+</html>
