@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>تست دکمه با Spinner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 3 + FontAwesome -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        body {
+            font-family: tahoma, sans-serif;
+            text-align: center;
+            margin-top: 80px;
+            background: #f8f8f8;
+        }
+
+        button {
+            margin: 10px;
+            min-width: 130px;
+        }
+
+        /* 🔹 استایل دکمه هنگام لود شدن */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+            .btn-loading .fa {
+                margin-right: 6px;
+                animation: spin 0.8s linear infinite;
+            }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h3>🌀 تست دکمه با لودر</h3>
+
+    <button id="btnStartGetXY" class="btn btn-success" onclick="startAction(this)">اجرا</button>
+    <button id="btnCloseGetXY" class="btn btn-danger" onclick="closeAction(this)">بستن</button>
+
+    <script>
+        // 🔸 تابع کمکی برای نمایش / حذف لودر در دکمه
+        function setButtonLoading(btn, isLoading, text) {
+            if (!btn) return;
+
+            if (isLoading) {
+                btn.disabled = true;
+                btn.classList.add("btn-loading");
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = `<i class="fa fa-spinner"></i> ${text || "در حال پردازش..."}`;
+            } else {
+                btn.disabled = false;
+                btn.classList.remove("btn-loading");
+                if (btn.dataset.originalText)
+                    btn.innerHTML = btn.dataset.originalText;
+            }
+        }
+
+        // 🔹 شبیه‌سازی عملیات زمان‌بر
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 🔹 دکمه اجرا
+        async function startAction(btn) {
+            setButtonLoading(btn, true, "در حال اجرا...");
+            await sleep(3000);
+            setButtonLoading(btn, false);
+            alert("عملیات اجرا تمام شد ✅");
+        }
+
+        // 🔹 دکمه بستن
+        async function closeAction(btn) {
+            setButtonLoading(btn, true, "در حال بستن...");
+            await sleep(2500);
+            setButtonLoading(btn, false);
+            alert("فرآیند بسته شد ❌");
+        }
+    </script>
+
+</body>
+</html>
