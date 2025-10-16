@@ -16872,6 +16872,7 @@
     <Content Include="OnePageCode\Loading\btnLoader\btnlodar.html" />
     <Content Include="OnePageCode\Reports\MultiSelect\ReportMultiSelectB3.html" />
     <Content Include="OnePageCode\Reports\MultiSelect\ReportMultiSelectB5.html" />
+    <Content Include="OnePageCode\Validation\String\Code\CodeNosazi.js" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
