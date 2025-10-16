@@ -1,33 +1,108 @@
 ﻿<!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>گزارش چند شیتی با Bootstrap 5</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-step Progress with Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body {
-            font-family: "Tahoma", sans-serif;
-            direction: rtl;
-            background: #f3f4f6;
-            height: 100vh;
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            font-family: Tahoma, sans-serif;
+        }
+
+        .steps {
             display: flex;
-            justify-content: center;
-            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
-        .dropdown-menu {
-            padding: 10px;
-            min-width: 250px;
+        .step {
+            flex: 1;
+            position: relative;
+            text-align: center;
+            margin: 10px 0;
         }
 
-            .dropdown-menu label {
-                display: flex;
-                align-items: center;
-                padding: 5px;
-                cursor: pointer;
+            .step .circle {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #ddd;
+                margin: 0 auto;
+                line-height: 60px;
+                color: #fff;
+                font-weight: bold;
+                font-size: 18px;
+                position: relative;
+                z-index: 2;
+                transition: all 0.3s;
             }
+
+            .step.active .circle {
+                background-color: #0d6efd;
+            }
+
+            .step.completed .circle {
+                background-color: #198754;
+                font-size: 22px;
+            }
+
+            .step.failed .circle {
+                background-color: #dc3545;
+                font-size: 22px;
+            }
+
+            .step .label {
+                margin-top: 8px;
+                font-size: 14px;
+            }
+
+            .step .report {
+                margin-top: 5px;
+                font-size: 13px;
+                color: #333;
+            }
+
+            /* Connector line between steps */
+            .step::after {
+                content: '';
+                position: absolute;
+                top: 30px;
+                left: 50%;
+                height: 4px;
+                width: 100%;
+                background-color: #ddd;
+                z-index: 1;
+                transition: background-color 0.3s;
+            }
+
+            .step.completed::after {
+                background-color: #198754; /* green for completed steps */
+            }
+
+            .step:last-child::after {
+                display: none;
+            }
+
+        .btn-loading i {
+            margin-left: 8px;
+        }
+
+        .btn-container button {
+            margin: 0 5px;
+        }
+
+        .dropdown-menu label {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            cursor: pointer;
+        }
 
         .select-all-row {
             display: flex;
@@ -44,99 +119,214 @@
             .select-all-row:hover {
                 background: #eef2f7;
             }
-
-        .btn-loading i {
-            margin-right: 8px;
-        }
     </style>
 </head>
 <body>
 
-    <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa fa-list-check"></i> انتخاب گزارش‌ها
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownBtn">
-            <li>
-                <div class="select-all-row" id="selectAllRow">
-                    <span><i class="fa fa-check-double"></i> انتخاب همه</span>
+    <div class="container">
+
+        <!-- Steps -->
+        <div class="steps" id="steps">
+            <div class="step active">
+                <div class="circle">1</div>
+                <div class="label">Step 1</div>
+                <div class="report"></div>
+            </div>
+            <div class="step">
+                <div class="circle">2</div>
+                <div class="label">Step 2</div>
+                <div class="report"></div>
+            </div>
+            <div class="step">
+                <div class="circle">3</div>
+                <div class="label">Step 3</div>
+                <div class="report"></div>
+            </div>
+            <div class="step">
+                <div class="circle">4</div>
+                <div class="label">Step 4</div>
+                <div class="report"></div>
+            </div>
+        </div>
+
+        <!-- Control buttons -->
+        <div class="btn-container mt-4">
+            <button class="btn btn-success" id="startBtn">Start</button>
+            <button class="btn btn-warning" id="toggleBtn">Pause</button>
+            <button class="btn btn-danger" id="resetBtn">Reset</button>
+        </div>
+
+        <!-- Report dropdown -->
+        <div class="dropdown mt-3">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa fa-list-check"></i> Select Reports
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownBtn">
+                <li class="select-all-row px-2 py-1">
+                    <span><i class="fa fa-check-double"></i> Select All</span>
                     <input type="checkbox" id="chkSelectAll">
-                </div>
-            </li>
-            <li><label><input type="checkbox" value="گزارش عملکرد" checked> گزارش عملکرد</label></li>
-            <li><label><input type="checkbox" value="گزارش مالی" checked> گزارش مالی</label></li>
-            <li><label><input type="checkbox" value="گزارش پروژه‌ها"> گزارش پروژه‌ها</label></li>
-            <li><label><input type="checkbox" value="گزارش کاربران"> گزارش کاربران</label></li>
-            <li><label><input type="checkbox" value="گزارش پشتیبانی"> گزارش پشتیبانی</label></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-                <button class="btn btn-primary w-100" id="btnReport">
-                    <i class="fa fa-file-lines"></i> نمایش گزارش
-                </button>
-            </li>
-        </ul>
+                </li>
+                <li><label class="dropdown-item"><input type="checkbox" value="Performance Report" checked> Performance Report</label></li>
+                <li><label class="dropdown-item"><input type="checkbox" value="Financial Report" checked> Financial Report</label></li>
+                <li><label class="dropdown-item"><input type="checkbox" value="Project Report"> Project Report</label></li>
+                <li><label class="dropdown-item"><input type="checkbox" value="User Report"> User Report</label></li>
+                <li><label class="dropdown-item"><input type="checkbox" value="Support Report"> Support Report</label></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <button class="btn btn-primary w-100" id="btnReport">
+                        <i class="fa fa-file-lines"></i> Generate Report
+                    </button>
+                </li>
+            </ul>
+        </div>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const checkboxes = Array.from(document.querySelectorAll(".dropdown-menu input[type='checkbox']:not(#chkSelectAll)"));
-            const chkSelectAll = document.getElementById("chkSelectAll");
-            const btnReport = document.getElementById("btnReport");
+        const steps = document.querySelectorAll('.step');
+        const startBtn = document.getElementById('startBtn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const resetBtn = document.getElementById('resetBtn');
 
-            // داده نمونه
-            const dataMap = {
-                "گزارش عملکرد": [["نام", "سن"], ["علی", 25], ["زهرا", 30]],
-                "گزارش مالی": [["ماه", "درآمد"], ["فروردین", 5000], ["اردیبهشت", 6000]],
-                "گزارش پروژه‌ها": [["پروژه", "وضعیت"], ["A", "فعال"], ["B", "تکمیل"]],
-                "گزارش کاربران": [["کاربر", "ایمیل"], ["user1", "a@mail.com"], ["user2", "b@mail.com"]],
-                "گزارش پشتیبانی": [["تیکت", "وضعیت"], [101, "باز"], [102, "بسته"]]
-            };
+        // Multi-step logic
+        let currentStep = 0;
+        let progress = 0;
+        let running = false;
+        let interval = null;
 
-            // انتخاب همه
-            chkSelectAll.addEventListener("change", function () {
-                const checked = chkSelectAll.checked;
-                checkboxes.forEach(c => c.checked = checked);
-            });
-
-            // بروزرسانی تیک انتخاب همه
-            checkboxes.forEach(c => {
-                c.addEventListener("change", function () {
-                    chkSelectAll.checked = checkboxes.every(chk => chk.checked);
-                });
-            });
-
-            // لودینگ دکمه
-            function setBtnLoading(btn, isLoading, text) {
-                if (isLoading) {
-                    btn.disabled = true;
-                    btn.dataset.originalText = btn.innerHTML;
-                    btn.innerHTML = (text || "در حال پردازش") + ' <i class="fa fa-spinner fa-spin"></i>';
-                } else {
-                    btn.disabled = false;
-                    if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
-                }
+        function setButtonLoading(btn, isLoading, text) {
+            if (!btn) return;
+            if (isLoading) {
+                btn.disabled = true;
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${text || "Processing..."}`;
+            } else {
+                btn.disabled = false;
+                if (btn.dataset.originalText) btn.innerHTML = btn.dataset.originalText;
             }
+        }
 
-            // دکمه گزارش -> Excel
-            btnReport.addEventListener("click", function () {
-                const selected = checkboxes.filter(c => c.checked).map(c => c.value);
-                if (selected.length === 0) return;
-
-                setBtnLoading(btnReport, true, "در حال پردازش");
-
-                setTimeout(() => {
-                    const wb = XLSX.utils.book_new();
-                    selected.forEach(name => {
-                        const ws = XLSX.utils.aoa_to_sheet(dataMap[name] || []);
-                        XLSX.utils.book_append_sheet(wb, ws, name);
-                    });
-                    XLSX.writeFile(wb, "گزارش.xlsx");
-                    setBtnLoading(btnReport, false);
-                }, 1000);
+        function resetSteps() {
+            clearInterval(interval);
+            steps.forEach((step, i) => {
+                step.classList.remove('active', 'completed', 'failed');
+                step.querySelector('.circle').textContent = i + 1;
+                step.querySelector('.circle').style.backgroundColor = '#ddd';
+                step.querySelector('.report').textContent = '';
             });
+            currentStep = 0;
+            running = false;
+            startBtn.disabled = false;
+            toggleBtn.textContent = 'Pause';
+        }
+
+        function startStep() {
+            if (currentStep >= steps.length) return;
+            const step = steps[currentStep];
+            const circle = step.querySelector('.circle');
+            const report = step.querySelector('.report');
+
+            step.classList.add('active');
+            progress = 0;
+
+            interval = setInterval(() => {
+                if (!running) {
+                    circle.style.backgroundColor = 'yellow';
+                    return;
+                } else {
+                    circle.style.backgroundColor = '#0d6efd';
+                }
+
+                progress += 2;
+                circle.textContent = Math.round(progress) + '%';
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+
+                    const success = Math.random() > 0.2;
+                    step.classList.remove('active');
+                    if (success) {
+                        step.classList.add('completed');
+                        circle.textContent = '✔';
+                        circle.style.backgroundColor = '#198754';
+                        report.textContent = `Step completed successfully`;
+                    } else {
+                        step.classList.add('failed');
+                        circle.textContent = '✖';
+                        circle.style.backgroundColor = '#dc3545';
+                        report.textContent = `Step failed`;
+                    }
+
+                    currentStep++;
+                    startStep();
+                }
+            }, 50);
+        }
+
+        // Buttons
+        startBtn.addEventListener('click', () => {
+            setButtonLoading(startBtn, true, "Starting");
+            resetSteps();
+            running = true;
+            setTimeout(() => {
+                setButtonLoading(startBtn, false);
+                startStep();
+            }, 500);
+        });
+
+        toggleBtn.addEventListener('click', () => {
+            if (currentStep >= steps.length) return;
+            running = !running;
+            toggleBtn.textContent = running ? 'Pause' : 'Continue';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            running = false;
+            setButtonLoading(resetBtn, true, "Resetting");
+            setTimeout(() => {
+                resetSteps();
+                setButtonLoading(resetBtn, false);
+            }, 500);
+        });
+
+        // Report dropdown logic
+        const checkboxes = Array.from(document.querySelectorAll(".dropdown-menu input[type='checkbox']:not(#chkSelectAll)"));
+        const chkSelectAll = document.getElementById("chkSelectAll");
+        const btnReport = document.getElementById("btnReport");
+
+        const dataMap = {
+            "Performance Report": [["Name", "Age"], ["Ali", 25], ["Zahra", 30]],
+            "Financial Report": [["Month", "Revenue"], ["Jan", 5000], ["Feb", 6000]],
+            "Project Report": [["Project", "Status"], ["A", "Active"], ["B", "Completed"]],
+            "User Report": [["User", "Email"], ["user1", "a@mail.com"], ["user2", "b@mail.com"]],
+            "Support Report": [["Ticket", "Status"], [101, "Open"], [102, "Closed"]]
+        };
+
+        chkSelectAll.addEventListener("change", () => {
+            checkboxes.forEach(c => c.checked = chkSelectAll.checked);
+        });
+
+        checkboxes.forEach(c => c.addEventListener("change", () => {
+            chkSelectAll.checked = checkboxes.every(chk => chk.checked);
+        }));
+
+        btnReport.addEventListener("click", () => {
+            const selected = checkboxes.filter(c => c.checked).map(c => c.value);
+            if (!selected.length) return;
+            setButtonLoading(btnReport, true, "Processing");
+
+            setTimeout(() => {
+                const wb = XLSX.utils.book_new();
+                selected.forEach(name => {
+                    const ws = XLSX.utils.aoa_to_sheet(dataMap[name] || []);
+                    XLSX.utils.book_append_sheet(wb, ws, name);
+                });
+                XLSX.writeFile(wb, "report.xlsx");
+                setButtonLoading(btnReport, false);
+            }, 1000);
         });
     </script>
-
 </body>
 </html>

@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>تست دکمه با Spinner</title>
+    <title>Button Test with Spinner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap 3 + FontAwesome -->
@@ -22,38 +22,30 @@
             min-width: 130px;
         }
 
-        /* 🔹 استایل دکمه هنگام لود شدن */
+        /* Button loading style */
         .btn-loading {
-            position: relative;
             pointer-events: none;
             opacity: 0.85;
         }
 
-            .btn-loading .fa {
+            .btn-loading .fa-spinner {
                 margin-right: 6px;
-                animation: spin 0.8s linear infinite;
             }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
     </style>
 </head>
 <body>
 
-    <h3>🌀 تست دکمه با لودر</h3>
+    <h3>🌀 Button Test with Loader</h3>
 
-    <button id="btnStartGetXY" class="btn btn-success" onclick="startAction(this)">اجرا</button>
-    <button id="btnCloseGetXY" class="btn btn-danger" onclick="closeAction(this)">بستن</button>
+    <button id="btnStartGetXY" class="btn btn-success">
+        <i class="fa fa-play"></i> Start
+    </button>
+    <button id="btnCloseGetXY" class="btn btn-danger">
+        <i class="fa fa-times"></i> Close
+    </button>
 
     <script>
-        // 🔸 تابع کمکی برای نمایش / حذف لودر در دکمه
+        // Helper function to show/hide loader on a button
         function setButtonLoading(btn, isLoading, text) {
             if (!btn) return;
 
@@ -61,7 +53,8 @@
                 btn.disabled = true;
                 btn.classList.add("btn-loading");
                 btn.dataset.originalText = btn.innerHTML;
-                btn.innerHTML = `<i class="fa fa-spinner"></i> ${text || "در حال پردازش..."}`;
+                // Use FontAwesome spinner with fa-spin
+                btn.innerHTML = `<i class="fa fa-spinner fa-spin"></i> ${text || "Processing..."}`;
             } else {
                 btn.disabled = false;
                 btn.classList.remove("btn-loading");
@@ -70,26 +63,31 @@
             }
         }
 
-        // 🔹 شبیه‌سازی عملیات زمان‌بر
+        // Simulate time-consuming operation
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // 🔹 دکمه اجرا
-        async function startAction(btn) {
-            setButtonLoading(btn, true, "در حال اجرا...");
+        // Event handlers
+        async function startAction() {
+            const btn = document.getElementById('btnStartGetXY');
+            setButtonLoading(btn, true, "Running...");
             await sleep(3000);
             setButtonLoading(btn, false);
-            alert("عملیات اجرا تمام شد ✅");
+            alert("Action completed ✅");
         }
 
-        // 🔹 دکمه بستن
-        async function closeAction(btn) {
-            setButtonLoading(btn, true, "در حال بستن...");
+        async function closeAction() {
+            const btn = document.getElementById('btnCloseGetXY');
+            setButtonLoading(btn, true, "Closing...");
             await sleep(2500);
             setButtonLoading(btn, false);
-            alert("فرآیند بسته شد ❌");
+            alert("Process closed ❌");
         }
+
+        // Attach events using vanilla JS
+        document.getElementById('btnStartGetXY').addEventListener('click', startAction);
+        document.getElementById('btnCloseGetXY').addEventListener('click', closeAction);
     </script>
 
 </body>
