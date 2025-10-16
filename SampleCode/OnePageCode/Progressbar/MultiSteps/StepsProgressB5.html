@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-step Gradient Progress (Bootstrap 3, LTR)</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+        body {
+            direction: ltr;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            flex: 1;
+            position: relative;
+            text-align: center;
+        }
+
+            .step .circle {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #ddd;
+                margin: 0 auto;
+                line-height: 60px;
+                color: #fff;
+                font-weight: bold;
+                transition: all 0.3s;
+                font-size: 18px;
+                position: relative;
+                z-index: 2;
+            }
+
+            .step.active .circle {
+                background-color: #337ab7; /* Bootstrap primary */
+            }
+
+            .step.completed .circle {
+                background-color: #5cb85c; /* Bootstrap success */
+                font-size: 22px;
+            }
+
+            .step .label {
+                margin-top: 8px;
+                font-size: 14px;
+            }
+
+            .step .report {
+                margin-top: 5px;
+                font-size: 13px;
+                color: #333;
+            }
+
+            /* 🔹 Gradient connector line */
+            .step::after {
+                content: '';
+                position: absolute;
+                top: 30px;
+                left: 50%;
+                height: 4px;
+                width: 100%;
+                background-color: #ddd;
+                z-index: 1;
+                transition: background 0.3s;
+            }
+
+            .step.completed::after {
+                background: linear-gradient(to right, #9be58c, #198754);
+            }
+
+            .step:last-child::after {
+                display: none;
+            }
+
+        @media (max-width: 767px) {
+            .steps {
+                flex-direction: column;
+            }
+
+            .step::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="steps" id="steps">
+            <div class="step active" id="step1">
+                <div class="circle">1</div>
+                <div class="label">Step 1</div>
+                <div class="report"></div>
+            </div>
+            <div class="step" id="step2">
+                <div class="circle">2</div>
+                <div class="label">Step 2</div>
+                <div class="report"></div>
+            </div>
+            <div class="step" id="step3">
+                <div class="circle">3</div>
+                <div class="label">Step 3</div>
+                <div class="report"></div>
+            </div>
+            <div class="step" id="step4">
+                <div class="circle">4</div>
+                <div class="label">Step 4</div>
+                <div class="report"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:30px;">
+            <button class="btn btn-success" id="startBtn">Start</button>
+            <button class="btn btn-warning" id="toggleBtn">Pause</button>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script>
+        var steps = $('.step');
+        var startBtn = $('#startBtn');
+        var toggleBtn = $('#toggleBtn');
+
+        var dataInfo = [
+            { total: 100, found: 80 },
+            { total: 120, found: 100 },
+            { total: 90, found: 70 },
+            { total: 150, found: 150 }
+        ];
+
+        var currentStep = 0;
+        var progress = 0;
+        var running = false;
+        var interval = null;
+
+        // Green hue range (light → dark)
+        var stepColors = [
+            [120, 140],
+            [140, 160],
+            [160, 180],
+            [180, 200]
+        ];
+
+        function getGreenColor(step, percent) {
+            var range = stepColors[step];
+            var hue = range[0] + (range[1] - range[0]) * (percent / 100);
+            return 'hsl(' + hue + ', 70%, 45%)';
+        }
+
+        function resetSteps() {
+            steps.each(function (i, el) {
+                var $el = $(el);
+                $el.removeClass('active completed');
+                var $circle = $el.find('.circle');
+                $circle.text(i + 1);
+                $circle.css('background-color', '#ddd');
+                $el.find('.report').text('');
+            });
+            currentStep = 0;
+        }
+
+        function startStep() {
+            if (currentStep >= steps.length) {
+                startBtn.prop('disabled', false);
+                return;
+            }
+
+            var $step = $(steps[currentStep]);
+            var $circle = $step.find('.circle');
+            var $report = $step.find('.report');
+
+            $step.addClass('active');
+            progress = 0;
+
+            interval = setInterval(function () {
+                if (!running) {
+                    $circle.css('background-color', 'yellow');
+                    return;
+                } else {
+                    $circle.css('background-color', getGreenColor(currentStep, progress));
+                }
+
+                progress += 2;
+                $circle.text(Math.round(progress) + '%');
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    $step.removeClass('active').addClass('completed');
+                    $circle.text('✔');
+                    var info = dataInfo[currentStep];
+                    $report.text('Found ' + info.found + ' of ' + info.total);
+                    currentStep++;
+                    startStep();
+                }
+            }, 50);
+        }
+
+        startBtn.on('click', function () {
+            resetSteps();
+            running = true;
+            startBtn.prop('disabled', true);
+            startStep();
+        });
+
+        toggleBtn.on('click', function () {
+            running = !running;
+            toggleBtn.text(running ? 'Pause' : 'Continue');
+        });
+    </script>
+
+</body>
+</html>

@@ -16870,6 +16870,8 @@
       <LastGenOutput>AmardShahrsaziMaryanaj.cs</LastGenOutput>
     </Content>
     <Content Include="OnePageCode\Loading\btnLoader\btnlodar.html" />
+    <Content Include="OnePageCode\Progressbar\MultiSteps\StepsProgressB3.html" />
+    <Content Include="OnePageCode\Progressbar\MultiSteps\StepsProgressB5.html" />
     <Content Include="OnePageCode\Reports\MultiSelect\ReportMultiSelectB3.html" />
     <Content Include="OnePageCode\Reports\MultiSelect\ReportMultiSelectB5.html" />
     <Content Include="OnePageCode\Validation\String\Code\CodeNosazi.js" />
