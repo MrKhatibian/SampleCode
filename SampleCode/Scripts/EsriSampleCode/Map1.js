@@ -99,13 +99,43 @@ const sketch = new Sketch({
 });
 //view.ui.add(sketch, "top-right");
 
+
+window.gisDarkhast = async function (codNArray) {
+    if (!Array.isArray(codNArray) || codNArray.length === 0) {
+        console.warn("ورودی باید آرایه‌ای از کدها باشد.");
+        return [];
+    }
+
+    const results = [];
+
+    for (const codN of codNArray) {
+        try {
+            const shape = await createDarkhastPoint(codN);
+            if (shape) {
+                results.push({ codN, ...shape });
+            } else {
+                console.warn(`نقطه‌ای برای کد ${codN} یافت نشد.`);
+            }
+        } catch (err) {
+            console.error(`خطا در پردازش کد ${codN}:`, err);
+        }
+    }
+
+    console.log("نتایج نهایی:", results);
+    return results;
+};
+
 // دکمه برای فعال‌سازی انتخاب
 const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
 //btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
 view.ui.add(btnUpdateXYDarkhast, "top-right");
 
 btnUpdateXYDarkhast.addEventListener("click", async () => {
-    alert("Hi");
+
+    let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
+    const results = await gisDarkhast(arrayCNosazi);
+
+    console.log("Updated: ", results);    
 });
 
 
