@@ -100,6 +100,31 @@ const sketch = new Sketch({
 //view.ui.add(sketch, "top-right");
 
 
+async function createDarkhastPoint(nCode) {
+    graphicsLayer.removeAll();
+
+    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
+    if (!polygon) return null;
+
+    const point = await generateValidPointInPolygon(polygon);
+    if (!point) return null;
+
+    // add point to map
+    graphicsLayer.add(
+        new Graphic({
+            geometry: point,
+            symbol: { type: "simple-marker", color: "red", size: 5 },
+        })
+    );
+
+    return {
+        wkt: `POINT(${point.x} ${point.y} 0)`,
+        wkid: point.spatialReference.wkid,
+    };
+    // If need for Projection
+    // const wgs84Point = project(randomPoint, { wkid: 4326 });
+}
+
 window.gisDarkhast = async function (codNArray) {
     if (!Array.isArray(codNArray) || codNArray.length === 0) {
         console.warn("ورودی باید آرایه‌ای از کدها باشد.");
