@@ -97,13 +97,24 @@ const sketch = new Sketch({
         settingsMenu: false
     }
 });
-view.ui.add(sketch, "top-right");
+//view.ui.add(sketch, "top-right");
 
 // دکمه برای فعال‌سازی انتخاب
-const btnSelect = document.createElement("button");
-btnSelect.innerText = "انتخاب محدوده";
-btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
-view.ui.add(btnSelect, "top-right");
+const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
+//btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
+view.ui.add(btnUpdateXYDarkhast, "top-right");
+
+btnUpdateXYDarkhast.addEventListener("click", async () => {
+    alert("Hi");
+});
+
+
+
+
+
+
+
+
 
 // وقتی روی دکمه کلیک شد، ابزار Rectangle فعال شود
 btnSelect.addEventListener("click", () => {
