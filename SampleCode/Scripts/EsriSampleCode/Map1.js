@@ -100,6 +100,21 @@ const sketch = new Sketch({
 //view.ui.add(sketch, "top-right");
 
 
+async function getPolygonByAttribute(field, value) {
+    try {
+        const query = arseFLayer.createQuery();
+        query.where = `${field} = '${value}'`;
+        query.returnGeometry = true;
+        query.outFields = ["*"];
+
+        const result = await arseFLayer.queryFeatures(query);
+        return result.features[0]?.geometry || leftExtent?.geometry;
+    } catch (err) {
+        console.error("getPolygonByAttribute error:", err);
+        return null;
+    }
+}
+
 async function createDarkhastPoint(nCode) {
     graphicsLayer.removeAll();
 
