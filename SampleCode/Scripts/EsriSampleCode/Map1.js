@@ -74,32 +74,22 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-// === Sketch Init ===
-const sketchLayer = new GraphicsLayer();
-map.add(sketchLayer);
 
-const sketch = new Sketch({
-    layer: sketchLayer,
-    view: view,
-    creationMode: "single",
-    visibleElements: {
-        //selectionTools: { "rectangle": true },
-        //settingsMenu: false,
-        createTools: {
-            point: false,
-            polyline: false,
-            circle: false,
-            rectangle: false
-        },
-        selectionTools: {
-            "rectangle-selection": false,
-        },
-        settingsMenu: false
+
+async function getPolygonByAttribute1(field, value) {
+    try {
+        const query = arseFLayer.createQuery();
+        query.where = `${field} = '${value}'`;
+        query.returnGeometry = true;
+        query.outFields = ["*"];
+
+        const result = await arseFLayer.queryFeatures(query);
+        return result.features[0]?.geometry || null;
+    } catch (err) {
+        console.error("getPolygonByAttribute error:", err);
+        return null;
     }
-});
-//view.ui.add(sketch, "top-right");
-
-
+}
 async function getPolygonByAttribute(field, value) {
     try {
         const query = arseFLayer.createQuery();
@@ -115,6 +105,28 @@ async function getPolygonByAttribute(field, value) {
     }
 }
 
+async function generateValidPointInPolygon1(polygon, maxAttempts = 500) {
+    const { extent, spatialReference } = polygon;
+
+    for (let i = 0; i < maxAttempts; i++) {
+        const x = extent.xmin + Math.random() * (extent.xmax - extent.xmin);
+        const y = extent.ymin + Math.random() * (extent.ymax - extent.ymin);
+
+        const candidate = new Point({ x, y, spatialReference });
+        if (!geometryEngine.contains(polygon, candidate)) continue;
+
+        const buffer = geometryEngine.buffer(candidate, 1, "meters");
+        const query = darkhastFLayer.createQuery();
+        query.geometry = buffer;
+        query.spatialRelationship = "intersects";
+
+        const { features } = await darkhastFLayer.queryFeatures(query);
+        if (!features.length) return candidate;
+    }
+
+    console.warn("No valid point found in polygon.");
+    return null;
+}
 async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
     const { extent, spatialReference } = polygon;
 
@@ -138,7 +150,30 @@ async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
     return null;
 }
 
+async function createDarkhastPoint1(nCode) {
+    graphicsLayer.removeAll();
 
+    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
+    if (!polygon) return null;
+
+    const point = await generateValidPointInPolygon(polygon);
+    if (!point) return null;
+
+    // add point to map
+    graphicsLayer.add(
+        new Graphic({
+            geometry: point,
+            symbol: { type: "simple-marker", color: "red", size: 5 },
+        })
+    );
+
+    return {
+        wkt: `POINT(${point.x} ${point.y} 0)`,
+        wkid: point.spatialReference.wkid,
+    };
+    // If need for Projection
+    // const wgs84Point = project(randomPoint, { wkid: 4326 });
+}
 async function createDarkhastPoint(nCode) {
     graphicsLayer.removeAll();
 
@@ -199,7 +234,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
     const results = await gisDarkhast(arrayCNosazi);
 
-    console.log("Updated: ", results);    
+    console.log("Updated: ", results);
 });
 
 
@@ -209,11 +244,34 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
 
 
 
+// === Sketch Init ===
+const sketchLayer = new GraphicsLayer();
+map.add(sketchLayer);
 
+const sketch = new Sketch({
+    layer: sketchLayer,
+    view: view,
+    creationMode: "single",
+    visibleElements: {
+        //selectionTools: { "rectangle": true },
+        //settingsMenu: false,
+        createTools: {
+            point: false,
+            polyline: false,
+            circle: false,
+            rectangle: false
+        },
+        selectionTools: {
+            "rectangle-selection": false,
+        },
+        settingsMenu: false
+    }
+});
+//view.ui.add(sketch, "top-right");
 // وقتی روی دکمه کلیک شد، ابزار Rectangle فعال شود
-btnSelect.addEventListener("click", () => {
-    sketch.create("rectangle");
-});
+//btnSelect.addEventListener("click", () => {
+//    sketch.create("rectangle");
+//});
 
 // وقتی رسم تمام شد
 reactiveUtils.when(() => sketch.state === "active", () => {
@@ -251,68 +309,11 @@ reactiveUtils.when(() => sketch.state === "active", () => {
 });
 
 // === Helpers ===
-async function getPolygonByAttribute(field, value) {
-    try {
-        const query = arseFLayer.createQuery();
-        query.where = `${field} = '${value}'`;
-        query.returnGeometry = true;
-        query.outFields = ["*"];
 
-        const result = await arseFLayer.queryFeatures(query);
-        return result.features[0]?.geometry || null;
-    } catch (err) {
-        console.error("getPolygonByAttribute error:", err);
-        return null;
-    }
-}
 
-async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
-    const { extent, spatialReference } = polygon;
 
-    for (let i = 0; i < maxAttempts; i++) {
-        const x = extent.xmin + Math.random() * (extent.xmax - extent.xmin);
-        const y = extent.ymin + Math.random() * (extent.ymax - extent.ymin);
 
-        const candidate = new Point({ x, y, spatialReference });
-        if (!geometryEngine.contains(polygon, candidate)) continue;
 
-        const buffer = geometryEngine.buffer(candidate, 1, "meters");
-        const query = darkhastFLayer.createQuery();
-        query.geometry = buffer;
-        query.spatialRelationship = "intersects";
-
-        const { features } = await darkhastFLayer.queryFeatures(query);
-        if (!features.length) return candidate;
-    }
-
-    console.warn("No valid point found in polygon.");
-    return null;
-}
-
-async function createDarkhastPoint(nCode) {
-    graphicsLayer.removeAll();
-
-    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
-    if (!polygon) return null;
-
-    const point = await generateValidPointInPolygon(polygon);
-    if (!point) return null;
-
-    // add point to map
-    graphicsLayer.add(
-        new Graphic({
-            geometry: point,
-            symbol: { type: "simple-marker", color: "red", size: 5 },
-        })
-    );
-
-    return {
-        wkt: `POINT(${point.x} ${point.y} 0)`,
-        wkid: point.spatialReference.wkid,
-    };
-    // If need for Projection
-    // const wgs84Point = project(randomPoint, { wkid: 4326 });
-}
 
 // === Event Listeners ===
 document.getElementById("btnSabtDarkhast").addEventListener("click", async () => {
@@ -330,23 +331,23 @@ document.getElementById("testConnection").addEventListener("click", async () => 
     }
 });
 
-document.getElementById("btnUpdate").addEventListener("click", async () => {
-    try {
-        const shape = await createDarkhastPoint("501-8-4-28-0-0-0");
-        if (!shape) return;
+//document.getElementById("btnUpdate").addEventListener("click", async () => {
+//    try {
+//        const shape = await createDarkhastPoint("501-8-4-28-0-0-0");
+//        if (!shape) return;
 
-        const response = await fetch("/Home/updateDarkhast", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                ShoD: 1097,
-                ...shape,
-            }),
-        });
+//        const response = await fetch("/Home/updateDarkhast", {
+//            method: "POST",
+//            headers: { "Content-Type": "application/json" },
+//            body: JSON.stringify({
+//                ShoD: 1097,
+//                ...shape,
+//            }),
+//        });
 
-        const result = await response.json();
-        alert(result.message);
-    } catch (err) {
-        alert("Error: " + err);
-    }
-});
+//        const result = await response.json();
+//        alert(result.message);
+//    } catch (err) {
+//        alert("Error: " + err);
+//    }
+//});
