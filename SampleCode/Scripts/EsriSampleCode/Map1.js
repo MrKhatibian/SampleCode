@@ -115,6 +115,30 @@ async function getPolygonByAttribute(field, value) {
     }
 }
 
+async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
+    const { extent, spatialReference } = polygon;
+
+    for (let i = 0; i < maxAttempts; i++) {
+        const x = extent.xmin + Math.random() * (extent.xmax - extent.xmin);
+        const y = extent.ymin + Math.random() * (extent.ymax - extent.ymin);
+
+        const candidate = new Point({ x, y, spatialReference });
+        if (!geometryEngine.contains(polygon, candidate)) continue;
+
+        const buffer = geometryEngine.buffer(candidate, 1, "meters");
+        const query = darkhastFLayer.createQuery();
+        query.geometry = buffer;
+        query.spatialRelationship = "intersects";
+
+        const { features } = await darkhastFLayer.queryFeatures(query);
+        if (!features.length) return candidate;
+    }
+
+    console.warn("No valid point found in polygon.");
+    return null;
+}
+
+
 async function createDarkhastPoint(nCode) {
     graphicsLayer.removeAll();
 
