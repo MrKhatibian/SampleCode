@@ -18,22 +18,10 @@ const map = new Map({
 });
 
 
-// === View Extent ====
-const cityExtent = new Extent({
-    xmin: 48.440, ymin: 34.826,
-    xmax: 48.484, ymax: 34.842,
-    spatialReference: { wkid: 4326 }
-});
+
 const view = new MapView({
     map,
-    container: "mapView",
-    center: [48.464869, 34.834155],
-    zoom: 14,
-    constraints: {
-        geometry: cityExtent,
-        minZoom: 14,
-        //maxZoom: 23
-    }
+    container: "mapView",      
 });
 view.ui.remove("attribution");
 
@@ -74,6 +62,56 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
+let leftExtent = new Extent();
+view.whenLayerView(darkhastFLayer).then(function () {
+    let layer = arseFLayer;
+    if (darkhastFLayer) {
+        layer = darkhastFLayer
+    }
+    view.goTo(layer.fullExtent, { animate: false })
+        .catch(function (err) { console.error("Extent projection error: ", err) });
+
+    // Limited View Extent and Zoom level
+    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
+    view.constraints = {
+        geometry: cityExtent,
+        minZoom: 13
+    };
+    console.log("cityExtent: ", cityExtent);
+    // Creating polygons for DarkhaST that do not have Melk
+    const width = cityExtent.xmax - cityExtent.xmin;
+    const height = cityExtent.ymax - cityExtent.ymin;
+
+    const lengthLeftExtent = width * 0.1; // یعنی 10 درصد فاصله
+
+
+    //leftExtent = {
+    //    xmin: cityExtent.xmin,
+    //    ymax: cityExtent.ymax,
+    //    xmax: cityExtent.xmin + lengthLeftExtent,
+    //    ymin: cityExtent.ymax - lengthLeftExtent,
+
+    //    spatialReference: cityExtent.spatialReference
+    //};
+    leftExtent.xmin = cityExtent.xmin;
+    leftExtent.ymax = cityExtent.ymax;
+    leftExtent.xmax = cityExtent.xmin + lengthLeftExtent;
+    leftExtent.ymin = cityExtent.ymax - lengthLeftExtent;
+
+    leftExtent.spatialReference = cityExtent.spatialReference;
+
+    console.log("Right extent:", leftExtent);
+
+    // اگر خواستی اون محدوده رو روی نقشه نشون بدی:
+    view.graphics.add(new Graphic({
+        geometry: leftExtent,
+        symbol: {
+            type: "simple-fill",
+            color: [0, 0, 255, 0.1],
+            outline: { color: [0, 0, 255], width: 2 }
+        }
+    }));
+});
 
 
 async function getPolygonByAttribute1(field, value) {
