@@ -11,6 +11,8 @@ import * as project from "../../EsriAPI/4.30/@arcgis/core/geometry/projection.js
 import Extent from "../../EsriAPI/4.30/@arcgis/core/geometry/Extent.js";
 import Sketch from "../../EsriAPI/4.30/@arcgis/core/widgets/Sketch.js";
 import * as reactiveUtils from "../../EsriAPI/4.30/@arcgis/core/core/reactiveUtils.js";
+import Polygon from "../../EsriAPI/4.30/@arcgis/core/geometry/Polygon.js";
+
 
 // === Map Init ===
 const map = new Map({
@@ -63,6 +65,7 @@ darkhastFLayer.when(() => {
 });
 
 let leftExtent = new Extent();
+let leftPolygon = new Polygon();
 view.whenLayerView(darkhastFLayer).then(function () {
     let layer = arseFLayer;
     if (darkhastFLayer) {
@@ -100,21 +103,51 @@ view.whenLayerView(darkhastFLayer).then(function () {
 
     leftExtent.spatialReference = cityExtent.spatialReference;
 
-    console.log("Right extent:", leftExtent);
+    //console.log("Right extent:", leftExtent);
 
     // اگر خواستی اون محدوده رو روی نقشه نشون بدی:
+    //view.graphics.add(new Graphic({
+    //    geometry: leftExtent,
+    //    symbol: {
+    //        type: "simple-fill",
+    //        color: [0, 0, 255, 0.1],
+    //        outline: { color: [0, 0, 255], width: 2 }
+    //    }
+    //}));
+    // فرض بر اینکه leftExtent از قبل داری
+    leftPolygon.rings = [
+        [leftExtent.xmin, leftExtent.ymin],
+        [leftExtent.xmin, leftExtent.ymax],
+        [leftExtent.xmax, leftExtent.ymax],
+        [leftExtent.xmax, leftExtent.ymin],
+        [leftExtent.xmin, leftExtent.ymin]
+    ];
+    leftPolygon.spatialReference = leftExtent.spatialReference;
+    //leftPolygon = {
+    //    rings: [
+    //        [leftExtent.xmin, leftExtent.ymin],
+    //        [leftExtent.xmin, leftExtent.ymax],
+    //        [leftExtent.xmax, leftExtent.ymax],
+    //        [leftExtent.xmax, leftExtent.ymin],
+    //        [leftExtent.xmin, leftExtent.ymin]
+    //    ],
+    //    spatialReference: leftExtent.spatialReference
+    //};
+    console.log("polygon: ", leftPolygon);
+
+    // اضافه کردن به نقشه
     view.graphics.add(new Graphic({
-        geometry: leftExtent,
+        geometry: leftPolygon,
         symbol: {
             type: "simple-fill",
-            color: [0, 0, 255, 0.1],
+            color: [0, 0, 255, 0.15],
             outline: { color: [0, 0, 255], width: 2 }
         }
     }));
 });
 
 
-async function getPolygonByAttribute1(field, value) {
+async function GetPolygonByAttribute1(field, value) {
     try {
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
@@ -124,27 +157,27 @@ async function getPolygonByAttribute1(field, value) {
         const result = await arseFLayer.queryFeatures(query);
         return result.features[0]?.geometry || null;
     } catch (err) {
-        console.error("getPolygonByAttribute error:", err);
+        console.error("GetPolygonByAttribute error:", err);
         return null;
     }
 }
-async function getPolygonByAttribute(field, value) {
-    debugger;
+async function GetPolygonByAttribute(field, value) {    
     try {
+        debugger;
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
         query.returnGeometry = true;
         query.outFields = ["*"];
 
         const result = await arseFLayer.queryFeatures(query);
-        return result.features[0]?.geometry || leftExtent;
+        return result.features[0]?.geometry || leftPolygon;
     } catch (err) {
-        console.error("getPolygonByAttribute error:", err);
+        console.error("GetPolygonByAttribute error:", err);
         return null;
     }
 }
 
-async function generateValidPointInPolygon1(polygon, maxAttempts = 500) {
+async function GenerateValidPointInPolygon1(polygon, maxAttempts = 500) {
     const { extent, spatialReference } = polygon;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -166,8 +199,7 @@ async function generateValidPointInPolygon1(polygon, maxAttempts = 500) {
     console.warn("No valid point found in polygon.");
     return null;
 }
-async function generateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {
-    debugger
+async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {    
     const { extent, spatialReference } = polygon;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -197,13 +229,13 @@ async function generateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts =
     return null;
 }
 
-async function createDarkhastPoint1(nCode) {
+async function CreateDarkhastPoint1(cNosazi) {
     graphicsLayer.removeAll();
 
-    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
+    const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
     if (!polygon) return null;
 
-    const point = await generateValidPointInPolygon(polygon);
+    const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
 
     // add point to map
@@ -221,13 +253,13 @@ async function createDarkhastPoint1(nCode) {
     // If need for Projection
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 }
-async function createDarkhastPoint(nCode) {
+async function CreateDarkhastPoint(cNosazi) {
     //graphicsLayer.removeAll();
-
-    const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
+    debugger;
+    const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
     if (!polygon) return null;
 
-    const point = await generateValidPointInPolygon(polygon);
+    const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
 
     // add point to map
@@ -246,24 +278,24 @@ async function createDarkhastPoint(nCode) {
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 }
 
-window.gisDarkhast = async function (codNArray) {
-    if (!Array.isArray(codNArray) || codNArray.length === 0) {
+window.gisDarkhast = async function (cNosaziArray) {
+    if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
         console.warn("ورودی باید آرایه‌ای از کدها باشد.");
         return [];
     }
 
     const results = [];
 
-    for (const codN of codNArray) {
+    for (const cNosazi of cNosaziArray) {
         try {
-            const shape = await createDarkhastPoint(codN);
+            const shape = await CreateDarkhastPoint(cNosazi);
             if (shape) {
-                results.push({ codN, ...shape });
+                results.push({ cNosazi, ...shape });
             } else {
-                console.warn(`نقطه‌ای برای کد ${codN} یافت نشد.`);
+                console.warn(`نقطه‌ای برای کد ${cNosazi} یافت نشد.`);
             }
         } catch (err) {
-            console.error(`خطا در پردازش کد ${codN}:`, err);
+            console.error(`خطا در پردازش کد ${cNosazi}:`, err);
         }
     }
 
@@ -276,13 +308,27 @@ const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
 //btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
 view.ui.add(btnUpdateXYDarkhast, "top-right");
 
-btnUpdateXYDarkhast.addEventListener("click", async () => {
-
+btnUpdateXYDarkhast.addEventListener("click", async () => {    
     //let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
-    //const results = await gisDarkhast(arrayCNosazi);
-    const results = await GetDarkhatFromShahrsazi();
+    //const results = await gisDarkhast(arrayCNosazi);    
 
-    console.log("Result: ", results);
+    const allDarkhastList = await GetDarkhatFromShahrsazi();
+
+    // جدا کردن بر اساس داشتن یا نداشتن shape
+    const darkhastWithShape = allDarkhastList.filter(item => item.shape !== null && item.shape.trim() !== "");
+    const darkhastWithoutShape = allDarkhastList.filter(item => !item.shape || item.shape.trim() === "");
+    darkhastWithoutShape.forEach((darkhast) => {
+        isValidCodeNosazi(darkhast.cNosazi);
+    });
+    console.log("✅ درخواست‌هایی که shape دارند:", darkhastWithShape);
+    console.log("⚠️ درخواست‌هایی که shape ندارند:", darkhastWithoutShape);
+
+    // اگر فقط shapeدارها رو می‌خوای پاس بدی به gisDarkhast:
+    const cNosaziArray = darkhastWithoutShape.map(x => x.cNosazi).slice(0,100);
+    
+    console.log("cNosaziArray: ", cNosaziArray)
+    const results = await gisDarkhast(cNosaziArray);
+    console.log("نتیجه gisDarkhast:", results);   
 });
 
 async function GetDarkhatFromShahrsazi1() {
@@ -321,7 +367,27 @@ async function GetDarkhatFromShahrsazi() {
         return [];
     }
 }
+function isValidCodeNosazi(cNosazi) {
+    if (!cNosazi || typeof cNosazi !== "string") return false;
 
+    const parts = cNosazi.trim().split('-');
+    if (parts.length !== 7) return false;
+
+    // All Parts must be numeric
+    if (parts.some(p => !/^\d+$/.test(p))) return false;
+
+
+    // Sections 1, 2, 3, and 4 must not be blank or zero
+    if (parts.slice(0, 4).some(p => p === "")) return false;
+
+    // The last three parts must be exactly zero
+    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") {
+        parts[4] == parts[5] == parts[6] == "0";
+    }    
+    cNosazi = parts.join("-");
+
+    return cNosazi;
+}
 
 
 
@@ -399,7 +465,7 @@ reactiveUtils.when(() => sketch.state === "active", () => {
 
 // === Event Listeners ===
 document.getElementById("btnSabtDarkhast").addEventListener("click", async () => {
-    const shp = await createDarkhastPoint("501-8-4-28-0-0-0");
+    const shp = await CreateDarkhastPoint("501-8-4-28-0-0-0");
     console.log("Shape:", shp);
 });
 
@@ -415,7 +481,7 @@ document.getElementById("testConnection").addEventListener("click", async () => 
 
 //document.getElementById("btnUpdate").addEventListener("click", async () => {
 //    try {
-//        const shape = await createDarkhastPoint("501-8-4-28-0-0-0");
+//        const shape = await CreateDarkhastPoint("501-8-4-28-0-0-0");
 //        if (!shape) return;
 
 //        const response = await fetch("/Home/updateDarkhast", {

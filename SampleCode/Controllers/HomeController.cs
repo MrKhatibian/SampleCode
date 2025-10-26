@@ -34,21 +34,22 @@ namespace SampleCode.Controllers
         {
             return View();
         }
-
         [HttpGet]
         public JsonResult GetAllDarkhast()
         {
             //return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
             try
             {
-                var list = _dbContext.Darkhast
-                    .Select(d => new
-                    {
-                        shodarkhast = d.shodarkhast,
-                        shParvandeh = d.shop,
-                        shape = d.Shape.AsText() // WKT string (POINT(...))
-                    })
-                    .ToList();
+                var list = (from d in _dbContext.Darkhast
+                            join p in _dbContext.Parvandeh on d.shop equals p.shop into dp
+                            from p in dp.DefaultIfEmpty()
+                            select new
+                            {
+                                shodarkhast = d.shodarkhast,
+                                shParvandeh = d.shop,
+                                cNosazi = p.codeN, // از join گرفته می‌شود
+                                shape = d.Shape.AsText()
+                            }).ToList();
 
                 return Json(new { success = true, data = list }, JsonRequestBehavior.AllowGet);
             }
