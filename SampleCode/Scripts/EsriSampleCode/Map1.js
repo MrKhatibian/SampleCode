@@ -278,18 +278,18 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 
 btnUpdateXYDarkhast.addEventListener("click", async () => {
 
-    let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
-    const results = await gisDarkhast(arrayCNosazi);
+    //let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
+    //const results = await gisDarkhast(arrayCNosazi);
+    const results = await GetDarkhatFromShahrsazi();
 
-    console.log("Updated: ", results);
+    console.log("Result: ", results);
 });
 
-async function getDarkhatFromShahrsazi() {
+async function GetDarkhatFromShahrsazi() {
     try {
-        const response = await fetch("/Home/getAllDarkhast", {
+        const response = await fetch("/Home/GetAllDarkhast", {
             method: "GET",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
+            headers: { "Content-Type": "application/json" },            
         });
 
         const result = await response.json();

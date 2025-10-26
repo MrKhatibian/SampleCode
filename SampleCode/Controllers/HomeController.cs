@@ -34,6 +34,13 @@ namespace SampleCode.Controllers
         {
             return View();
         }
+
+        [HttpGet]
+        public JsonResult GetAllDarkhast()
+        {
+            return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpGet]
         public JsonResult testConnection()
         {
