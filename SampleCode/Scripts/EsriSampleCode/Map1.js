@@ -21,7 +21,7 @@ const map = new Map({
 
 const view = new MapView({
     map,
-    container: "mapView",      
+    container: "mapView",
 });
 view.ui.remove("attribution");
 
@@ -44,7 +44,7 @@ const darkhastFLayer = new FeatureLayer({
     },
 });
 
-const arseFLayer = new FeatureLayer({ url: `${url}/1` });
+const arseFLayer = new FeatureLayer({ url: `${url}/9` });
 const graphicsLayer = new GraphicsLayer();
 
 map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
@@ -129,6 +129,7 @@ async function getPolygonByAttribute1(field, value) {
     }
 }
 async function getPolygonByAttribute(field, value) {
+    debugger;
     try {
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
@@ -136,7 +137,7 @@ async function getPolygonByAttribute(field, value) {
         query.outFields = ["*"];
 
         const result = await arseFLayer.queryFeatures(query);
-        return result.features[0]?.geometry || leftExtent?.geometry;
+        return result.features[0]?.geometry || leftExtent;
     } catch (err) {
         console.error("getPolygonByAttribute error:", err);
         return null;
@@ -165,7 +166,8 @@ async function generateValidPointInPolygon1(polygon, maxAttempts = 500) {
     console.warn("No valid point found in polygon.");
     return null;
 }
-async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
+async function generateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {
+    debugger
     const { extent, spatialReference } = polygon;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -181,7 +183,14 @@ async function generateValidPointInPolygon(polygon, maxAttempts = 500) {
         query.spatialRelationship = "intersects";
 
         const { features } = await darkhastFLayer.queryFeatures(query);
-        if (!features.length) return candidate;
+        if (!features.length) {
+            return {
+                geometry: candidate,
+                attributes: {
+                    ShoD: ShoDValue
+                }
+            };
+        }
     }
 
     console.warn("No valid point found in polygon.");
@@ -213,7 +222,7 @@ async function createDarkhastPoint1(nCode) {
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 }
 async function createDarkhastPoint(nCode) {
-    graphicsLayer.removeAll();
+    //graphicsLayer.removeAll();
 
     const polygon = await getPolygonByAttribute("Code_nosazi", nCode);
     if (!polygon) return null;
@@ -275,7 +284,20 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     console.log("Updated: ", results);
 });
 
+async function getDarkhatFromShahrsazi() {
+    try {
+        const response = await fetch("/Home/getAllDarkhast", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
 
+        const result = await response.json();
+        return result;
+    } catch (err) {
+        console.error("Error in getDarkhatFromShahrsazi: " + err);
+    }
+}
 
 
 
