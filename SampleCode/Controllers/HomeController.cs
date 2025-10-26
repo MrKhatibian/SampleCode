@@ -38,7 +38,24 @@ namespace SampleCode.Controllers
         [HttpGet]
         public JsonResult GetAllDarkhast()
         {
-            return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
+            //return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var list = _dbContext.Darkhast
+                    .Select(d => new
+                    {
+                        shodarkhast = d.shodarkhast,
+                        shParvandeh = d.shop,
+                        shape = d.Shape.AsText() // WKT string (POINT(...))
+                    })
+                    .ToList();
+
+                return Json(new { success = true, data = list }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
