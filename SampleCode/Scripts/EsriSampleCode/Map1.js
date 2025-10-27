@@ -208,7 +208,7 @@ async function GetPolygonByAttribute1(field, value) {
         return null;
     }
 }
-async function GetPolygonByAttribute(field, value) {
+async function GetPolygonByAttribute2(field, value) {
     try {
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
@@ -222,6 +222,31 @@ async function GetPolygonByAttribute(field, value) {
         return null;
     }
 }
+async function GetPolygonByAttribute(field, value) {
+    try {
+        if (!arseFLayer) {
+            console.error("GetPolygonByAttribute error: arseFLayer is not defined.");
+            return null;
+        }
+
+        // ✅ Prepare query more efficiently
+        const query = arseFLayer.createQuery();
+        query.where = `${field} = '${value}'`;
+        query.returnGeometry = true;
+        query.outFields = [];
+        query.num = 1; // only need the first feature
+
+        const { features } = await arseFLayer.queryFeatures(query);
+
+        // ✅ Return geometry safely, fallback to global leftPolygon
+        return features.length > 0 ? features[0].geometry : (window.leftPolygon ?? null);
+
+    } catch (err) {
+        console.error("GetPolygonByAttribute error:", err);
+        return null;
+    }
+}
+
 
 async function GenerateValidPointInPolygon1(polygon, maxAttempts = 500) {
     const { extent, spatialReference } = polygon;
