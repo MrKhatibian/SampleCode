@@ -19,8 +19,6 @@ const map = new Map({
     basemap: "osm"
 });
 
-
-
 const view = new MapView({
     map,
     container: "mapView",
@@ -64,136 +62,48 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-//let leftExtent = new Extent();
-//let leftPolygon = new Polygon();
-//view.whenLayerView(darkhastFLayer).then(function () {
-//    let layer = arseFLayer;
-//    if (darkhastFLayer) {
-//        layer = darkhastFLayer
-//    }
-//    view.goTo(layer.fullExtent, { animate: false })
-//        .catch(function (err) { console.error("Extent projection error: ", err) });
-
-//    // Limited View Extent and Zoom level
-//    const cityExtent = darkhastFLayer.fullExtent; // dynamic extent
-//    view.constraints = {
-//        geometry: cityExtent,
-//        minZoom: 13
-//    };
-//    console.log("cityExtent: ", cityExtent);
-//    // Creating polygons for DarkhaST that do not have Melk
-//    const width = cityExtent.xmax - cityExtent.xmin;
-//    const height = cityExtent.ymax - cityExtent.ymin;
-
-//    const lengthLeftExtent = width * 0.1; // یعنی 10 درصد فاصله
-
-
-//    //leftExtent = {
-//    //    xmin: cityExtent.xmin,
-//    //    ymax: cityExtent.ymax,
-//    //    xmax: cityExtent.xmin + lengthLeftExtent,
-//    //    ymin: cityExtent.ymax - lengthLeftExtent,
-
-//    //    spatialReference: cityExtent.spatialReference
-//    //};
-//    leftExtent.xmin = cityExtent.xmin;
-//    leftExtent.ymax = cityExtent.ymax;
-//    leftExtent.xmax = cityExtent.xmin + lengthLeftExtent;
-//    leftExtent.ymin = cityExtent.ymax - lengthLeftExtent;
-
-//    leftExtent.spatialReference = cityExtent.spatialReference;
-
-//    //console.log("Right extent:", leftExtent);
-
-//    // اگر خواستی اون محدوده رو روی نقشه نشون بدی:
-//    //view.graphics.add(new Graphic({
-//    //    geometry: leftExtent,
-//    //    symbol: {
-//    //        type: "simple-fill",
-//    //        color: [0, 0, 255, 0.1],
-//    //        outline: { color: [0, 0, 255], width: 2 }
-//    //    }
-//    //}));
-//    // فرض بر اینکه leftExtent از قبل داری
-//    leftPolygon.rings = [
-//        [leftExtent.xmin, leftExtent.ymin],
-//        [leftExtent.xmin, leftExtent.ymax],
-//        [leftExtent.xmax, leftExtent.ymax],
-//        [leftExtent.xmax, leftExtent.ymin],
-//        [leftExtent.xmin, leftExtent.ymin]
-//    ];
-//    leftPolygon.spatialReference = leftExtent.spatialReference;
-//    //leftPolygon = {
-//    //    rings: [
-//    //        [leftExtent.xmin, leftExtent.ymin],
-//    //        [leftExtent.xmin, leftExtent.ymax],
-//    //        [leftExtent.xmax, leftExtent.ymax],
-//    //        [leftExtent.xmax, leftExtent.ymin],
-//    //        [leftExtent.xmin, leftExtent.ymin]
-//    //    ],
-//    //    spatialReference: leftExtent.spatialReference
-//    //};
-//    console.log("polygon: ", leftPolygon);
-
-//    // اضافه کردن به نقشه
-//    view.graphics.add(new Graphic({
-//        geometry: leftPolygon,
-//        symbol: {
-//            type: "simple-fill",
-//            color: [0, 0, 255, 0.15],
-//            outline: { color: [0, 0, 255], width: 2 }
-//        }
-//    }));
-//});
 let leftExtent;
 let leftPolygon = null;
 
-view.whenLayerView(darkhastFLayer).then(async function () {
-    console.log("شروع تنظیمات لایه Darkhast...");
-
-    // اطمینان از اینکه لایه کامل بارگذاری شده
-    let layer = darkhastFLayer || arseFLayer;
+view.whenLayerView(darkhastFLayer).then(async function () {        
+    let layer = arseFLayer;
     await layer.when();
 
-    // بررسی وجود extent
+    // Validation for Extent 
     if (!layer.fullExtent) {
-        console.error("❌ fullExtent برای لایه در دسترس نیست!");
+        console.error("fullExtent is not available for the layer!");
         return;
     }
 
-    const cityExtent = layer.fullExtent.clone();
-    console.log("✅ fullExtent معتبر:", cityExtent);
+    const cityExtent = layer.fullExtent.clone();    
 
-    // تنظیم محدودیت زوم و extent
+    // Limiting for Extent & Zoom
     view.constraints = {
         geometry: cityExtent,
-        minZoom: 13
+        minZoom: 14
     };
 
-    // پرش به محدوده‌ی شهر
+    // Going to City Extemt
     try {
         await view.goTo(cityExtent, { animate: false });
     } catch (err) {
         console.error("Extent projection error:", err);
     }
 
-    // محاسبه‌ی محدوده‌ی سمت چپ (۱۰٪ عرض)
     const width = cityExtent.xmax - cityExtent.xmin;
-    const height = cityExtent.ymax - cityExtent.ymin;
-    const lengthLeftExtent = width * 0.1;
+    //const height = cityExtent.ymax - cityExtent.ymin;
+    const lengthLeftExtent = width * 0.2;
 
-    // ساخت extent سمت چپ
+    // Creating Extent
     leftExtent = new Extent({
         xmin: cityExtent.xmin,
         ymin: cityExtent.ymax - lengthLeftExtent,
         xmax: cityExtent.xmin + lengthLeftExtent,
         ymax: cityExtent.ymax,
         spatialReference: cityExtent.spatialReference
-    });
+    });    
 
-    console.log("✅ leftExtent ساخته شد:", leftExtent);
-
-    // ساخت Polygon معتبر
+    // Creating Polygon
     leftPolygon = new Polygon({
         rings: [
             [leftExtent.xmin, leftExtent.ymin],
@@ -203,11 +113,9 @@ view.whenLayerView(darkhastFLayer).then(async function () {
             [leftExtent.xmin, leftExtent.ymin]
         ],
         spatialReference: cityExtent.spatialReference
-    });
+    });   
 
-    console.log("✅ leftPolygon ساخته شد:", leftPolygon);
-
-    // رسم محدوده‌ی سمت چپ روی نقشه
+    // Drawing Polygon in map
     try {
         view.graphics.add(new Graphic({
             geometry: leftPolygon,
@@ -216,17 +124,14 @@ view.whenLayerView(darkhastFLayer).then(async function () {
                 color: [0, 0, 255, 0.15],
                 outline: { color: [0, 0, 255], width: 2 }
             }
-        }));
-        console.log("🟢 leftPolygon روی نقشه نمایش داده شد.");
+        }));        
     } catch (err) {
-        console.error("❌ خطا در افزودن Polygon به نقشه:", err);
+        console.error("Error adding Polygon to map:", err);
     }
 
-    // ذخیره در window تا در سایر توابع استفاده شود
+    // Useing in other function
     window.leftPolygon = leftPolygon;
-}).catch(function (err) {
-        console.error("❌ خطا در زمان بارگذاری لایه:", err);
-    });
+}).catch(function (err) { console.error("Error while loading layer:", err) });
 
 async function GetPolygonByAttribute1(field, value) {
     try {
@@ -308,7 +213,7 @@ async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts =
     console.warn("No valid point found in polygon.");
     return null;
 }
-
+let counter = 0;
 async function CreateDarkhastPoint1(cNosazi) {
     graphicsLayer.removeAll();
 
@@ -337,10 +242,11 @@ async function CreateDarkhastPoint(cNosazi) {
     //graphicsLayer.removeAll();    
     const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
     if (!polygon) return null;
+    if (polygon.geometry == leftPolygon.geometry) counter++;    
 
     const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
-    console.log("Created Point:", point)
+    //console.log("Created Point:", point)
 
     const geom = point.geometry;
     if (!geom || geom.type !== "point") {
@@ -406,6 +312,7 @@ window.gisDarkhast = async function (cNosaziArray) {
     }
 
     console.log("نتایج نهایی:", results);
+    console.log("counter: ", counter);
     return results;
 };
 
@@ -423,14 +330,23 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     // جدا کردن بر اساس داشتن یا نداشتن shape
     const darkhastWithShape = allDarkhastList.filter(item => item.shape !== null && item.shape.trim() !== "");
     const darkhastWithoutShape = allDarkhastList.filter(item => !item.shape || item.shape.trim() === "");
-    darkhastWithoutShape.forEach((darkhast) => {
-        isValidCodeNosazi(darkhast.cNosazi);
+    let darkhastWithoutShapeValid = [];
+    
+    darkhastWithoutShape.forEach((darkhast) =>
+    {        
+        const _cNosazi = isValidCodeNosazi(darkhast.cNosazi);
+        if (_cNosazi) {
+            darkhast.cNosazi = _cNosazi
+            darkhastWithoutShapeValid.push(darkhast);        
+        }
+            
     });
     console.log("✅ درخواست‌هایی که shape دارند:", darkhastWithShape);
+    console.log("darkhastWithoutShapeValid:", darkhastWithoutShapeValid)
     console.log("⚠️ درخواست‌هایی که shape ندارند:", darkhastWithoutShape);
 
     // اگر فقط shapeدارها رو می‌خوای پاس بدی به gisDarkhast:
-    const cNosaziArray = darkhastWithoutShape.map(x => x.cNosazi).slice(0, 100);
+    const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi)/*.slice(0, 100)*/;
 
     console.log("cNosaziArray: ", cNosaziArray)
     const results = await gisDarkhast(cNosaziArray);
@@ -484,14 +400,12 @@ function isValidCodeNosazi(cNosazi) {
 
 
     // Sections 1, 2, 3, and 4 must not be blank or zero
-    if (parts.slice(0, 4).some(p => p === "")) return false;
-
+    if (parts.slice(0, 4).some(p => p === "")) return false;    
     // The last three parts must be exactly zero
     if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") {
-        parts[4] == parts[5] == parts[6] == "0";
+        parts[4] = parts[5] = parts[6] = "0";
     }
     cNosazi = parts.join("-");
-
     return cNosazi;
 }
 
