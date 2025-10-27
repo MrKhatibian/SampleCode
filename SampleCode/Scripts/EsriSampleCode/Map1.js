@@ -270,7 +270,7 @@ async function GenerateValidPointInPolygon1(polygon, maxAttempts = 500) {
     console.warn("No valid point found in polygon.");
     return null;
 }
-async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {
+async function GenerateValidPointInPolygon2(polygon, ShoDValue = 0, maxAttempts = 200) {
     const { extent, spatialReference } = polygon;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -299,7 +299,51 @@ async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts =
     console.warn("No valid point found in polygon.");
     return null;
 }
-let counter = 0;
+async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {
+    if (!polygon || !geometryEngine.isSimple(polygon)) {
+        console.error("Invalid or non-simple polygon provided.");
+        return null;
+    }
+
+    const { extent, spatialReference } = polygon;
+    const dx = extent.xmax - extent.xmin;
+    const dy = extent.ymax - extent.ymin;
+
+    // Precompute layer query template (reduces object creation cost per iteration)
+    const baseQuery = darkhastFLayer.createQuery();
+    baseQuery.spatialRelationship = "intersects";
+    baseQuery.returnGeometry = false; // No need for geometry if only checking existence
+    baseQuery.outFields = [];
+
+    for (let i = 0; i < maxAttempts; i++) {
+        // Random coordinate inside polygon extent
+        const x = extent.xmin + Math.random() * dx;
+        const y = extent.ymin + Math.random() * dy;
+        const candidate = new Point({ x, y, spatialReference });
+
+        // Skip if point not in polygon
+        if (!geometryEngine.contains(polygon, candidate)) continue;
+
+        // Small buffer (in meters) to check spatial overlap
+        const buffer = geometryEngine.buffer(candidate, 1, "meters");
+
+        // Reuse query object to reduce GC overhead
+        baseQuery.geometry = buffer;
+
+        // queryFeatureCount is much faster than queryFeatures
+        const count = await darkhastFLayer.queryFeatureCount(baseQuery);
+        if (count === 0) {
+            return {
+                geometry: candidate,
+                attributes: { ShoD: ShoDValue }
+            };
+        }
+    }
+
+    console.warn("No valid point found in polygon after", maxAttempts, "attempts.");
+    return null;
+}
+
 async function CreateDarkhastPoint1(cNosazi) {
     graphicsLayer.removeAll();
 
