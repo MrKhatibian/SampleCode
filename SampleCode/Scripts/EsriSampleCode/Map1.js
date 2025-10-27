@@ -368,11 +368,10 @@ async function CreateDarkhastPoint1(cNosazi) {
     // If need for Projection
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 }
-async function CreateDarkhastPoint(cNosazi) {
+async function CreateDarkhastPoint2(cNosazi) {
     //graphicsLayer.removeAll();    
     const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
-    if (!polygon) return null;
-    if (polygon.geometry == leftPolygon.geometry) counter++;
+    if (!polygon) return null;    
 
     const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
@@ -419,6 +418,75 @@ async function CreateDarkhastPoint(cNosazi) {
     // If need for Projection
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
 }
+async function CreateDarkhastPoint(cNosazi) {
+    try {
+        // Step 1: Get polygon by attribute
+        const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
+        if (!polygon) {
+            console.warn(`⚠️ Polygon not found for Code_nosazi = ${cNosazi}`);
+            return null;
+        }
+
+        // Step 2: Generate a valid point inside polygon
+        const pointData = await GenerateValidPointInPolygon(polygon);
+        if (!pointData?.geometry) {
+            console.warn("⚠️ Could not generate a valid point in polygon.");
+            return null;
+        }
+
+        const geom = pointData.geometry;
+
+        // Step 3: Ensure spatial reference is valid
+        const sr = geom.spatialReference || arseFLayer.geometry.spatialReference;
+        if (!sr?.wkid) {
+            console.error("❌ Missing spatial reference (wkid).");
+            return null;
+        }
+
+        geom.spatialReference = sr;
+
+        // Step 4: Draw the point on map
+        graphicsLayer.add(new Graphic({
+            geometry: geom,
+            symbol: {
+                type: "simple-marker",
+                color: "red",
+                size: 6,
+                outline: { color: "white", width: 1 }
+            },
+            attributes: pointData.attributes
+        }));
+        //const graphic = new Graphic({
+        //    geometry: geom,
+        //    symbol: {
+        //        type: "simple-marker",
+        //        color: [255, 0, 0, 0.8],
+        //        size: 6,
+        //        outline: { color: [255, 255, 255, 1], width: 1 }
+        //    },
+        //    attributes: pointData.attributes
+        //});
+        //graphicsLayer.add(graphic);
+
+        //// Simple animation (fade in/out)
+        //graphic.symbol.color = [255, 0, 0, 0];
+        //setTimeout(() => {
+        //    graphic.symbol.color = [255, 0, 0, 0.8];
+        //    graphicsLayer.refresh();
+        //}, 150);
+
+
+        // Step 5: Return WKT and WKID (projection info)
+        return {
+            wkt: `POINT(${geom.x} ${geom.y} 0)`,
+            wkid: sr.wkid
+        };
+    } catch (err) {
+        console.error("CreateDarkhastPoint error:", err);
+        return null;
+    }
+}
+
 
 window.gisDarkhast = async function (cNosaziArray) {
     if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
@@ -441,8 +509,7 @@ window.gisDarkhast = async function (cNosaziArray) {
         }
     }
 
-    console.log("نتایج نهایی:", results);
-    console.log("counter: ", counter);
+    console.log("نتایج نهایی:", results);    
     return results;
 };
 
