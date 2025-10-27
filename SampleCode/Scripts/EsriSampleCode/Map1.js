@@ -62,76 +62,137 @@ darkhastFLayer.when(() => {
     view.ui.add(homeWidget, "top-left");
 });
 
-let leftExtent;
-let leftPolygon = null;
+//let leftExtent;
+//let leftPolygon = null;
 
-view.whenLayerView(darkhastFLayer).then(async function () {        
-    let layer = arseFLayer;
-    await layer.when();
+//view.whenLayerView(darkhastFLayer).then(async function () {
+//    let layer = arseFLayer;
+//    await layer.when();
 
-    // Validation for Extent 
-    if (!layer.fullExtent) {
-        console.error("fullExtent is not available for the layer!");
-        return;
-    }
+//    // Validation for Extent
+//    if (!layer.fullExtent) {
+//        console.error("fullExtent is not available for the layer!");
+//        return;
+//    }
 
-    const cityExtent = layer.fullExtent.clone();    
+//    const cityExtent = layer.fullExtent.clone();
 
-    // Limiting for Extent & Zoom
-    view.constraints = {
-        geometry: cityExtent,
-        minZoom: 14
-    };
+//    // Limiting for Extent & Zoom
+//    view.constraints = {
+//        geometry: cityExtent,
+//        minZoom: 14
+//    };
 
-    // Going to City Extemt
-    try {
-        await view.goTo(cityExtent, { animate: false });
-    } catch (err) {
-        console.error("Extent projection error:", err);
-    }
+//    // Going to City Extemt
+//    try {
+//        await view.goTo(cityExtent, { animate: false });
+//    } catch (err) {
+//        console.error("Extent projection error:", err);
+//    }
 
-    const width = cityExtent.xmax - cityExtent.xmin;
-    //const height = cityExtent.ymax - cityExtent.ymin;
-    const lengthLeftExtent = width * 0.2;
+//    const width = cityExtent.xmax - cityExtent.xmin;
+//    //const height = cityExtent.ymax - cityExtent.ymin;
+//    const lengthLeftExtent = width * 0.2;
 
-    // Creating Extent
-    leftExtent = new Extent({
-        xmin: cityExtent.xmin,
-        ymin: cityExtent.ymax - lengthLeftExtent,
-        xmax: cityExtent.xmin + lengthLeftExtent,
-        ymax: cityExtent.ymax,
-        spatialReference: cityExtent.spatialReference
-    });    
+//    // Creating Extent
+//    leftExtent = new Extent({
+//        xmin: cityExtent.xmin,
+//        ymin: cityExtent.ymax - lengthLeftExtent,
+//        xmax: cityExtent.xmin + lengthLeftExtent,
+//        ymax: cityExtent.ymax,
+//        spatialReference: cityExtent.spatialReference
+//    });
 
-    // Creating Polygon
-    leftPolygon = new Polygon({
-        rings: [
-            [leftExtent.xmin, leftExtent.ymin],
-            [leftExtent.xmin, leftExtent.ymax],
-            [leftExtent.xmax, leftExtent.ymax],
-            [leftExtent.xmax, leftExtent.ymin],
-            [leftExtent.xmin, leftExtent.ymin]
-        ],
-        spatialReference: cityExtent.spatialReference
-    });   
+//    // Creating Polygon
+//    leftPolygon = new Polygon({
+//        rings: [
+//            [leftExtent.xmin, leftExtent.ymin],
+//            [leftExtent.xmin, leftExtent.ymax],
+//            [leftExtent.xmax, leftExtent.ymax],
+//            [leftExtent.xmax, leftExtent.ymin],
+//            [leftExtent.xmin, leftExtent.ymin]
+//        ],
+//        spatialReference: cityExtent.spatialReference
+//    });
 
-    // Drawing Polygon in map
-    try {
-        view.graphics.add(new Graphic({
-            geometry: leftPolygon,
-            symbol: {
-                type: "simple-fill",
-                color: [0, 0, 255, 0.15],
-                outline: { color: [0, 0, 255], width: 2 }
-            }
-        }));        
-    } catch (err) {
-        console.error("Error adding Polygon to map:", err);
-    }
+//    // Drawing Polygon in map
+//    try {
+//        view.graphics.add(new Graphic({
+//            geometry: leftPolygon,
+//            symbol: {
+//                type: "simple-fill",
+//                color: [0, 0, 255, 0.15],
+//                outline: { color: [0, 0, 255], width: 2 }
+//            }
+//        }));
+//    } catch (err) {
+//        console.error("Error adding Polygon to map:", err);
+//    }
 
-    // Useing in other function
-    window.leftPolygon = leftPolygon;
-}).catch(function (err) { console.error("Error while loading layer:", err) });
+//    // Useing in other function
+//    window.leftPolygon = leftPolygon;
+//}).catch(function (err) { console.error("Error while loading layer:", err) });
+view.whenLayerView(darkhastFLayer)
+    .then(async () => {
+        const layer = darkhastFLayer ?? arseFLayer;
+        await layer.when();
+
+        const { fullExtent } = layer;
+        if (!fullExtent) {
+            console.error("Layer fullExtent unavailable");
+            return;
+        }
+
+        // Set map constraints
+        view.constraints = { geometry: fullExtent, minZoom: 14 };
+
+        try {
+            await view.goTo(fullExtent, { animate: false });
+
+            const width = fullExtent.xmax - fullExtent.xmin;
+            const offset = width * 0.2;
+
+            // Define left extent directly (no clone needed)
+            const leftExtent = new Extent({
+                xmin: fullExtent.xmin,
+                xmax: fullExtent.xmin + offset,
+                ymin: fullExtent.ymax - offset,
+                ymax: fullExtent.ymax,
+                spatialReference: fullExtent.spatialReference
+            });
+
+            // Create polygon directly from extent
+            const { xmin, ymin, xmax, ymax, spatialReference } = leftExtent;
+            const leftPolygon = new Polygon({
+                rings: [
+                    [xmin, ymin],
+                    [xmin, ymax],
+                    [xmax, ymax],
+                    [xmax, ymin],
+                    [xmin, ymin]
+                ],
+                spatialReference
+            });
+
+            // Draw polygon
+            view.graphics.add(new Graphic({
+                geometry: leftPolygon,
+                symbol: {
+                    type: "simple-fill",
+                    color: [0, 0, 255, 0.15],
+                    outline: { color: [0, 0, 255], width: 2 }
+                }
+            }));
+
+            // Store globally if needed
+            window.leftPolygon = leftPolygon;
+
+        } catch (err) {
+            console.error("Error in map rendering:", err);
+        }
+    })
+    .catch(err => console.error("Error loading layer:", err));
+
 
 async function GetPolygonByAttribute1(field, value) {
     try {
@@ -148,7 +209,7 @@ async function GetPolygonByAttribute1(field, value) {
     }
 }
 async function GetPolygonByAttribute(field, value) {
-    try {        
+    try {
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
         query.returnGeometry = true;
@@ -184,7 +245,7 @@ async function GenerateValidPointInPolygon1(polygon, maxAttempts = 500) {
     console.warn("No valid point found in polygon.");
     return null;
 }
-async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {    
+async function GenerateValidPointInPolygon(polygon, ShoDValue = 0, maxAttempts = 200) {
     const { extent, spatialReference } = polygon;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -242,7 +303,7 @@ async function CreateDarkhastPoint(cNosazi) {
     //graphicsLayer.removeAll();    
     const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
     if (!polygon) return null;
-    if (polygon.geometry == leftPolygon.geometry) counter++;    
+    if (polygon.geometry == leftPolygon.geometry) counter++;
 
     const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
@@ -331,15 +392,14 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     const darkhastWithShape = allDarkhastList.filter(item => item.shape !== null && item.shape.trim() !== "");
     const darkhastWithoutShape = allDarkhastList.filter(item => !item.shape || item.shape.trim() === "");
     let darkhastWithoutShapeValid = [];
-    
-    darkhastWithoutShape.forEach((darkhast) =>
-    {        
+
+    darkhastWithoutShape.forEach((darkhast) => {
         const _cNosazi = isValidCodeNosazi(darkhast.cNosazi);
         if (_cNosazi) {
             darkhast.cNosazi = _cNosazi
-            darkhastWithoutShapeValid.push(darkhast);        
+            darkhastWithoutShapeValid.push(darkhast);
         }
-            
+
     });
     console.log("✅ درخواست‌هایی که shape دارند:", darkhastWithShape);
     console.log("darkhastWithoutShapeValid:", darkhastWithoutShapeValid)
@@ -400,7 +460,7 @@ function isValidCodeNosazi(cNosazi) {
 
 
     // Sections 1, 2, 3, and 4 must not be blank or zero
-    if (parts.slice(0, 4).some(p => p === "")) return false;    
+    if (parts.slice(0, 4).some(p => p === "")) return false;
     // The last three parts must be exactly zero
     if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") {
         parts[4] = parts[5] = parts[6] = "0";
