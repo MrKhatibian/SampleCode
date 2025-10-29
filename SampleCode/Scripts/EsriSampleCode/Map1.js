@@ -608,10 +608,7 @@ async function GetDarkhatFromShahrsazi() {
             throw new Error(result.message);
             return [];
         }
-        // clear this
-        // result.data شامل لیست درخواست‌ها است
-        console.log("لیست درخواست‌ها:", result.data);
-
+        
         return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
     } catch (err) {
         console.error("Error in GetDarkhatFromShahrsazi:", err);
