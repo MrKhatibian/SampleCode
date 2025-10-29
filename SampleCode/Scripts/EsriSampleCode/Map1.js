@@ -595,19 +595,6 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     console.log("نتیجه gisDarkhast:", results);
 });
 
-async function GetDarkhatFromShahrsazi1() {
-    try {
-        const response = await fetch("/Home/GetAllDarkhast", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-
-        const result = await response.json();
-        return result;
-    } catch (err) {
-        console.error("Error in getDarkhatFromShahrsazi: " + err);
-    }
-}
 async function GetDarkhatFromShahrsazi() {
     try {
         const response = await fetch("/Home/GetAllDarkhast", {
@@ -617,11 +604,11 @@ async function GetDarkhatFromShahrsazi() {
 
         const result = await response.json();
 
-        if (!result.success) {
-            console.error("خطا در دریافت داده‌ها:", result.message);
+        if (!result.success) {            
+            throw new Error(result.message);
             return [];
         }
-
+        // clear this
         // result.data شامل لیست درخواست‌ها است
         console.log("لیست درخواست‌ها:", result.data);
 
