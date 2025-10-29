@@ -512,6 +512,52 @@ window.gisDarkhast = async function (cNosaziArray) {
     console.log("نتایج نهایی:", results);    
     return results;
 };
+window.gisDarkhast1 = async function (cNosaziArray) {
+    if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
+        console.warn("⚠️ ورودی باید آرایه‌ای از کدها باشد.");
+        return [];
+    }
+
+    const results = [];
+    const concurrency = 5; // ⚙️ limit simultaneous GIS queries
+    const total = cNosaziArray.length;
+    let processed = 0;
+
+    console.log(`🚀 شروع پردازش ${total} کد...`);
+
+    // Helper to handle each single item
+    const processSingle = async (cNosazi) => {
+        try {
+            const shape = await CreateDarkhastPoint(cNosazi);
+            processed++;
+
+            if (shape) {
+                results.push({ cNosazi, ...shape });
+                console.log(`✅ ${processed}/${total} → نقطه برای ${cNosazi} ساخته شد.`);
+            } else {
+                console.warn(`⚠️ ${processed}/${total} → نقطه‌ای برای ${cNosazi} یافت نشد.`);
+            }
+
+            // Live progress percentage
+            if (processed % 5 === 0 || processed === total) {
+                const percent = ((processed / total) * 100).toFixed(1);
+                console.log(`📊 پیشرفت: ${percent}%`);
+            }
+        } catch (err) {
+            processed++;
+            console.error(`❌ ${processed}/${total} → خطا در پردازش ${cNosazi}:`, err);
+        }
+    };
+
+    // Process in parallel batches
+    for (let i = 0; i < total; i += concurrency) {
+        const batch = cNosaziArray.slice(i, i + concurrency);
+        await Promise.all(batch.map(processSingle));
+    }
+
+    console.log(`🏁 پایان پردازش (${results.length}/${total}) مورد موفق.`);
+    return results;
+};
 
 // دکمه برای فعال‌سازی انتخاب
 const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
