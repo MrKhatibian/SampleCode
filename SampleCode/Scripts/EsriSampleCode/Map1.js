@@ -576,7 +576,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     let darkhastWithoutShapeValid = [];
 
     darkhastWithoutShape.forEach((darkhast) => {
-        const _cNosazi = isValidCodeNosazi(darkhast.cNosazi);
+        const _cNosazi = normalizeCodeNosazi(darkhast.cNosazi);
         if (_cNosazi) {
             darkhast.cNosazi = _cNosazi
             darkhastWithoutShapeValid.push(darkhast);
@@ -618,24 +618,23 @@ async function GetDarkhatFromShahrsazi() {
         return [];
     }
 }
-function isValidCodeNosazi(cNosazi) {
-    if (!cNosazi || typeof cNosazi !== "string") return false;
+
+function normalizeCodeNosazi(cNosazi) {
+    if (!cNosazi || typeof cNosazi !== "string") return null;
 
     const parts = cNosazi.trim().split('-');
-    if (parts.length !== 7) return false;
+    if (parts.length !== 7) return null;
 
     // All Parts must be numeric
-    if (parts.some(p => !/^\d+$/.test(p))) return false;
-
+    if (parts.some(p => !/^\d+$/.test(p))) return null;
 
     // Sections 1, 2, 3, and 4 must not be blank or zero
-    if (parts.slice(0, 4).some(p => p === "")) return false;
+    if (parts.slice(0, 4).some(p => p === "")) return null;
+
     // The last three parts must be exactly zero
-    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") {
-        parts[4] = parts[5] = parts[6] = "0";
-    }
-    cNosazi = parts.join("-");
-    return cNosazi;
+    parts[4] = parts[5] = parts[6] = "0";
+
+    return parts.join("-");
 }
 
 
