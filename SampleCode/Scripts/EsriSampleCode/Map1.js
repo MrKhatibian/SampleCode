@@ -198,19 +198,6 @@ view.whenLayerView(darkhastFLayer)
     })
     .catch(err => console.error("Error loading layer:", err));
 
-//// Example use inside your main code:
-//view.whenLayerView(darkhastFLayer)
-//    .then(async () => {
-//        const layer = darkhastFLayer ?? arseFLayer;
-//        await layer.when();
-//        const { fullExtent } = layer;
-
-//        await view.goTo(fullExtent, { animate: false });
-//        const newLeftPolygon = await createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent);
-
-//        window.leftPolygon = newLeftPolygon;
-//    });
-
 async function createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent) {
     const width = fullExtent.xmax - fullExtent.xmin;
     const height = fullExtent.ymax - fullExtent.ymin;
@@ -245,16 +232,16 @@ async function createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent) {
         const intersects = await doesIntersect(candidatePolygon, arseFLayer);
         if (!intersects) {
             leftPolygon = candidatePolygon;
-            console.log(`✅ Found non-intersecting polygon after ${attempt + 1} tries`);
+            console.log(`Found non-intersecting polygon after ${attempt + 1} tries`);
             break;
         }
 
-        console.log(`⚠️ Attempt ${attempt + 1}: polygon intersects — retrying...`);
+        console.log(`Attempt ${attempt + 1}: polygon intersects — retrying...`);
         attempt++;
     }
 
     if (!leftPolygon) {
-        console.warn("❌ Could not find non-intersecting polygon within max attempts");
+        console.warn("Could not find non-intersecting polygon within max attempts");
         return;
     }
 
