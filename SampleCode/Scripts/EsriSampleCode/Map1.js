@@ -488,7 +488,7 @@ async function CreateDarkhastPoint(cNosazi) {
 }
 
 
-window.gisDarkhast = async function (cNosaziArray) {
+window.gisDarkhast1 = async function (cNosaziArray) {
     if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
         console.warn("ورودی باید آرایه‌ای از کدها باشد.");
         return [];
@@ -512,7 +512,7 @@ window.gisDarkhast = async function (cNosaziArray) {
     console.log("نتایج نهایی:", results);    
     return results;
 };
-window.gisDarkhast1 = async function (cNosaziArray) {
+window.gisDarkhast = async function (cNosaziArray) {
     if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
         console.warn("⚠️ ورودی باید آرایه‌ای از کدها باشد.");
         return [];
@@ -559,40 +559,105 @@ window.gisDarkhast1 = async function (cNosaziArray) {
     return results;
 };
 
-// دکمه برای فعال‌سازی انتخاب
+// btn Update XY Darkhast
 const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
 //btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
 view.ui.add(btnUpdateXYDarkhast, "top-right");
 
+//btnUpdateXYDarkhast.addEventListener("click", async () => {
+//    //let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
+//    //const results = await gisDarkhast(arrayCNosazi);    
+
+//    const allDarkhastList = await GetDarkhatFromShahrsazi();
+
+//    // جدا کردن بر اساس داشتن یا نداشتن shape
+//    const darkhastWithShape = allDarkhastList.filter(item => item.shape !== null && item.shape.trim() !== "");
+//    const darkhastWithoutShape = allDarkhastList.filter(item => !item.shape || item.shape.trim() === "");
+//    let darkhastWithoutShapeValid = [];
+
+//    darkhastWithoutShape.forEach((darkhast) => {
+//        const _cNosazi = normalizeCodeNosazi(darkhast.cNosazi);
+//        if (_cNosazi) {
+//            darkhast.cNosazi = _cNosazi
+//            darkhastWithoutShapeValid.push(darkhast);
+//        }
+
+//    });
+//    console.log("✅ درخواست‌هایی که shape دارند:", darkhastWithShape);
+//    console.log("darkhastWithoutShapeValid:", darkhastWithoutShapeValid)
+//    console.log("⚠️ درخواست‌هایی که shape ندارند:", darkhastWithoutShape);
+
+//    // اگر فقط shapeدارها رو می‌خوای پاس بدی به gisDarkhast:
+//    const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi)/*.slice(0, 100)*/;
+
+//    console.log("cNosaziArray: ", cNosaziArray)
+//    const results = await gisDarkhast(cNosaziArray);
+//    console.log("نتیجه gisDarkhast:", results);
+//});
 btnUpdateXYDarkhast.addEventListener("click", async () => {
-    //let arrayCNosazi = ["501-10-10-15-0-0-0", "501-10-14-12-0-0-0", "501-10-10-1-0-0-0", "501-10-3-12-0-0-0"];
-    //const results = await gisDarkhast(arrayCNosazi);    
+    try {
+        console.log("شروع دریافت داده‌ها از شهرسازی...");
 
-    const allDarkhastList = await GetDarkhatFromShahrsazi();
-
-    // جدا کردن بر اساس داشتن یا نداشتن shape
-    const darkhastWithShape = allDarkhastList.filter(item => item.shape !== null && item.shape.trim() !== "");
-    const darkhastWithoutShape = allDarkhastList.filter(item => !item.shape || item.shape.trim() === "");
-    let darkhastWithoutShapeValid = [];
-
-    darkhastWithoutShape.forEach((darkhast) => {
-        const _cNosazi = normalizeCodeNosazi(darkhast.cNosazi);
-        if (_cNosazi) {
-            darkhast.cNosazi = _cNosazi
-            darkhastWithoutShapeValid.push(darkhast);
+        const allDarkhastList = await GetDarkhatFromShahrsazi();
+        if (!Array.isArray(allDarkhastList) || allDarkhastList.length === 0) {
+            console.warn("No Darkhast were received from the Shahrsazi.");
+            return;
         }
 
-    });
-    console.log("✅ درخواست‌هایی که shape دارند:", darkhastWithShape);
-    console.log("darkhastWithoutShapeValid:", darkhastWithoutShapeValid)
-    console.log("⚠️ درخواست‌هایی که shape ندارند:", darkhastWithoutShape);
+        // Separating Darkhast based on shape
+        const darkhastWithShape = [];
+        const darkhastWithoutShape = [];
 
-    // اگر فقط shapeدارها رو می‌خوای پاس بدی به gisDarkhast:
-    const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi)/*.slice(0, 100)*/;
+        for (const d of allDarkhastList) {
+            const hasShape = d.shape && d.shape.trim() !== "";
+            (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
+        }
 
-    console.log("cNosaziArray: ", cNosaziArray)
-    const results = await gisDarkhast(cNosaziArray);
-    console.log("نتیجه gisDarkhast:", results);
+        // Validate and update codeNosazi for without shapes
+        const darkhastWithoutShapeValid = darkhastWithoutShape
+            .map(d => {
+                const validCode = normalizeCodeNosazi(d.cNosazi);
+                return validCode ? { ...d, cNosazi: validCode } : null;
+            })
+            .filter(Boolean);
+
+        console.log(`✅ درخواست‌های دارای shape: ${darkhastWithShape.length}`);
+        console.log(`⚠️ بدون shape معتبر: ${darkhastWithoutShapeValid.length}`);
+        console.log(`🚫 بدون shape نامعتبر: ${darkhastWithoutShape.length - darkhastWithoutShapeValid.length}`);
+
+        // Array of valid codes for point generation
+        const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi);
+        if (cNosaziArray.length === 0) {
+            console.warn("There is no valid code to generate the point.");
+            return;
+        }
+
+        // Generate points with real-time updates on the map)
+        console.log(`🎯 شروع تولید نقطه برای ${cNosaziArray.length} درخواست...`);
+        const results = await gisDarkhast(cNosaziArray);
+
+        console.log(`🏁 فرآیند تولید نقطه تمام شد. (${results.length}/${cNosaziArray.length} موفق)`);
+
+        // زوم روی تمام نقاط موفق
+        //if (results.length > 0) {
+        //    try {
+        //        const pointGeometries = results
+        //            .map(r => new Point({
+        //                x: parseFloat(r.wkt.split("(")[1].split(" ")[0]),
+        //                y: parseFloat(r.wkt.split("(")[1].split(" ")[1]),
+        //                spatialReference: { wkid: r.wkid }
+        //            }));
+
+        //        const extent = geometryEngine.union(pointGeometries).extent;
+        //        await view.goTo(extent.expand(1.5), { animate: true });
+        //        console.log("📍 زوم روی نقاط موفق انجام شد.");
+        //    } catch (zoomErr) {
+        //        console.warn("⚠️ خطا در زوم روی نقشه:", zoomErr);
+        //    }
+        //}
+    } catch (err) {
+        console.error("Error in the XY Darkhast update process:", err);
+    }
 });
 
 async function GetDarkhatFromShahrsazi() {
@@ -633,9 +698,6 @@ function normalizeCodeNosazi(cNosazi) {
 
     return parts.join("-");
 }
-
-
-
 
 // === Sketch Init ===
 const sketchLayer = new GraphicsLayer();
