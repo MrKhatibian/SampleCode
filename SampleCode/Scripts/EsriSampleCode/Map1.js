@@ -377,18 +377,18 @@ async function CreateDarkhastPoint2(cNosazi) {
     if (!point) return null;
     //console.log("Created Point:", point)
 
-    const geom = point.geometry;
-    if (!geom || geom.type !== "point") {
+    const pGeo = point.geometry;
+    if (!pGeo || pGeo.type !== "point") {
         console.error("❌ geometry برگشتی معتبر نیست:", pointResult);
         return null;
     }
 
     // ✅ اگر spatialReference ندارد، از پلیگون بگیر
-    if (!geom.spatialReference) {
+    if (!pGeo.spatialReference) {
         point.geometry.spatialReference = arseFLayer.geometry.spatialReference;
     }
 
-    if (!geom.spatialReference.wkid) {
+    if (!pGeo.spatialReference.wkid) {
         point.geometry.spatialReference.wkid = arseFLayer.geometry.spatialReference.wkid;
     }
 
@@ -413,7 +413,7 @@ async function CreateDarkhastPoint2(cNosazi) {
     return {
         wkt: `POINT(${point.x} ${point.y} 0)`,
         //wkid: point.spatialReference.wkid,
-        wkid: geom.spatialReference.wkid,
+        wkid: pGeo.spatialReference.wkid,
     };
     // If need for Projection
     // const wgs84Point = project(randomPoint, { wkid: 4326 });
@@ -423,31 +423,31 @@ async function CreateDarkhastPoint(cNosazi) {
         // Step 1: Get polygon by attribute
         const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
         if (!polygon) {
-            console.warn(`⚠️ Polygon not found for Code_nosazi = ${cNosazi}`);
+            console.warn(`Polygon not found for Code_nosazi = ${cNosazi}`);
             return null;
         }
 
         // Step 2: Generate a valid point inside polygon
         const pointData = await GenerateValidPointInPolygon(polygon);
         if (!pointData?.geometry) {
-            console.warn("⚠️ Could not generate a valid point in polygon.");
+            console.warn("Could not generate a valid point in polygon.");
             return null;
         }
 
-        const geom = pointData.geometry;
+        const pGeo = pointData.geometry;
 
         // Step 3: Ensure spatial reference is valid
-        const sr = geom.spatialReference || arseFLayer.geometry.spatialReference;
+        const sr = pGeo.spatialReference || arseFLayer.geometry.spatialReference;
         if (!sr?.wkid) {
-            console.error("❌ Missing spatial reference (wkid).");
+            console.error("Missing spatial reference (wkid).");
             return null;
         }
 
-        geom.spatialReference = sr;
+        pGeo.spatialReference = sr;
 
         // Step 4: Draw the point on map
         graphicsLayer.add(new Graphic({
-            geometry: geom,
+            geometry: pGeo,
             symbol: {
                 type: "simple-marker",
                 color: "red",
@@ -457,7 +457,7 @@ async function CreateDarkhastPoint(cNosazi) {
             attributes: pointData.attributes
         }));
         //const graphic = new Graphic({
-        //    geometry: geom,
+        //    geometry: pGeo,
         //    symbol: {
         //        type: "simple-marker",
         //        color: [255, 0, 0, 0.8],
@@ -478,7 +478,7 @@ async function CreateDarkhastPoint(cNosazi) {
 
         // Step 5: Return WKT and WKID (projection info)
         return {
-            wkt: `POINT(${geom.x} ${geom.y} 0)`,
+            wkt: `POINT(${pGeo.x} ${pGeo.y} 0)`,
             wkid: sr.wkid
         };
     } catch (err) {
@@ -514,16 +514,16 @@ window.gisDarkhast1 = async function (cNosaziArray) {
 };
 window.gisDarkhast = async function (cNosaziArray) {
     if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
-        console.warn("⚠️ ورودی باید آرایه‌ای از کدها باشد.");
+        console.warn("The input must be an array of codes.");
         return [];
     }
 
     const results = [];
-    const concurrency = 5; // ⚙️ limit simultaneous GIS queries
+    const concurrency = 5; // limit simultaneous GIS queries
     const total = cNosaziArray.length;
     let processed = 0;
 
-    console.log(`🚀 شروع پردازش ${total} کد...`);
+    console.log(`شروع پردازش ${total} کد...`);
 
     // Helper to handle each single item
     const processSingle = async (cNosazi) => {
@@ -533,19 +533,19 @@ window.gisDarkhast = async function (cNosaziArray) {
 
             if (shape) {
                 results.push({ cNosazi, ...shape });
-                console.log(`✅ ${processed}/${total} → نقطه برای ${cNosazi} ساخته شد.`);
+                console.log(`${processed}/${total} → نقطه برای ${cNosazi} ساخته شد.`);
             } else {
-                console.warn(`⚠️ ${processed}/${total} → نقطه‌ای برای ${cNosazi} یافت نشد.`);
+                console.warn(`${processed}/${total} → نقطه‌ای برای ${cNosazi} یافت نشد.`);
             }
 
             // Live progress percentage
             if (processed % 5 === 0 || processed === total) {
                 const percent = ((processed / total) * 100).toFixed(1);
-                console.log(`📊 پیشرفت: ${percent}%`);
+                console.log(`پیشرفت: ${percent}%`);
             }
         } catch (err) {
             processed++;
-            console.error(`❌ ${processed}/${total} → خطا در پردازش ${cNosazi}:`, err);
+            console.error(`${processed}/${total} Error processing ${cNosazi}:`, err);
         }
     };
 
@@ -555,7 +555,7 @@ window.gisDarkhast = async function (cNosaziArray) {
         await Promise.all(batch.map(processSingle));
     }
 
-    console.log(`🏁 پایان پردازش (${results.length}/${total}) مورد موفق.`);
+    console.log(`پایان پردازش (${results.length}/${total}) مورد موفق.`);
     return results;
 };
 
