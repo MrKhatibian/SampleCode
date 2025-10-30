@@ -132,6 +132,7 @@ darkhastFLayer.when(() => {
 //    // Useing in other function
 //    window.leftPolygon = leftPolygon;
 //}).catch(function (err) { console.error("Error while loading layer:", err) });
+
 view.whenLayerView(darkhastFLayer)
     .then(async () => {
         const layer = darkhastFLayer ?? arseFLayer;
@@ -149,49 +150,136 @@ view.whenLayerView(darkhastFLayer)
         try {
             await view.goTo(fullExtent, { animate: false });
 
-            const width = fullExtent.xmax - fullExtent.xmin;
-            const offset = width * 0.2;
+            const newLeftPolygon = await createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent);
 
-            // Define left extent directly (no clone needed)
-            const leftExtent = new Extent({
-                xmin: fullExtent.xmin,
-                xmax: fullExtent.xmin + offset,
-                ymin: fullExtent.ymax - offset,
-                ymax: fullExtent.ymax,
-                spatialReference: fullExtent.spatialReference
-            });
+            window.leftPolygon = newLeftPolygon;
 
-            // Create polygon directly from extent
-            const { xmin, ymin, xmax, ymax, spatialReference } = leftExtent;
-            const leftPolygon = new Polygon({
-                rings: [
-                    [xmin, ymin],
-                    [xmin, ymax],
-                    [xmax, ymax],
-                    [xmax, ymin],
-                    [xmin, ymin]
-                ],
-                spatialReference
-            });
+            //const width = fullExtent.xmax - fullExtent.xmin;
+            //const offset = width * 0.2;
 
-            // Draw polygon
-            view.graphics.add(new Graphic({
-                geometry: leftPolygon,
-                symbol: {
-                    type: "simple-fill",
-                    color: [0, 0, 255, 0.15],
-                    outline: { color: [0, 0, 255], width: 2 }
-                }
-            }));
+            //// Define left extent directly (no clone needed)
+            //const leftExtent = new Extent({
+            //    xmin: fullExtent.xmin,
+            //    xmax: fullExtent.xmin + offset,
+            //    ymin: fullExtent.ymax - offset,
+            //    ymax: fullExtent.ymax,
+            //    spatialReference: fullExtent.spatialReference
+            //});
 
-            // Store globally if needed
-            window.leftPolygon = leftPolygon;
+            //// Create polygon directly from extent
+            //const { xmin, ymin, xmax, ymax, spatialReference } = leftExtent;
+            //const leftPolygon = new Polygon({
+            //    rings: [
+            //        [xmin, ymin],
+            //        [xmin, ymax],
+            //        [xmax, ymax],
+            //        [xmax, ymin],
+            //        [xmin, ymin]
+            //    ],
+            //    spatialReference
+            //});
+
+            //// Draw polygon
+            //view.graphics.add(new Graphic({
+            //    geometry: leftPolygon,
+            //    symbol: {
+            //        type: "simple-fill",
+            //        color: [0, 0, 255, 0.15],
+            //        outline: { color: [0, 0, 255], width: 2 }
+            //    }
+            //}));
+
+            //// Store globally if needed
+            //window.leftPolygon = leftPolygon;
 
         } catch (err) {
             console.error("Error in map rendering:", err);
         }
     })
     .catch(err => console.error("Error loading layer:", err));
+
+//// Example use inside your main code:
+//view.whenLayerView(darkhastFLayer)
+//    .then(async () => {
+//        const layer = darkhastFLayer ?? arseFLayer;
+//        await layer.when();
+//        const { fullExtent } = layer;
+
+//        await view.goTo(fullExtent, { animate: false });
+//        const newLeftPolygon = await createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent);
+
+//        window.leftPolygon = newLeftPolygon;
+//    });
+
+async function createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent) {
+    const width = fullExtent.xmax - fullExtent.xmin;
+    const height = fullExtent.ymax - fullExtent.ymin;
+    const offset = width * 0.2;
+
+    let attempt = 0;
+    let maxAttempts = 10;
+    let leftPolygon = null;
+
+    while (attempt < maxAttempts) {
+        const shiftX = attempt * offset * 0.5;  // move left each time
+        const leftExtent = new Extent({
+            xmin: fullExtent.xmin - shiftX,
+            xmax: fullExtent.xmin + offset - shiftX,
+            ymin: fullExtent.ymax - offset + shiftX,
+            ymax: fullExtent.ymax + shiftX,
+            spatialReference: fullExtent.spatialReference
+        });
+
+        const { xmin, ymin, xmax, ymax, spatialReference } = leftExtent;
+        const candidatePolygon = new Polygon({
+            rings: [
+                [xmin, ymin],
+                [xmin, ymax],
+                [xmax, ymax],
+                [xmax, ymin],
+                [xmin, ymin]
+            ],
+            spatialReference
+        });
+
+        const intersects = await doesIntersect(candidatePolygon, arseFLayer);
+        if (!intersects) {
+            leftPolygon = candidatePolygon;
+            console.log(`✅ Found non-intersecting polygon after ${attempt + 1} tries`);
+            break;
+        }
+
+        console.log(`⚠️ Attempt ${attempt + 1}: polygon intersects — retrying...`);
+        attempt++;
+    }
+
+    if (!leftPolygon) {
+        console.warn("❌ Could not find non-intersecting polygon within max attempts");
+        return;
+    }
+
+    // Draw final polygon
+    view.graphics.add(new Graphic({
+        geometry: leftPolygon,
+        symbol: {
+            type: "simple-fill",
+            color: [0, 255, 0, 0.2],
+            outline: { color: [0, 255, 0], width: 2 }
+        }
+    }));
+
+    return leftPolygon;
+}
+
+async function doesIntersect(polygon, layer) {
+    const query = layer.createQuery();
+    query.geometry = polygon;
+    query.spatialRelationship = "intersects";
+    query.returnGeometry = false;
+
+    const result = await layer.queryFeatures(query);
+    return result.features.length > 0;
+}
 
 
 async function GetPolygonByAttribute1(field, value) {
@@ -229,7 +317,7 @@ async function GetPolygonByAttribute(field, value) {
             return null;
         }
 
-        // ✅ Prepare query more efficiently
+        // Prepare query more efficiently
         const query = arseFLayer.createQuery();
         query.where = `${field} = '${value}'`;
         query.returnGeometry = true;
@@ -238,7 +326,7 @@ async function GetPolygonByAttribute(field, value) {
 
         const { features } = await arseFLayer.queryFeatures(query);
 
-        // ✅ Return geometry safely, fallback to global leftPolygon
+        // Return geometry safely, fallback to global leftPolygon
         return features.length > 0 ? features[0].geometry : (window.leftPolygon ?? null);
 
     } catch (err) {
@@ -371,7 +459,7 @@ async function CreateDarkhastPoint1(cNosazi) {
 async function CreateDarkhastPoint2(cNosazi) {
     //graphicsLayer.removeAll();    
     const polygon = await GetPolygonByAttribute("Code_nosazi", cNosazi);
-    if (!polygon) return null;    
+    if (!polygon) return null;
 
     const point = await GenerateValidPointInPolygon(polygon);
     if (!point) return null;
@@ -509,7 +597,7 @@ window.gisDarkhast1 = async function (cNosaziArray) {
         }
     }
 
-    console.log("نتایج نهایی:", results);    
+    console.log("نتایج نهایی:", results);
     return results;
 };
 window.gisDarkhast = async function (cNosaziArray) {
@@ -669,11 +757,11 @@ async function GetDarkhatFromShahrsazi() {
 
         const result = await response.json();
 
-        if (!result.success) {            
+        if (!result.success) {
             throw new Error(result.message);
             return [];
         }
-        
+
         return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
     } catch (err) {
         console.error("Error in GetDarkhatFromShahrsazi:", err);
