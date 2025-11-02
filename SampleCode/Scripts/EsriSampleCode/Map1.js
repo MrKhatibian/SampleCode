@@ -634,6 +634,44 @@ window.gisDarkhast = async function (cNosaziArray) {
     return results;
 };
 
+async function checkDarkhastInParcel(darkhast, arseFLayer) {
+    const code = normalizeCodeNosazi(darkhast.cNosazi);
+    if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
+
+    const query = arseFLayer.createQuery();
+    query.where = `Code_nosazi = '${code}'`;
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    const parcelResult = await arseFLayer.queryFeatures(query);
+    if (parcelResult.features.length === 0) {
+        return { ...darkhast, valid: false, reason: "Parcel not found" };
+    }
+
+    const parcelGeom = parcelResult.features[0].geometry;
+    const point = parseWKTPoint(darkhast.shape);
+    if (!point) return { ...darkhast, valid: false, reason: "Invalid shape" };
+
+    const inside = geometryEngine.contains(parcelGeom, point);
+    return { ...darkhast, valid: inside, reason: inside ? "Inside parcel" : "Outside parcel" };
+}
+
+function parseWKTPoint(wkt) {
+    try {
+        const match = wkt.match(/POINT\s*\(\s*([0-9.+-]+)\s+([0-9.+-]+)\s*\)/i);
+        if (!match) return null;
+
+        return new Point({
+            x: parseFloat(match[1]),
+            y: parseFloat(match[2]),
+            spatialReference: { wkid: 4326 } // adjust to your SR
+        });
+    } catch {
+        return null;
+    }
+}
+
+
+
 // btn Update XY Darkhast
 const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
 //btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
@@ -669,6 +707,71 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 //    const results = await gisDarkhast(cNosaziArray);
 //    console.log("نتیجه gisDarkhast:", results);
 //});
+//btnUpdateXYDarkhast.addEventListener("click", async () => {
+//    try {
+//        console.log("شروع دریافت داده‌ها از شهرسازی...");
+
+//        const allDarkhastList = await GetDarkhatFromShahrsazi();
+//        if (!Array.isArray(allDarkhastList) || allDarkhastList.length === 0) {
+//            console.warn("No Darkhast were received from the Shahrsazi.");
+//            return;
+//        }
+
+//        // Separating Darkhast based on shape
+//        const darkhastWithShape = [];
+//        const darkhastWithoutShape = [];
+
+//        for (const d of allDarkhastList) {
+//            const hasShape = d.shape && d.shape.trim() !== "";
+//            (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
+//        }
+
+//        // Validate and update codeNosazi for without shapes
+//        const darkhastWithoutShapeValid = darkhastWithoutShape
+//            .map(d => {
+//                const validCode = normalizeCodeNosazi(d.cNosazi);
+//                return validCode ? { ...d, cNosazi: validCode } : null;
+//            })
+//            .filter(Boolean);
+
+//        console.log(`✅ درخواست‌های دارای shape: ${darkhastWithShape.length}`);
+//        console.log(`⚠️ بدون shape معتبر: ${darkhastWithoutShapeValid.length}`);
+//        console.log(`🚫 بدون shape نامعتبر: ${darkhastWithoutShape.length - darkhastWithoutShapeValid.length}`);
+
+//        // Array of valid codes for point generation
+//        const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi);
+//        if (cNosaziArray.length === 0) {
+//            console.warn("There is no valid code to generate the point.");
+//            return;
+//        }
+
+//        // Generate points with real-time updates on the map)
+//        console.log(`🎯 شروع تولید نقطه برای ${cNosaziArray.length} درخواست...`);
+//        const results = await gisDarkhast(cNosaziArray);
+
+//        console.log(`🏁 فرآیند تولید نقطه تمام شد. (${results.length}/${cNosaziArray.length} موفق)`);
+
+//        // زوم روی تمام نقاط موفق
+//        //if (results.length > 0) {
+//        //    try {
+//        //        const pointGeometries = results
+//        //            .map(r => new Point({
+//        //                x: parseFloat(r.wkt.split("(")[1].split(" ")[0]),
+//        //                y: parseFloat(r.wkt.split("(")[1].split(" ")[1]),
+//        //                spatialReference: { wkid: r.wkid }
+//        //            }));
+
+//        //        const extent = geometryEngine.union(pointGeometries).extent;
+//        //        await view.goTo(extent.expand(1.5), { animate: true });
+//        //        console.log("📍 زوم روی نقاط موفق انجام شد.");
+//        //    } catch (zoomErr) {
+//        //        console.warn("⚠️ خطا در زوم روی نقشه:", zoomErr);
+//        //    }
+//        //}
+//    } catch (err) {
+//        console.error("Error in the XY Darkhast update process:", err);
+//    }
+//});
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
         console.log("شروع دریافت داده‌ها از شهرسازی...");
@@ -679,7 +782,6 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             return;
         }
 
-        // Separating Darkhast based on shape
         const darkhastWithShape = [];
         const darkhastWithoutShape = [];
 
@@ -688,52 +790,72 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
         }
 
-        // Validate and update codeNosazi for without shapes
-        const darkhastWithoutShapeValid = darkhastWithoutShape
+        console.log(`✅ With shape: ${darkhastWithShape.length}, ❌ Without shape: ${darkhastWithoutShape.length}`);
+
+        // ----------------------------------------------------------
+        // ✅ STEP A — Check “with shape” points inside parcel
+        // ----------------------------------------------------------
+        const invalidWithShape = [];
+        const validWithShape = [];
+
+        for (const d of darkhastWithShape) {
+            const res = await checkDarkhastInParcel(d, arseFLayer);
+            if (res.valid) {
+                validWithShape.push(res);
+            } else {
+                console.warn(`🚫 ${res.cNosazi} point outside parcel → will reprocess`);
+                invalidWithShape.push(res);
+
+                // visualize red point
+                const point = parseWKTPoint(d.shape);
+                if (point) {
+                    view.graphics.add(new Graphic({
+                        geometry: point,
+                        symbol: {
+                            type: "simple-marker",
+                            color: [255, 0, 0, 0.8],
+                            size: 6,
+                            outline: { color: "white", width: 0.5 }
+                        }
+                    }));
+                }
+            }
+        }
+
+        console.log(`✅ Inside parcel: ${validWithShape.length}, 🚫 Outside parcel: ${invalidWithShape.length}`);
+
+        // ----------------------------------------------------------
+        // ✅ STEP B — Merge invalid-with-shape with no-shape list
+        // ----------------------------------------------------------
+        const reprocessList = [...darkhastWithoutShape, ...invalidWithShape];
+        const reprocessListValid = reprocessList
             .map(d => {
                 const validCode = normalizeCodeNosazi(d.cNosazi);
                 return validCode ? { ...d, cNosazi: validCode } : null;
             })
             .filter(Boolean);
 
-        console.log(`✅ درخواست‌های دارای shape: ${darkhastWithShape.length}`);
-        console.log(`⚠️ بدون shape معتبر: ${darkhastWithoutShapeValid.length}`);
-        console.log(`🚫 بدون shape نامعتبر: ${darkhastWithoutShape.length - darkhastWithoutShapeValid.length}`);
+        console.log(`🎯 Total for regeneration: ${reprocessListValid.length}`);
 
-        // Array of valid codes for point generation
-        const cNosaziArray = darkhastWithoutShapeValid.map(x => x.cNosazi);
-        if (cNosaziArray.length === 0) {
-            console.warn("There is no valid code to generate the point.");
-            return;
+        // ----------------------------------------------------------
+        // ✅ STEP C — Generate new points for reprocess list
+        // ----------------------------------------------------------
+        if (reprocessListValid.length > 0) {
+            const cNosaziArray = reprocessListValid.map(x => x.cNosazi);
+            const results = await gisDarkhast(cNosaziArray);
+            console.log(`🏁 New points created: ${results.length}/${cNosaziArray.length}`);
         }
 
-        // Generate points with real-time updates on the map)
-        console.log(`🎯 شروع تولید نقطه برای ${cNosaziArray.length} درخواست...`);
-        const results = await gisDarkhast(cNosaziArray);
+        // ----------------------------------------------------------
+        // ✅ STEP D — Optionally zoom or visualize
+        // ----------------------------------------------------------
+        // ... (your optional zooming code)
 
-        console.log(`🏁 فرآیند تولید نقطه تمام شد. (${results.length}/${cNosaziArray.length} موفق)`);
-
-        // زوم روی تمام نقاط موفق
-        //if (results.length > 0) {
-        //    try {
-        //        const pointGeometries = results
-        //            .map(r => new Point({
-        //                x: parseFloat(r.wkt.split("(")[1].split(" ")[0]),
-        //                y: parseFloat(r.wkt.split("(")[1].split(" ")[1]),
-        //                spatialReference: { wkid: r.wkid }
-        //            }));
-
-        //        const extent = geometryEngine.union(pointGeometries).extent;
-        //        await view.goTo(extent.expand(1.5), { animate: true });
-        //        console.log("📍 زوم روی نقاط موفق انجام شد.");
-        //    } catch (zoomErr) {
-        //        console.warn("⚠️ خطا در زوم روی نقشه:", zoomErr);
-        //    }
-        //}
     } catch (err) {
         console.error("Error in the XY Darkhast update process:", err);
     }
 });
+
 
 async function GetDarkhatFromShahrsazi() {
     try {
