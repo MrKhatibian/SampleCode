@@ -309,6 +309,7 @@ window.gisDarkhast = async function (darkhast) {
             console.error(`Error processing:`, err);
         }
     }
+    return results;
 };
 
 async function checkDarkhastInParcel(darkhast, arseFLayer) {
@@ -369,7 +370,7 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
-        console.log("شروع دریافت داده‌ها از شهرسازی...");
+        console.log("Starting to receive data from Shahrsazi");
 
         const allDarkhastList = await GetDarkhatFromShahrsazi();
         if (!Array.isArray(allDarkhastList) || allDarkhastList.length === 0) {
@@ -385,10 +386,10 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
         }
 
-        console.log(`✅ With shape: ${darkhastWithShape.length}, ❌ Without shape: ${darkhastWithoutShape.length}`);
+        console.log(`With shape: ${darkhastWithShape.length}, ❌ Without shape: ${darkhastWithoutShape.length}`);
 
         // ----------------------------------------------------------
-        // ✅ STEP A — Check “with shape” points inside parcel
+        // STEP A — Check “with shape” points inside parcel
         // ----------------------------------------------------------
         const invalidWithShape = [];
         const validWithShape = [];        
@@ -398,7 +399,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             if (res.valid) {
                 validWithShape.push(res);
             } else {
-                console.warn(`🚫 ${res.cNosazi} point outside parcel → will reprocess`);
+                console.warn(`${res.cNosazi} point outside parcel → will reprocess`);
                 invalidWithShape.push(res);
 
                 // visualize red point
@@ -417,10 +418,10 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             }
         }
 
-        console.log(`✅ Inside parcel: ${validWithShape.length}, 🚫 Outside parcel: ${invalidWithShape.length}`);
+        console.log(`Inside parcel: ${validWithShape.length}, 🚫 Outside parcel: ${invalidWithShape.length}`);
 
         // ----------------------------------------------------------
-        // ✅ STEP B — Merge invalid-with-shape with no-shape list
+        // STEP B — Merge invalid-with-shape with no-shape list
         // ----------------------------------------------------------
         const reprocessList = [...darkhastWithoutShape, ...invalidWithShape];
         const reprocessListValid = reprocessList
@@ -430,23 +431,17 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             })
             .filter(Boolean);
 
-        console.log(`🎯 Total for regeneration: ${reprocessListValid.length}`);
+        console.log(`Total for regeneration: ${reprocessListValid.length}`);
 
         // ----------------------------------------------------------
-        // ✅ STEP C — Generate new points for reprocess list
+        // STEP C — Generate new points for reprocess list
         // ----------------------------------------------------------
         if (reprocessListValid.length > 0) {
-            //const cNosaziArray = reprocessListValid.map(x => x.cNosazi);
-            //reprocessListValid = reprocessListValid.slice(0,1000)
+            
             const results = await gisDarkhast(reprocessListValid);
-            //const results = await gisDarkhast(reprocessListValid);
-            console.log(`🏁 New points created: ${results.length}/${cNosaziArray.length}`);
+            if (results)
+                console.log(`New points created: ${results.length}/${cNosaziArray.length}`);
         }
-
-        // ----------------------------------------------------------
-        // ✅ STEP D — Optionally zoom or visualize
-        // ----------------------------------------------------------
-        // ... (your optional zooming code)
 
     } catch (err) {
         console.error("Error in the XY Darkhast update process:", err);
