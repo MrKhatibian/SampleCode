@@ -276,73 +276,6 @@ async function CreateDarkhastPoint(cNosazi) {
     }
 }
 
-window.gisDarkhast1 = async function (cNosaziArray) {
-    if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
-        console.warn("The input must be an array of codes.");
-        return [];
-    }
-
-    const results = [];
-    const concurrency = 5;
-    const total = cNosaziArray.length;
-    let processed = 0;
-
-    console.log(`شروع پردازش ${total} کد...`);
-
-    // تابع برای ارسال به سرور
-    const saveToDatabase = async (darkhastValue) => {
-        try {
-            const response = await fetch('/Home/updateDarkhast', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(darkhastValue)
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                console.warn(`❌ ذخیره ${darkhastValue.Shod} ناموفق: ${result.message}`);
-            } else {
-                console.log(`✅ ذخیره ${darkhastValue.Shod} موفق`);
-            }
-        } catch (error) {
-            console.error(`⚠️ خطا در ارسال ${darkhastValue.Shod}:`, error);
-        }
-    };
-
-    // تابع برای پردازش هر مورد
-    const processSingle = async (cNosazi) => {
-        try {
-            const shape = await CreateDarkhastPoint(cNosazi);
-            processed++;
-            if (shape && shape.Shod && shape.wkt) {
-                results.push({ cNosazi, ...shape });
-                console.log(`${processed}/${total} → نقطه برای ${cNosazi} ساخته شد.`);
-
-                // ذخیره در دیتابیس
-                await saveToDatabase(shape);
-            } else {
-                console.warn(`${processed}/${total} → نقطه‌ای برای ${cNosazi} یافت نشد.`);
-            }
-
-            if (processed % 5 === 0 || processed === total) {
-                const percent = ((processed / total) * 100).toFixed(1);
-                console.log(`پیشرفت: ${percent}%`);
-            }
-        } catch (err) {
-            processed++;
-            console.error(`${processed}/${total} Error processing ${cNosazi}:`, err);
-        }
-    };
-
-    // پردازش گروهی
-    for (let i = 0; i < total; i += concurrency) {
-        const batch = cNosaziArray.slice(i, i + concurrency);
-        await Promise.all(batch.map(processSingle));
-    }
-
-    console.log(`پایان پردازش (${results.length}/${total}) مورد موفق.`);
-    return results;
-};
 window.gisDarkhast = async function (darkhast) {
     if (!Array.isArray(darkhast) || darkhast.length === 0) {
         console.warn("The input must be an array of codes.");
@@ -379,7 +312,7 @@ window.gisDarkhast = async function (darkhast) {
 };
 
 async function checkDarkhastInParcel(darkhast, arseFLayer) {
-    debugger;
+    
     const code = normalizeCodeNosazi(darkhast.cNosazi);
     if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
 
@@ -458,13 +391,9 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ✅ STEP A — Check “with shape” points inside parcel
         // ----------------------------------------------------------
         const invalidWithShape = [];
-        const validWithShape = [];
-        let counter = 0;
-        const darkhastWithShape1 = darkhastWithShape.slice(423,427);
-        for (const d of darkhastWithShape1) {
-            counter++;
-            console.log("counter: ", counter);
-            debugger;
+        const validWithShape = [];        
+        
+        for (const d of darkhastWithShape) {            
             const res = await checkDarkhastInParcel(d, arseFLayer);
             if (res.valid) {
                 validWithShape.push(res);
