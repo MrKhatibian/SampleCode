@@ -144,8 +144,7 @@ async function createNonIntersectingLeftPolygon(view, arseFLayer, fullExtent) {
             color: [0, 255, 0, 0.2],
             outline: { color: [0, 255, 0], width: 2 }
         }
-    }));
-
+    }));    
     return leftPolygon;
 }
 
@@ -344,8 +343,8 @@ window.gisDarkhast1 = async function (cNosaziArray) {
     console.log(`پایان پردازش (${results.length}/${total}) مورد موفق.`);
     return results;
 };
-window.gisDarkhast = async function (cNosaziArray, darkhast) {
-    if (!Array.isArray(cNosaziArray) || cNosaziArray.length === 0) {
+window.gisDarkhast = async function (darkhast) {
+    if (!Array.isArray(darkhast) || darkhast.length === 0) {
         console.warn("The input must be an array of codes.");
         return [];
     }
@@ -353,8 +352,7 @@ window.gisDarkhast = async function (cNosaziArray, darkhast) {
     const results = [];
     for (var i = 0; i < darkhast.length; i++) {
         try {
-            const shape = await CreateDarkhastPoint(darkhast[i].cNosazi);
-            debugger;
+            const shape = await CreateDarkhastPoint(darkhast[i].cNosazi);            
             if (shape && darkhast[i].shodarkhast && shape.wkt) {
                 results.push({ Shod: darkhast[i].shodarkhast, ...shape });
 
@@ -381,6 +379,7 @@ window.gisDarkhast = async function (cNosaziArray, darkhast) {
 };
 
 async function checkDarkhastInParcel(darkhast, arseFLayer) {
+    debugger;
     const code = normalizeCodeNosazi(darkhast.cNosazi);
     if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
 
@@ -389,15 +388,28 @@ async function checkDarkhastInParcel(darkhast, arseFLayer) {
     query.returnGeometry = true;
     query.outFields = ["*"];
     const parcelResult = await arseFLayer.queryFeatures(query);
+    let parcelGeom;
     if (parcelResult.features.length === 0) {
-        return { ...darkhast, valid: false, reason: "Parcel not found" };
+        if (!window.leftPolygon) {
+            console.warn("Left polygon not ready or undefined");
+            return { ...darkhast, valid: false, reason: "Parcel not found and leftPolygon not ready" };
+        }
+        parcelGeom = window.leftPolygon;
+        //return { ...darkhast, valid: false, reason: "Parcel not found" };
+    } else {
+        parcelGeom = parcelResult.features[0].geometry;
     }
-
-    const parcelGeom = parcelResult.features[0].geometry;
+    if (!parcelGeom) {
+        console.warn("Parcel geometry is undefined");
+        return { ...darkhast, valid: false, reason: "Parcel geometry undefined" };
+    }
     const point = parseWKTPoint(darkhast.shape);
     if (!point) return { ...darkhast, valid: false, reason: "Invalid shape" };
 
     const inside = geometryEngine.contains(parcelGeom, point);
+    if (!inside) {
+        console.log(`LeftPolygon: ${leftPolygon.spatialReference.wkid}, Point: ${point.spatialReference.wkid}, parcelGeom: ${parcelGeom.spatialReference.wkid}`);
+    }
     return { ...darkhast, valid: inside, reason: inside ? "Inside parcel" : "Outside parcel" };
 }
 
@@ -409,7 +421,8 @@ function parseWKTPoint(wkt) {
         return new Point({
             x: parseFloat(match[1]),
             y: parseFloat(match[2]),
-            spatialReference: { wkid: 4326 } // adjust to your SR
+            //spatialReference: { wkid: 4326 } // adjust to your SR
+            spatialReference: { wkid: arseFLayer.spatialReference?.wkid || 32639 }
         });
     } catch {
         return null;
@@ -446,8 +459,12 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ----------------------------------------------------------
         const invalidWithShape = [];
         const validWithShape = [];
-
-        for (const d of darkhastWithShape) {
+        let counter = 0;
+        const darkhastWithShape1 = darkhastWithShape.slice(423,427);
+        for (const d of darkhastWithShape1) {
+            counter++;
+            console.log("counter: ", counter);
+            debugger;
             const res = await checkDarkhastInParcel(d, arseFLayer);
             if (res.valid) {
                 validWithShape.push(res);
@@ -490,8 +507,9 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ✅ STEP C — Generate new points for reprocess list
         // ----------------------------------------------------------
         if (reprocessListValid.length > 0) {
-            const cNosaziArray = reprocessListValid.map(x => x.cNosazi);
-            const results = await gisDarkhast(cNosaziArray, reprocessListValid);
+            //const cNosaziArray = reprocessListValid.map(x => x.cNosazi);
+            //reprocessListValid = reprocessListValid.slice(0,1000)
+            const results = await gisDarkhast(reprocessListValid);
             //const results = await gisDarkhast(reprocessListValid);
             console.log(`🏁 New points created: ${results.length}/${cNosaziArray.length}`);
         }
