@@ -312,7 +312,7 @@ window.gisDarkhast = async function (darkhast) {
     return results;
 };
 
-async function checkDarkhastInParcel(darkhast, arseFLayer) {
+async function checkDarkhastInParcel1(darkhast, arseFLayer) {
     
     const code = normalizeCodeNosazi(darkhast.cNosazi);
     if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
@@ -342,8 +342,43 @@ async function checkDarkhastInParcel(darkhast, arseFLayer) {
 
     const inside = geometryEngine.contains(parcelGeom, point);
     if (!inside) {
-        console.log(`LeftPolygon: ${leftPolygon.spatialReference.wkid}, Point: ${point.spatialReference.wkid}, parcelGeom: ${parcelGeom.spatialReference.wkid}`);
+        //console.log(`LeftPolygon: ${leftPolygon.spatialReference.wkid}, Point: ${point.spatialReference.wkid}, parcelGeom: ${parcelGeom.spatialReference.wkid}`);
     }
+    return { ...darkhast, valid: inside, reason: inside ? "Inside parcel" : "Outside parcel" };
+}
+async function checkDarkhastInParcel(darkhast, arseFLayer) {
+    const code = normalizeCodeNosazi(darkhast.cNosazi);
+    if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
+
+    const query = arseFLayer.createQuery();
+    query.where = `Code_nosazi = '${code}'`;
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    const parcelResult = await arseFLayer.queryFeatures(query);
+    let parcelGeom;
+
+    if (parcelResult.features.length === 0) {
+        if (!window.leftPolygon) {
+            console.warn("Left polygon is not ready");
+            return { ...darkhast, valid: false, reason: "Parcel not found and no leftPolygon" };
+        }
+        parcelGeom = window.leftPolygon;
+    } else {
+        parcelGeom = parcelResult.features[0].geometry;
+    }
+    if (!parcelGeom) {
+        console.warn("Parcel geometry is undefined");
+        return { ...darkhast, valid: false, reason: "Parcel geometry undefined" };
+    }
+    const point = parseWKTPoint(darkhast.shape);
+    if (!point) return { ...darkhast, valid: false, reason: "Invalid shape" };
+
+    // SpatialReference validation
+    if (point.spatialReference?.wkid !== parcelGeom.spatialReference?.wkid) {
+        point = projection.project(point, parcelGeom.spatialReference);
+    }
+
+    const inside = geometryEngine.contains(parcelGeom, point);
     return { ...darkhast, valid: inside, reason: inside ? "Inside parcel" : "Outside parcel" };
 }
 
@@ -386,7 +421,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
         }
 
-        console.log(`With shape: ${darkhastWithShape.length}, ❌ Without shape: ${darkhastWithoutShape.length}`);
+        console.log(`With shape: ${darkhastWithShape.length}, Without shape: ${darkhastWithoutShape.length}`);
 
         // ----------------------------------------------------------
         // STEP A — Check “with shape” points inside parcel
@@ -418,7 +453,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             }
         }
 
-        console.log(`Inside parcel: ${validWithShape.length}, 🚫 Outside parcel: ${invalidWithShape.length}`);
+        console.log(`Inside parcel: ${validWithShape.length}, Outside parcel: ${invalidWithShape.length}`);
 
         // ----------------------------------------------------------
         // STEP B — Merge invalid-with-shape with no-shape list

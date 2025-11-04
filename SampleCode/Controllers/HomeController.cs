@@ -37,7 +37,6 @@ namespace SampleCode.Controllers
         [HttpGet]
         public JsonResult GetAllDarkhast()
         {
-            //return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
             try
             {
                 var list = (from d in _dbContext.Darkhast
@@ -47,7 +46,7 @@ namespace SampleCode.Controllers
                             {
                                 shodarkhast = d.shodarkhast,
                                 shParvandeh = d.shop,
-                                cNosazi = p.codeN, // از join گرفته می‌شود
+                                cNosazi = p.codeN,
                                 shape = d.Shape.AsText()
                             }).ToList();
 
