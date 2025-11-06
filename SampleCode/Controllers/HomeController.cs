@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Data.Spatial;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Web.Mvc;
 
 
@@ -70,18 +69,18 @@ namespace SampleCode.Controllers
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetAllDarkhast1()
+        public JsonResult GetAllDarkhast1()
         {
             try
             {
-                var list = await (from d in _dbContext.darkhastGis
-                                  select new
-                                  {
-                                      d.shodarkhast,
-                                      shParvandeh = d.shop,
-                                      cNosazi = d.codeN,
-                                      shape = d.Shape
-                                  }).ToListAsync();
+                var list = (from d in _dbContext.darkhastGis
+                            select new
+                            {
+                                d.shodarkhast,
+                                shParvandeh = d.shop,
+                                cNosazi = d.codeN,
+                                shape = d.Shape
+                            }).ToList();
 
                 var listWithShape = new List<object>();
                 var listWithoutShape = new List<object>();

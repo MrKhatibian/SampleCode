@@ -412,6 +412,8 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             console.warn("No Darkhast were received from the Shahrsazi.");
             return;
         }
+        GetDarkhatFromShahrsazi1()
+        debugger;
 
         const darkhastWithShape = [];
         const darkhastWithoutShape = [];
@@ -500,6 +502,25 @@ async function GetDarkhatFromShahrsazi() {
         }
 
         return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
+    } catch (err) {
+        console.error("Error in GetDarkhatFromShahrsazi:", err);
+        return [];
+    }
+}
+async function GetDarkhatFromShahrsazi1() {
+    try {
+        const response = await fetch("/Home/GetAllDarkhast1", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const result = await response.json();
+
+        if (!result.success) { throw new Error(result.message); }
+
+        const { listWithShape, listWithoutShape } = result;
+        console.log(listWithShape.length, listWithoutShape.length);
+        //return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
     } catch (err) {
         console.error("Error in GetDarkhatFromShahrsazi:", err);
         return [];
