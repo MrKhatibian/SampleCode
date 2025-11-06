@@ -8,6 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 
+
+
 namespace SampleCode.Controllers
 {
     public class HomeController : Controller
@@ -112,8 +114,6 @@ namespace SampleCode.Controllers
             }
         }
 
-
-
         [HttpGet]
         public JsonResult testConnection()
         {
@@ -136,9 +136,6 @@ namespace SampleCode.Controllers
             return Json(new { result = message }, JsonRequestBehavior.AllowGet);
 
         }
-
-
-
 
         public class darkhastValues
         {
