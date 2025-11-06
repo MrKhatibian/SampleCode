@@ -416,9 +416,9 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         const darkhastWithShape = [];
         const darkhastWithoutShape = [];
 
-        for (const d of allDarkhastList) {
-            const hasShape = d.shape && d.shape.trim() !== "";
-            (hasShape ? darkhastWithShape : darkhastWithoutShape).push(d);
+        for (const darkhast of allDarkhastList) {
+            const hasShape = darkhast.shape && darkhast.shape.trim() !== "";
+            (hasShape ? darkhastWithShape : darkhastWithoutShape).push(darkhast);
         }
 
         console.log(`With shape: ${darkhastWithShape.length}, Without shape: ${darkhastWithoutShape.length}`);
@@ -459,6 +459,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // STEP B — Merge invalid-with-shape with no-shape list
         // ----------------------------------------------------------
         const reprocessList = [...darkhastWithoutShape, ...invalidWithShape];
+        debugger;
         const reprocessListValid = reprocessList
             .map(d => {
                 const validCode = normalizeCodeNosazi(d.cNosazi);
