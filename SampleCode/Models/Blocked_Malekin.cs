@@ -27,5 +27,8 @@ namespace SampleCode.Models
         public string mob { get; set; }
         public string address { get; set; }
         public string tozihat { get; set; }
+        public string UserFullName { get; set; }
+        public Nullable<System.DateTime> BlockDate { get; set; }
+        public Nullable<System.DateTime> UnBlockDate { get; set; }
     }
 }

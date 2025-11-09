@@ -25,5 +25,8 @@ namespace SampleCode.Models
         public string saal { get; set; }
         public string FlgD { get; set; }
         public byte typeArzeshDaraei { get; set; }
+        public Nullable<decimal> CommercialPrice { get; set; }
+        public Nullable<decimal> OfficePrice { get; set; }
+        public Nullable<decimal> OtherPrice { get; set; }
     }
 }

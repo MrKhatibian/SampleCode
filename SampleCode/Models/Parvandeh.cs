@@ -40,6 +40,7 @@ namespace SampleCode.Models
         public string AssetBlock { get; set; }
         public bool Destructed { get; set; }
         public bool IsTajmi { get; set; }
+        public string Description { get; set; }
     
         public virtual ICollection<LevelJob> LevelJob { get; set; }
     }

@@ -277,6 +277,7 @@ async function CreateDarkhastPoint(cNosazi) {
 }
 
 window.gisDarkhast = async function (darkhast) {
+    debugger;
     if (!Array.isArray(darkhast) || darkhast.length === 0) {
         console.warn("The input must be an array of codes.");
         return [];
@@ -408,22 +409,23 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         console.log("Starting to receive data from Shahrsazi");
 
         const allDarkhastList = await GetDarkhatFromShahrsazi();
-        if (!Array.isArray(allDarkhastList) || allDarkhastList.length === 0) {
-            console.warn("No Darkhast were received from the Shahrsazi.");
-            return;
-        }
-        GetDarkhatFromShahrsazi1()
+        //if (!Array.isArray(allDarkhastList) || allDarkhastList.length === 0) {
+        //    console.warn("No Darkhast were received from the Shahrsazi.");
+        //    return;
+        //}
+        const { listWithShape, listWithoutShape } = await GetDarkhatFromShahrsazi1();
         debugger;
 
-        const darkhastWithShape = [];
-        const darkhastWithoutShape = [];
+        //const darkhastWithShape = [];
+        //const darkhastWithoutShape = [];
 
-        for (const darkhast of allDarkhastList) {
-            const hasShape = darkhast.shape && darkhast.shape.trim() !== "";
-            (hasShape ? darkhastWithShape : darkhastWithoutShape).push(darkhast);
-        }
+        //for (const darkhast of allDarkhastList) {
+        //    const hasShape = darkhast.shape && darkhast.shape.trim() !== "";
+        //    (hasShape ? darkhastWithShape : darkhastWithoutShape).push(darkhast);
+        //}
 
-        console.log(`With shape: ${darkhastWithShape.length}, Without shape: ${darkhastWithoutShape.length}`);
+        //console.log(`With shape: ${darkhastWithShape.length}, Without shape: ${darkhastWithoutShape.length}`);
+        console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
 
         // ----------------------------------------------------------
         // STEP A — Check “with shape” points inside parcel
@@ -431,7 +433,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         const invalidWithShape = [];
         const validWithShape = [];        
         
-        for (const d of darkhastWithShape) {            
+        for (const d of listWithShape) {            
             const res = await checkDarkhastInParcel(d, arseFLayer);
             if (res.valid) {
                 validWithShape.push(res);
@@ -460,16 +462,16 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ----------------------------------------------------------
         // STEP B — Merge invalid-with-shape with no-shape list
         // ----------------------------------------------------------
-        const reprocessList = [...darkhastWithoutShape, ...invalidWithShape];
+        const reprocessList = [...listWithoutShape, ...invalidWithShape];
         debugger;
-        const reprocessListValid = reprocessList
-            .map(d => {
-                const validCode = normalizeCodeNosazi(d.cNosazi);
-                return validCode ? { ...d, cNosazi: validCode } : null;
-            })
-            .filter(Boolean);
+        const reprocessListValid = reprocessList;
+        //    .map(d => {
+        //        const validCode = normalizeCodeNosazi(d.cNosazi);
+        //        return validCode ? { ...d, cNosazi: validCode } : null;
+        //    })
+        //    .filter(Boolean);
 
-        console.log(`Total for regeneration: ${reprocessListValid.length}`);
+        //console.log(`Total for regeneration: ${reprocessListValid.length}`);
 
         // ----------------------------------------------------------
         // STEP C — Generate new points for reprocess list
@@ -478,7 +480,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
             
             const results = await gisDarkhast(reprocessListValid);
             if (results)
-                console.log(`New points created: ${results.length}/${cNosaziArray.length}`);
+                console.log(`New points created: ${results.length}/${reprocessListValid.length}`);
         }
 
     } catch (err) {
@@ -517,12 +519,12 @@ async function GetDarkhatFromShahrsazi1() {
         const result = await response.json();
 
         if (!result.success) { throw new Error(result.message); }
-
-        const { listWithShape, listWithoutShape } = result;
-        console.log(listWithShape.length, listWithoutShape.length);
+        return result;
+        //const { listWithShape, listWithoutShape } = result;
+        //console.log(listWithShape.length, listWithoutShape.length);
         //return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
     } catch (err) {
-        console.error("Error in GetDarkhatFromShahrsazi:", err);
+        console.error("Error in GetDarkhatFromShahrsazi1:", err);
         return [];
     }
 }

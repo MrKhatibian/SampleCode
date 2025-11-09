@@ -12,18 +12,19 @@ namespace SampleCode.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class TrafficFormula
+    public partial class ConflictFormula
     {
-        public TrafficFormula()
+        public ConflictFormula()
         {
-            this.TrafficDetail = new HashSet<TrafficDetail>();
+            this.ConflictFormulaDetails = new HashSet<ConflictFormulaDetails>();
         }
     
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Formula { get; set; }
-        public Nullable<int> Year { get; set; }
+        public int Year { get; set; }
+        public string FX { get; set; }
+        public string Description { get; set; }
+        public Nullable<bool> FinalFormula { get; set; }
     
-        public virtual ICollection<TrafficDetail> TrafficDetail { get; set; }
+        public virtual ICollection<ConflictFormulaDetails> ConflictFormulaDetails { get; set; }
     }
 }

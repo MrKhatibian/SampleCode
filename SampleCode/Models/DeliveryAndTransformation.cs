@@ -26,5 +26,7 @@ namespace SampleCode.Models
         public Nullable<decimal> Shod { get; set; }
         public Nullable<decimal> Shop { get; set; }
         public string Description { get; set; }
+        public Nullable<int> ReferenceNumber { get; set; }
+        public string ReferenceIssuer { get; set; }
     }
 }

@@ -27,6 +27,7 @@ namespace SampleCode.Models
         public Nullable<decimal> TotalPrice { get; set; }
         public Nullable<bool> IsDelete { get; set; }
         public Nullable<int> NumOfExpert { get; set; }
+        public Nullable<long> RealEstateExpertId { get; set; }
     
         public virtual ExpertOfEstate ExpertOfEstate { get; set; }
     }

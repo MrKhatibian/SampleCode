@@ -63,7 +63,5 @@ namespace SampleCode.Models
         public Nullable<decimal> mablaghBes { get; set; }
         public Nullable<int> c_marhaleh { get; set; }
         public bool Ebtal { get; set; }
-        public System.Data.Spatial.DbGeometry Shape { get; set; }
-        public int IdGIS { get; set; }
     }
 }

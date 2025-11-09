@@ -73,7 +73,7 @@ namespace SampleCode.Controllers
         {
             try
             {
-                var list = (from d in _dbContext.darkhastGis
+                var list = (from d in _dbContext.DarkhastGIS
                             select new
                             {
                                 d.shodarkhast,

@@ -58,5 +58,6 @@ namespace SampleCode.Models
         public Nullable<int> Expr2 { get; set; }
         public string UserName { get; set; }
         public Nullable<int> UserCode { get; set; }
+        public Nullable<decimal> Tax { get; set; }
     }
 }

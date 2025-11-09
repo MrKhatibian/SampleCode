@@ -47,5 +47,6 @@ namespace SampleCode.Models
         public Nullable<bool> Taxable { get; set; }
         public string IncomeType { get; set; }
         public string MoadianDescription { get; set; }
+        public Nullable<bool> CalculationDelayInPayment { get; set; }
     }
 }

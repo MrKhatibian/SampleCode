@@ -18,5 +18,23 @@ namespace SampleCode.Models
         public Nullable<int> tarikhMozayedeh { get; set; }
         public Nullable<int> tarikhFishShahrdari { get; set; }
         public Nullable<long> mablaghFishShahrdari { get; set; }
+        public string PossessionStatus { get; set; }
+        public Nullable<int> C_PossessionStatus { get; set; }
+        public string ProjectDefinition { get; set; }
+        public Nullable<int> C_ProjectDefinition { get; set; }
+        public string ExploitationType { get; set; }
+        public Nullable<int> C_ExploitationType { get; set; }
+        public Nullable<int> CreateType { get; set; }
+        public Nullable<System.DateTime> OwnershipDate { get; set; }
+        public string OwnerName { get; set; }
+        public Nullable<long> ApprovalNo { get; set; }
+        public Nullable<System.DateTime> ApprovalDate { get; set; }
+        public string FinanceCode { get; set; }
+        public Nullable<bool> IsRentable { get; set; }
+        public Nullable<bool> IsDemolishable { get; set; }
+        public Nullable<bool> IsInPath { get; set; }
+        public Nullable<bool> IsAssignable { get; set; }
+        public Nullable<bool> IsMunicipalityShareLand { get; set; }
+        public Nullable<bool> IsProtected { get; set; }
     }
 }

@@ -75,5 +75,6 @@ namespace SampleCode.Models
         public Nullable<long> DelayInPaymentOfServices { get; set; }
         public Nullable<byte> RenovationType { get; set; }
         public Nullable<System.DateTime> LastModified { get; set; }
+        public Nullable<int> ServiceTax { get; set; }
     }
 }

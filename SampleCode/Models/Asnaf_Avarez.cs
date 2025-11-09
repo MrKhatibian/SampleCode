@@ -37,6 +37,7 @@ namespace SampleCode.Models
         public Nullable<long> JobListId { get; set; }
         public Nullable<decimal> ConstantNumber { get; set; }
         public Nullable<long> ParametricDiscount { get; set; }
+        public Nullable<long> DelayInPayment { get; set; }
     
         public virtual Dv_ListShoghl Dv_ListShoghl { get; set; }
     }

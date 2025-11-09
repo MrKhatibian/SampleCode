@@ -35,5 +35,7 @@ namespace SampleCode.Models
         public Nullable<int> BaseDensityPercentage { get; set; }
         public Nullable<int> BaseOccupancyLevel { get; set; }
         public Nullable<int> c_estefadeh_m { get; set; }
+        public Nullable<int> C_PerformanceScale { get; set; }
+        public string PerformanceScale { get; set; }
     }
 }

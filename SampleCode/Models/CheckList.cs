@@ -12,18 +12,15 @@ namespace SampleCode.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class TrafficFormula
+    public partial class CheckList
     {
-        public TrafficFormula()
-        {
-            this.TrafficDetail = new HashSet<TrafficDetail>();
-        }
-    
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Formula { get; set; }
-        public Nullable<int> Year { get; set; }
-    
-        public virtual ICollection<TrafficDetail> TrafficDetail { get; set; }
+        public long Id { get; set; }
+        public int Shop { get; set; }
+        public Nullable<int> Shod { get; set; }
+        public int Radif { get; set; }
+        public int Type { get; set; }
+        public Nullable<bool> Complate { get; set; }
+        public string Description { get; set; }
+        public string ShortDescription { get; set; }
     }
 }
