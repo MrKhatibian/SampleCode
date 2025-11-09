@@ -45,7 +45,7 @@ namespace SampleCode.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetAllDarkhast()
+        public JsonResult GetAllDarkhast1()
         {
             try
             {
@@ -69,7 +69,7 @@ namespace SampleCode.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetAllDarkhast1()
+        public JsonResult GetAllDarkhast()
         {
             try
             {
