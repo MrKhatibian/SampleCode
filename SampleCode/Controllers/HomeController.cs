@@ -1,10 +1,13 @@
 ﻿using SampleCode.Models;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Spatial;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
+
+
 
 namespace SampleCode.Controllers
 {
@@ -34,10 +37,16 @@ namespace SampleCode.Controllers
         {
             return View();
         }
+
+        private readonly AmardShahrsaziMaryanajEntities _dbContext;
+        public HomeController()
+        {
+            _dbContext = new AmardShahrsaziMaryanajEntities();
+        }
+
         [HttpGet]
         public JsonResult GetAllDarkhast()
         {
-            //return Json(new { success = true, message = "Successful" }, JsonRequestBehavior.AllowGet);
             try
             {
                 var list = (from d in _dbContext.Darkhast
@@ -47,11 +56,56 @@ namespace SampleCode.Controllers
                             {
                                 shodarkhast = d.shodarkhast,
                                 shParvandeh = d.shop,
-                                cNosazi = p.codeN, // از join گرفته می‌شود
+                                cNosazi = p.codeN,
                                 shape = d.Shape.AsText()
                             }).ToList();
 
                 return Json(new { success = true, data = list }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetAllDarkhast1()
+        {
+            try
+            {
+                var list = (from d in _dbContext.darkhastGis
+                            select new
+                            {
+                                d.shodarkhast,
+                                shParvandeh = d.shop,
+                                cNosazi = d.codeN,
+                                shape = d.Shape
+                            }).ToList();
+
+                var listWithShape = new List<object>();
+                var listWithoutShape = new List<object>();
+
+                foreach (var d in list)
+                {
+                    if (d.shape == null)
+                        listWithoutShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = (string)null
+                        });
+                    else
+                        listWithShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = d.shape.AsText()
+                        });
+                }
+
+                return Json(new { success = true, listWithShape, listWithoutShape }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -80,13 +134,6 @@ namespace SampleCode.Controllers
 
             return Json(new { result = message }, JsonRequestBehavior.AllowGet);
 
-        }
-
-
-        private readonly AmardShahrsaziMaryanajEntities _dbContext;
-        public HomeController()
-        {
-            _dbContext = new AmardShahrsaziMaryanajEntities();
         }
 
         public class darkhastValues
