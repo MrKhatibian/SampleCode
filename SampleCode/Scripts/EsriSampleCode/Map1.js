@@ -395,8 +395,7 @@ async function fetchBatch(skip, batchSize = 100) {
     return response.json();
 }
 
-async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
-
+async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {    
     const skips = [];
     for (let s = 0; s < totalCount; s += batchSize) {
         skips.push(s);
@@ -407,20 +406,19 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
     let results = [];
 
     return new Promise((resolve, reject) => {
-        function next() {
+        function next() {            
             // همه Batch‌ها تمام شده؟
             if (index >= skips.length && active === 0) {
                 return resolve(results);
-            }
-
+            }            
             // اگر می‌توانیم کارگر جدید فعال کنیم
-            while (active < concurrency && index < skips.length) {
+            while (active < concurrency && index < skips.length) {                
                 const currentSkip = skips[index++];
                 active++;
-
                 fetchBatch(currentSkip)
                     .then(res => {
                         results.push(res);
+                        UpdateProgressbar(Math.round(results.length / skips.length * 100));                        
                         console.log(`Batch ${currentSkip} loaded.`);
                     })
                     .catch(err => console.error("Batch error:", err))
@@ -435,7 +433,8 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
     });
 }
 
-async function loadAllDarkhast() {    
+async function loadAllDarkhast() {
+    RestProgressbar();
     // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
     const first = await fetchBatch(0, 1);
 
@@ -564,11 +563,13 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
         console.log("Starting to receive data from Shahrsazi");
-        divprogressbar.hidden = false;
+        RestProgressbar();
+        ShowProgressbar();
+
         // دریافت لیست‌ها
         const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
-
+        return;
         // ----------------------------------------------------------
         // ✅ STEP A — Batch check “with shape” data (100 by 100)
         // ----------------------------------------------------------
@@ -619,7 +620,7 @@ btnStartProgressbar.addEventListener("click", () => {
     ShowProgressbar();    
     UpdateProgressbar(25);    
 });
-function Restprogressbar() {
+function RestProgressbar() {
     UpdateProgressbar(0);     
 }
 function ShowProgressbar(Show = true) {    
