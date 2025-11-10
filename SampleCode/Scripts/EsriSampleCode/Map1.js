@@ -353,7 +353,7 @@ async function CheckDarkhastInParcel(darkhast, arseFLayer) {
     query.where = `Code_nosazi = '${darkhast.cNosazi}'`;
     query.returnGeometry = true;
     query.outFields = ["*"];
-    console.log("checkParcl: ", darkhast.cNosazi);
+    //console.log("checkParcl: ", darkhast.cNosazi);
 
     const parcelResult = await arseFLayer.queryFeatures(query);
     let parcelGeom = parcelResult.features[0]?.geometry || window.leftPolygon;
@@ -419,7 +419,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
                     .then(res => {
                         results.push(res);
                         UpdateProgressbar(progressbar1, Math.round(results.length / skips.length * 100));                        
-                        console.log(`Batch ${currentSkip} loaded.`);
+                        //console.log(`Batch ${currentSkip} loaded.`);
                     })
                     .catch(err => console.error("Batch error:", err))
                     .finally(() => {
@@ -465,8 +465,7 @@ async function checkInBatches(list, batchSize = 100) {
     const invalid = [];
 
     for (let i = 0; i < list.length; i += batchSize) {
-        const batch = list.slice(i, i + batchSize);
-        console.log("batchCounter:", i)
+        const batch = list.slice(i, i + batchSize);        
         const results = await Promise.all(
             batch.map(d => CheckDarkhastInParcel(d, arseFLayer))
         );
@@ -474,8 +473,8 @@ async function checkInBatches(list, batchSize = 100) {
         results.forEach(r => {
             if (r.valid) valid.push(r);
             else invalid.push(r);
-        });
-
+        });        
+        UpdateProgressbar(progressbar2, Math.round((valid.length + invalid.length) / list.length * 100));
         console.log(`Batch ${Math.floor(i / batchSize) + 1} processed (${batch.length} items)`);
     }
 
@@ -564,18 +563,20 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
         console.log("Starting to receive data from Shahrsazi");
         RestProgressbar(progressbar1);
+        RestProgressbar(progressbar2);
+        RestProgressbar(progressbar3);
         ShowProgressbar();
 
         // دریافت لیست‌ها
         const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
-        return;
+        
         // ----------------------------------------------------------
         // ✅ STEP A — Batch check “with shape” data (100 by 100)
         // ----------------------------------------------------------
         const { valid, invalid } = await checkInBatches(listWithShape, 100);
         console.log(`Inside parcel: ${valid.length}, Outside parcel: ${invalid.length}`);
-
+        return;
         // نمایش red point فقط برای invalid‌ها
         invalid.forEach(d => {
             const point = ParselWKTPoint(d.shape);
@@ -584,7 +585,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
                     geometry: point,
                     symbol: {
                         type: "simple-marker",
-                        color: [255, 0, 0, 0.8],
+                        color: [0, 255, 0, 0.8],
                         size: 6,
                         outline: { color: "white", width: 0.5 }
                     }
