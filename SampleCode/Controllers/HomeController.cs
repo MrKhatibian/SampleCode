@@ -114,6 +114,132 @@ namespace SampleCode.Controllers
         }
 
         [HttpGet]
+        public JsonResult GetAllDarkhastBatch1(int skip = 0, int batchSize = 100)
+        {
+            try
+            {
+                var query = _dbContext.DarkhastGIS
+                    .OrderBy(d => d.shodarkhast)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        shParvandeh = d.shop,
+                        cNosazi = d.codeN,
+                        shape = d.Shape
+                    })
+                    .ToList();
+                var listWithShape = new List<object>();
+                var listWithoutShape = new List<object>();
+
+                foreach (var d in query)
+                {
+                    if (d.shape == null)
+                    {
+                        listWithoutShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = (string)null
+                        });
+                    }
+                    else
+                    {
+                        listWithShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = d.shape.AsText()
+                        });
+                    }
+                }
+
+                var totalCount = _dbContext.DarkhastGIS.Count();
+
+                return Json(new
+                {
+                    success = true,
+                    skip,
+                    batchSize,
+                    totalCount,
+                    listWithShape,
+                    listWithoutShape
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetAllDarkhastBatch(int skip = 0, int batchSize = 100)
+        {
+            try
+            {
+                var batch = _dbContext.DarkhastGIS
+                    .OrderBy(d => d.shodarkhast)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        shParvandeh = d.shop,
+                        cNosazi = d.codeN,
+                        shape = d.Shape
+                    })
+                    .ToList();
+
+                var listWithShape = new List<object>();
+                var listWithoutShape = new List<object>();
+
+                foreach (var d in batch)
+                {
+                    if (d.shape == null)
+                    {
+                        listWithoutShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = (string)null
+                        });
+                    }
+                    else
+                    {
+                        listWithShape.Add(new
+                        {
+                            d.shodarkhast,
+                            d.shParvandeh,
+                            d.cNosazi,
+                            shape = d.shape.AsText()
+                        });
+                    }
+                }
+
+                var totalCount = _dbContext.DarkhastGIS.Count();
+
+                return Json(new
+                {
+                    success = true,
+                    skip,
+                    batchSize,
+                    totalCount,
+                    listWithShape,
+                    listWithoutShape
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+        [HttpGet]
         public JsonResult testConnection()
         {
             string connString = ConfigurationManager.ConnectionStrings["AmardShahrsaziMaryanaj"].ConnectionString;

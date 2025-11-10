@@ -312,7 +312,7 @@ window.GisDarkhast = async function (listDarkhat) {
     return results;
 };
 
-async function CheckDarkhastInParcel(darkhast, arseFLayer) {
+async function CheckDarkhastInParcel1(darkhast, arseFLayer) {
     //const code = normalizeCodeNosazi(darkhast.cNosazi);
     //if (!code) return { ...darkhast, valid: false, reason: "Invalid codeNosazi" };
 
@@ -336,7 +336,7 @@ async function CheckDarkhastInParcel(darkhast, arseFLayer) {
         console.warn("Parcel geometry is undefined");
         return { ...darkhast, valid: false, reason: "Parcel geometry undefined" };
     }
-    const point = ParselWKTPoint(darkhast.shape);
+    let point = ParselWKTPoint(darkhast.shape);
     if (!point) return { ...darkhast, valid: false, reason: "Invalid shape" };
 
     // SpatialReference validation
@@ -346,6 +346,32 @@ async function CheckDarkhastInParcel(darkhast, arseFLayer) {
 
     const inside = geometryEngine.contains(parcelGeom, point);
     return { ...darkhast, valid: inside, reason: inside ? "Inside parcel" : "Outside parcel" };
+}
+async function CheckDarkhastInParcel(darkhast, arseFLayer) {
+
+    const query = arseFLayer.createQuery();
+    query.where = `Code_nosazi = '${darkhast.cNosazi}'`;
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    console.log("checkParcl: ", darkhast.cNosazi);
+
+    const parcelResult = await arseFLayer.queryFeatures(query);
+    let parcelGeom = parcelResult.features[0]?.geometry || window.leftPolygon;
+
+    if (!parcelGeom) {
+        return { ...darkhast, valid: false, reason: "Parcel not found" };
+    }
+
+    let point = ParselWKTPoint(darkhast.shape);
+    if (!point) return { ...darkhast, valid: false, reason: "Invalid shape" };
+
+    // هماهنگ‌سازی SpatialReference
+    if (point.spatialReference?.wkid !== parcelGeom.spatialReference?.wkid) {
+        point = projection.project(point, parcelGeom.spatialReference);
+    }
+
+    const inside = geometryEngine.contains(parcelGeom, point);
+    return { ...darkhast, valid: inside };
 }
 
 function ParselWKTPoint(wkt) {
@@ -364,63 +390,219 @@ function ParselWKTPoint(wkt) {
     }
 }
 
+async function fetchBatch(skip, batchSize = 100) {
+    const response = await fetch(`/Home/GetAllDarkhastBatch?skip=${skip}&batchSize=${batchSize}`);
+    return response.json();
+}
+
+async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
+
+    const skips = [];
+    for (let s = 0; s < totalCount; s += batchSize) {
+        skips.push(s);
+    }
+
+    let active = 0;
+    let index = 0;
+    let results = [];
+
+    return new Promise((resolve, reject) => {
+        function next() {
+            // همه Batch‌ها تمام شده؟
+            if (index >= skips.length && active === 0) {
+                return resolve(results);
+            }
+
+            // اگر می‌توانیم کارگر جدید فعال کنیم
+            while (active < concurrency && index < skips.length) {
+                const currentSkip = skips[index++];
+                active++;
+
+                fetchBatch(currentSkip)
+                    .then(res => {
+                        results.push(res);
+                        console.log(`Batch ${currentSkip} loaded.`);
+                    })
+                    .catch(err => console.error("Batch error:", err))
+                    .finally(() => {
+                        active--;
+                        next(); // کارگر بعدی
+                    });
+            }
+        }
+
+        next();
+    });
+}
+
+async function loadAllDarkhast() {
+
+    // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
+    const first = await fetchBatch(0, 1);
+
+    const totalCount = first.totalCount;
+
+    console.log("Total records:", totalCount);
+
+    const all = await fetchAllBatches(totalCount, 100, 5);
+
+    // ادغام همهٔ دیتای دریافتی
+    let listWithShape = [];
+    let listWithoutShape = [];
+
+    for (let batch of all) {
+        listWithShape.push(...batch.listWithShape);
+        listWithoutShape.push(...batch.listWithoutShape);
+    }
+
+    console.log("DONE ✅");
+    console.log("Total with shape:", listWithShape.length);
+    console.log("Total without shape:", listWithoutShape.length);
+
+    return { listWithShape, listWithoutShape };
+}
+
+async function checkInBatches(list, batchSize = 100) {
+    const valid = [];
+    const invalid = [];
+
+    for (let i = 0; i < list.length; i += batchSize) {
+        const batch = list.slice(i, i + batchSize);
+        console.log("batchCounter:", i)
+        const results = await Promise.all(
+            batch.map(d => CheckDarkhastInParcel(d, arseFLayer))
+        );
+
+        results.forEach(r => {
+            if (r.valid) valid.push(r);
+            else invalid.push(r);
+        });
+
+        console.log(`Batch ${Math.floor(i / batchSize) + 1} processed (${batch.length} items)`);
+    }
+
+    return { valid, invalid };
+}
+
+async function processBatches(list, batchSize, processorFn) {
+    let results = [];
+
+    for (let i = 0; i < list.length; i += batchSize) {
+        const batch = list.slice(i, i + batchSize);
+
+        const batchResult = await processorFn(batch);
+        if (Array.isArray(batchResult)) {
+            results = results.concat(batchResult);
+        }
+
+        console.log(`Processed batch ${Math.floor(i / batchSize) + 1}`);
+    }
+
+    return results;
+}
+
 // btn Update XY Darkhast
 const btnUpdateXYDarkhast = document.getElementById("btnUpdateXYDarkhast");
 //btnSelect.classList = "esri-widget esri-widget--button esri-interactive";
 view.ui.add(btnUpdateXYDarkhast, "top-right");
+//btnUpdateXYDarkhast.addEventListener("click", async () => {
+//    try {
+//        console.log("Starting to receive data from Shahrsazi");                
+//        const { listWithShape, listWithoutShape } = await loadAllDarkhast();
+//        console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
 
+//        // ----------------------------------------------------------
+//        // STEP A — Check “with shape” points inside parcel
+//        // ----------------------------------------------------------
+//        const invalidWithShape = [];
+//        const validWithShape = [];        
+        
+//        for (const d of listWithShape) {            
+//            const res = await CheckDarkhastInParcel(d, arseFLayer);
+//            if (res.valid) {
+//                validWithShape.push(res);
+//            } else {
+//                console.warn(`${res.cNosazi} point outside parcel → will reprocess`);
+//                invalidWithShape.push(res);
+
+//                // visualize red point
+//                const point = ParselWKTPoint(d.shape);
+//                if (point) {
+//                    view.graphics.add(new Graphic({
+//                        geometry: point,
+//                        symbol: {
+//                            type: "simple-marker",
+//                            color: [255, 0, 0, 0.8],
+//                            size: 6,
+//                            outline: { color: "white", width: 0.5 }
+//                        }
+//                    }));
+//                }
+//            }
+//        }
+
+//        console.log(`Inside parcel: ${validWithShape.length}, Outside parcel: ${invalidWithShape.length}`);
+
+//        // ----------------------------------------------------------
+//        // STEP B — Merge invalid-with-shape with no-shape list
+//        // ----------------------------------------------------------
+//        const reprocessList = [...listWithoutShape, ...invalidWithShape]; 
+
+//        // ----------------------------------------------------------
+//        // STEP C — Generate new points for reprocess list
+//        // ----------------------------------------------------------
+//        if (reprocessList.length > 0) {
+            
+//            const results = await GisDarkhast(reprocessList);
+//            if (results)
+//                console.log(`New points created: ${results.length}/${reprocessList.length}`);
+//        }
+
+//    } catch (err) {
+//        console.error("Error in the XY Darkhast update process:", err);
+//    }
+//});
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
-        console.log("Starting to receive data from Shahrsazi");
-
-        const { listWithShape, listWithoutShape } = await GetDarkhatFromShahrsazi();
+        console.log("Starting to receive data from Shahrsazi");       
+        // دریافت لیست‌ها
+        const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
 
         // ----------------------------------------------------------
-        // STEP A — Check “with shape” points inside parcel
+        // ✅ STEP A — Batch check “with shape” data (100 by 100)
         // ----------------------------------------------------------
-        const invalidWithShape = [];
-        const validWithShape = [];        
-        
-        for (const d of listWithShape) {            
-            const res = await CheckDarkhastInParcel(d, arseFLayer);
-            if (res.valid) {
-                validWithShape.push(res);
-            } else {
-                console.warn(`${res.cNosazi} point outside parcel → will reprocess`);
-                invalidWithShape.push(res);
+        const { valid, invalid } = await checkInBatches(listWithShape, 100);
+        console.log(`Inside parcel: ${valid.length}, Outside parcel: ${invalid.length}`);
 
-                // visualize red point
-                const point = ParselWKTPoint(d.shape);
-                if (point) {
-                    view.graphics.add(new Graphic({
-                        geometry: point,
-                        symbol: {
-                            type: "simple-marker",
-                            color: [255, 0, 0, 0.8],
-                            size: 6,
-                            outline: { color: "white", width: 0.5 }
-                        }
-                    }));
-                }
+        // نمایش red point فقط برای invalid‌ها
+        invalid.forEach(d => {
+            const point = ParselWKTPoint(d.shape);
+            if (point) {
+                view.graphics.add(new Graphic({
+                    geometry: point,
+                    symbol: {
+                        type: "simple-marker",
+                        color: [255, 0, 0, 0.8],
+                        size: 6,
+                        outline: { color: "white", width: 0.5 }
+                    }
+                }));
             }
-        }
-
-        console.log(`Inside parcel: ${validWithShape.length}, Outside parcel: ${invalidWithShape.length}`);
+        });
 
         // ----------------------------------------------------------
-        // STEP B — Merge invalid-with-shape with no-shape list
+        // ✅ STEP B — Merge invalid-with-shape with no-shape list
         // ----------------------------------------------------------
-        const reprocessList = [...listWithoutShape, ...invalidWithShape]; 
+        const reprocessList = [...listWithoutShape, ...invalid];
+        console.log("Total reprocess count:", reprocessList.length);
 
         // ----------------------------------------------------------
-        // STEP C — Generate new points for reprocess list
+        // ✅ STEP C — Generate new points in batches (100 by 100)
         // ----------------------------------------------------------
         if (reprocessList.length > 0) {
-            
-            const results = await GisDarkhast(reprocessList);
-            if (results)
-                console.log(`New points created: ${results.length}/${reprocessList.length}`);
+            const results = await processBatches(reprocessList, 100, GisDarkhast);
+            console.log(`New points created: ${results.length}/${reprocessList.length}`);
         }
 
     } catch (err) {
@@ -429,42 +611,8 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
 });
 
 
-async function GetDarkhatFromShahrsazi1() {
-    try {
-        const response = await fetch("/Home/GetAllDarkhast", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
 
-        const result = await response.json();
 
-        if (!result.success) {
-            throw new Error(result.message);
-            return [];
-        }
-
-        return result.data; // [{shodarkhast:1, shParvandeh:'A123', shape:'POINT(...)'}, ...]
-    } catch (err) {
-        console.error("Error in GetDarkhatFromShahrsazi:", err);
-        return [];
-    }
-}
-async function GetDarkhatFromShahrsazi() {
-    try {
-        const response = await fetch("/Home/GetAllDarkhast", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-
-        const result = await response.json();
-
-        if (!result.success) { throw new Error(result.message); }
-        return result;
-    } catch (err) {
-        console.error("Error in GetDarkhatFromShahrsazi:", err);
-        return [];
-    }
-}
 
 // === Sketch Init ===
 const sketchLayer = new GraphicsLayer();
