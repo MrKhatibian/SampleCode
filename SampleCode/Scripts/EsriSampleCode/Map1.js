@@ -435,8 +435,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
     });
 }
 
-async function loadAllDarkhast() {
-
+async function loadAllDarkhast() {    
     // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
     const first = await fetchBatch(0, 1);
 
@@ -564,7 +563,8 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 //});
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
-        console.log("Starting to receive data from Shahrsazi");       
+        console.log("Starting to receive data from Shahrsazi");
+        divprogressbar.hidden = false;
         // دریافت لیست‌ها
         const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
@@ -610,8 +610,24 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     }
 });
 
+// =============== Progressbar hanlder ===============
+const divprogressbar = document.getElementById("divProgressbar");
+const btnStartProgressbar = document.getElementById("btnStartProgressbar");
+const progressbar = document.getElementById("progressbar");
 
-
+btnStartProgressbar.addEventListener("click", () => {    
+    ShowProgressbar();    
+    UpdateProgressbar(25);    
+});
+function Restprogressbar() {
+    UpdateProgressbar(0);     
+}
+function ShowProgressbar(Show = true) {    
+    divprogressbar.hidden = !Show;
+}
+function UpdateProgressbar(prsent) {    
+    progressbar.style.width = progressbar.textContent = `${prsent}%`;
+}
 
 
 // === Sketch Init ===
