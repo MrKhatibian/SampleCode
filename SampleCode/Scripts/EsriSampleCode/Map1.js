@@ -418,7 +418,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
                 fetchBatch(currentSkip)
                     .then(res => {
                         results.push(res);
-                        UpdateProgressbar(Math.round(results.length / skips.length * 100));                        
+                        UpdateProgressbar(progressbar1, Math.round(results.length / skips.length * 100));                        
                         console.log(`Batch ${currentSkip} loaded.`);
                     })
                     .catch(err => console.error("Batch error:", err))
@@ -434,7 +434,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
 }
 
 async function loadAllDarkhast() {
-    RestProgressbar();
+    RestProgressbar(progressbar1);
     // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
     const first = await fetchBatch(0, 1);
 
@@ -563,7 +563,7 @@ view.ui.add(btnUpdateXYDarkhast, "top-right");
 btnUpdateXYDarkhast.addEventListener("click", async () => {
     try {
         console.log("Starting to receive data from Shahrsazi");
-        RestProgressbar();
+        RestProgressbar(progressbar1);
         ShowProgressbar();
 
         // دریافت لیست‌ها
@@ -614,19 +614,21 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
 // =============== Progressbar hanlder ===============
 const divprogressbar = document.getElementById("divProgressbar");
 const btnStartProgressbar = document.getElementById("btnStartProgressbar");
-const progressbar = document.getElementById("progressbar");
+const progressbar1 = document.getElementById("progressbar1");
+const progressbar2 = document.getElementById("progressbar2");
+const progressbar3 = document.getElementById("progressbar3");
 
 btnStartProgressbar.addEventListener("click", () => {    
     ShowProgressbar();    
     UpdateProgressbar(25);    
 });
-function RestProgressbar() {
-    UpdateProgressbar(0);     
+function RestProgressbar(progressbar) {
+    UpdateProgressbar(progressbar, 0);     
 }
 function ShowProgressbar(Show = true) {    
     divprogressbar.hidden = !Show;
 }
-function UpdateProgressbar(prsent) {    
+function UpdateProgressbar(progressbar, prsent) {    
     progressbar.style.width = progressbar.textContent = `${prsent}%`;
 }
 
