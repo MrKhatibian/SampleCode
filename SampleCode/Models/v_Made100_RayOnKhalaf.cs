@@ -68,5 +68,7 @@ namespace SampleCode.Models
         public Nullable<int> RowId { get; set; }
         public Nullable<int> BalconyRowId { get; set; }
         public Nullable<decimal> CommissionScope { get; set; }
+        public Nullable<double> tarakom { get; set; }
+        public Nullable<double> tarakomMojaz { get; set; }
     }
 }

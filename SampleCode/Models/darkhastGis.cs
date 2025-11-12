@@ -12,30 +12,26 @@ namespace SampleCode.Models
     using System;
     using System.Collections.Generic;
     
-    public partial class darkhastGis
+    public partial class DarkhastGIS
     {
         public double shop { get; set; }
+        public long shodarkhast { get; set; }
+        public string codeN { get; set; }
+        public string noedarkhast { get; set; }
+        public Nullable<int> c_noedarkhast { get; set; }
+        public string marhaleh { get; set; }
+        public Nullable<int> c_marhaleh { get; set; }
+        public string karbariAsli { get; set; }
+        public Nullable<int> C_karbariAsli { get; set; }
+        public string mahdodeh { get; set; }
+        public Nullable<int> c_mahdodeh { get; set; }
+        public Nullable<int> date_rooz { get; set; }
         public Nullable<decimal> mantaghe { get; set; }
         public Nullable<decimal> hoze { get; set; }
         public Nullable<decimal> blok { get; set; }
         public Nullable<decimal> shomelk { get; set; }
-        public Nullable<decimal> sakhteman { get; set; }
-        public Nullable<decimal> apar { get; set; }
-        public Nullable<decimal> senfi { get; set; }
-        public string codeN { get; set; }
-        public Nullable<double> masahat_s { get; set; }
-        public Nullable<double> masahat_m { get; set; }
-        public Nullable<double> masahat_e { get; set; }
-        public Nullable<double> masahat_b { get; set; }
-        public long shodarkhast { get; set; }
-        public string noedarkhast { get; set; }
-        public Nullable<int> c_noedarkhast { get; set; }
-        public Nullable<int> date_rooz { get; set; }
         public bool Ebtal { get; set; }
+        public Nullable<int> Id { get; set; }
         public System.Data.Spatial.DbGeometry Shape { get; set; }
-        public int Id { get; set; }
-        public Nullable<bool> flag { get; set; }
-        public Nullable<int> c_marhaleh { get; set; }
-        public string marhaleh { get; set; }
     }
 }

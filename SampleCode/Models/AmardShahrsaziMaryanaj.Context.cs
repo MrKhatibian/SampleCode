@@ -29,11 +29,13 @@ namespace SampleCode.Models
         }
     
         public DbSet<Article77ExpertsInvitation> Article77ExpertsInvitation { get; set; }
+        public DbSet<CheckList> CheckList { get; set; }
         public DbSet<DecisionToVoteArticle77> DecisionToVoteArticle77 { get; set; }
         public DbSet<DefenseArticle77> DefenseArticle77 { get; set; }
         public DbSet<Draft> Draft { get; set; }
         public DbSet<ExpertsOfArticle77> ExpertsOfArticle77 { get; set; }
         public DbSet<MeetingVoteArticle77> MeetingVoteArticle77 { get; set; }
+        public DbSet<Setting> Setting { get; set; }
         public DbSet<Voting> Voting { get; set; }
         public DbSet<Warnings> Warnings { get; set; }
         public DbSet<accesslevel> accesslevel { get; set; }
@@ -66,7 +68,6 @@ namespace SampleCode.Models
         public DbSet<ChangeLog> ChangeLog { get; set; }
         public DbSet<Check> Check { get; set; }
         public DbSet<CommonFields> CommonFields { get; set; }
-        public DbSet<ConflictFormulaDetails> ConflictFormulaDetails { get; set; }
         public DbSet<Control_Map> Control_Map { get; set; }
         public DbSet<D_bargeh> D_bargeh { get; set; }
         public DbSet<D_Traffic> D_Traffic { get; set; }
@@ -248,6 +249,7 @@ namespace SampleCode.Models
         public DbSet<Pishnevis> Pishnevis { get; set; }
         public DbSet<posht_formol> posht_formol { get; set; }
         public DbSet<PosInfo> PosInfo { get; set; }
+        public DbSet<PropertyValueFormulas> PropertyValueFormulas { get; set; }
         public DbSet<Reconciliators> Reconciliators { get; set; }
         public DbSet<RegionalPrice_Temp> RegionalPrice_Temp { get; set; }
         public DbSet<Rental> Rental { get; set; }
@@ -294,6 +296,7 @@ namespace SampleCode.Models
         public DbSet<SDE_xml_columns> SDE_xml_columns { get; set; }
         public DbSet<SDE_xml_index_tags> SDE_xml_index_tags { get; set; }
         public DbSet<SDE_xml_indexes> SDE_xml_indexes { get; set; }
+        public DbSet<SecurityCheck> SecurityCheck { get; set; }
         public DbSet<Senfi> Senfi { get; set; }
         public DbSet<Shenase> Shenase { get; set; }
         public DbSet<signature> signature { get; set; }
@@ -352,6 +355,8 @@ namespace SampleCode.Models
         public DbSet<AccountTypeDetail> AccountTypeDetail { get; set; }
         public DbSet<BuildingType> BuildingType { get; set; }
         public DbSet<BuildingTypeDetail> BuildingTypeDetail { get; set; }
+        public DbSet<ConflictFormula> ConflictFormula { get; set; }
+        public DbSet<ConflictFormulaDetails> ConflictFormulaDetails { get; set; }
         public DbSet<Defense> Defense { get; set; }
         public DbSet<Density> Density { get; set; }
         public DbSet<DensityDetail> DensityDetail { get; set; }
@@ -362,6 +367,7 @@ namespace SampleCode.Models
         public DbSet<TypeStructuresMaterials> TypeStructuresMaterials { get; set; }
         public DbSet<TypeStructuresMaterialsDetail> TypeStructuresMaterialsDetail { get; set; }
         public DbSet<VoteViolationType> VoteViolationType { get; set; }
+        public DbSet<RealEstateExpert> RealEstateExpert { get; set; }
         public DbSet<RenovationCoefficientArea> RenovationCoefficientArea { get; set; }
         public DbSet<YearCoefficientRenovation> YearCoefficientRenovation { get; set; }
         public DbSet<CreditWorthiness> CreditWorthiness { get; set; }
@@ -376,7 +382,7 @@ namespace SampleCode.Models
         public DbSet<GDB_TABLES_LAST_MODIFIED> GDB_TABLES_LAST_MODIFIED { get; set; }
         public DbSet<temp> temp { get; set; }
         public DbSet<Darkhast_Melk> Darkhast_Melk { get; set; }
-        public DbSet<darkhastGis> darkhastGis { get; set; }
+        public DbSet<DarkhastGIS> DarkhastGIS { get; set; }
         public DbSet<dbtune> dbtune { get; set; }
         public DbSet<RepBed> RepBed { get; set; }
         public DbSet<repbed_mostajer> repbed_mostajer { get; set; }

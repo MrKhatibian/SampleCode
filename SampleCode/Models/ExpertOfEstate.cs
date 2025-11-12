@@ -34,6 +34,9 @@ namespace SampleCode.Models
         public Nullable<decimal> AfterFieldPrice { get; set; }
         public Nullable<decimal> AfterAyanPrice { get; set; }
         public Nullable<decimal> AfterTotalPrice { get; set; }
+        public Nullable<System.DateTime> CommentValidDate { get; set; }
+        public Nullable<decimal> BeforeRightOfWayFee { get; set; }
+        public Nullable<decimal> AfterRightOfWayFee { get; set; }
     
         public virtual ICollection<ExpertStaff> ExpertStaff { get; set; }
     }

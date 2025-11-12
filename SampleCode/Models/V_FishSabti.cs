@@ -14,6 +14,7 @@ namespace SampleCode.Models
     
     public partial class V_FishSabti
     {
+        public Nullable<double> shop { get; set; }
         public int ID { get; set; }
         public string shomare { get; set; }
         public string tar { get; set; }
@@ -21,7 +22,6 @@ namespace SampleCode.Models
         public Nullable<double> avarez { get; set; }
         public Nullable<double> khad { get; set; }
         public Nullable<double> khada { get; set; }
-        public Nullable<double> shop { get; set; }
         public Nullable<int> RadifMalek { get; set; }
         public Nullable<int> IdMalek { get; set; }
         public string name { get; set; }
@@ -64,5 +64,7 @@ namespace SampleCode.Models
         public Nullable<long> CreditWorthinessOfServices { get; set; }
         public Nullable<decimal> bes { get; set; }
         public string Expr1 { get; set; }
+        public byte ReceiptRegistrationType { get; set; }
+        public string user_n { get; set; }
     }
 }

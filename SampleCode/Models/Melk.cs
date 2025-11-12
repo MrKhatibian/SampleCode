@@ -129,5 +129,9 @@ namespace SampleCode.Models
         public Nullable<bool> Nothing { get; set; }
         public Nullable<int> c_DensityArea { get; set; }
         public string DensityArea { get; set; }
+        public Nullable<decimal> AppraisedPrice { get; set; }
+        public Nullable<decimal> ExistingAccess { get; set; }
+        public Nullable<decimal> PreConversionPrice { get; set; }
+        public Nullable<decimal> PreSubdivisionArea { get; set; }
     }
 }

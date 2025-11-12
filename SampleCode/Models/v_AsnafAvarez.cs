@@ -14,6 +14,7 @@ namespace SampleCode.Models
     
     public partial class v_AsnafAvarez
     {
+        public Nullable<long> DelayInPayment { get; set; }
         public int Term { get; set; }
         public long ShoP { get; set; }
         public int JobCode { get; set; }

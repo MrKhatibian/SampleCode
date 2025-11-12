@@ -205,5 +205,14 @@ namespace SampleCode.Models
         public string IncomeCode { get; set; }
         public string TaxIncomeCode { get; set; }
         public Nullable<bool> IsRequiredNationalCodeIncome { get; set; }
+        public Nullable<long> MoadianSerialNumber { get; set; }
+        public Nullable<bool> SendSMS_Made77 { get; set; }
+        public Nullable<bool> SaveSpecialDiscounts { get; set; }
+        public Nullable<bool> SecurityCheck { get; set; }
+        public Nullable<bool> SecurityCheckFailed { get; set; }
+        public Nullable<byte> GisRequestId { get; set; }
+        public Nullable<bool> SendSMS_BlockedOwner { get; set; }
+        public string ValueAddedRevenueCodeForRenovationServices { get; set; }
+        public string IncomeCodeDelayInPayment { get; set; }
     }
 }

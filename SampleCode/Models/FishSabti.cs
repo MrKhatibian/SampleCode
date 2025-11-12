@@ -49,5 +49,7 @@ namespace SampleCode.Models
         public Nullable<long> CreditWorthiness { get; set; }
         public Nullable<long> PlaqueHammering { get; set; }
         public Nullable<long> CreditWorthinessOfServices { get; set; }
+        public byte ReceiptRegistrationType { get; set; }
+        public Nullable<int> ServiceTax { get; set; }
     }
 }

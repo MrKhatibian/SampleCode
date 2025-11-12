@@ -23,6 +23,8 @@ namespace SampleCode.Models
     
         public int Code { get; set; }
         public string Sharh { get; set; }
+        public Nullable<byte> WorkflowType { get; set; }
+        public Nullable<byte> RecordType { get; set; }
     
         public virtual ICollection<Darkhast> Darkhast { get; set; }
         public virtual ICollection<Erja> Erja { get; set; }

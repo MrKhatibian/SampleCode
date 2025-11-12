@@ -57,6 +57,8 @@ namespace SampleCode.Models
         public string CodeMeli { get; set; }
         public System.Data.Spatial.DbGeometry Shape { get; set; }
         public int Id { get; set; }
+        public string AgreementType { get; set; }
+        public Nullable<int> C_AgreementType { get; set; }
     
         public virtual Gardesh_Kar Gardesh_Kar { get; set; }
         public virtual ICollection<LevelJob> LevelJob { get; set; }

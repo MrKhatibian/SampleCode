@@ -46,6 +46,6 @@ namespace SampleCode.Models
         public Nullable<double> faseleh_harim { get; set; }
         public string AdjacencyType { get; set; }
         public Nullable<int> c_AdjacencyType { get; set; }
-        public Nullable<double> Retreat { get; set; }
+        public string Retreat { get; set; }
     }
 }

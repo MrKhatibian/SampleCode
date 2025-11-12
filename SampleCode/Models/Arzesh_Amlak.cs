@@ -24,5 +24,8 @@ namespace SampleCode.Models
         public Nullable<bool> Flag { get; set; }
         public Nullable<double> MasahatJebhe { get; set; }
         public byte typeArzeshAmlak { get; set; }
+        public Nullable<decimal> CommercialPrice { get; set; }
+        public Nullable<decimal> OfficePrice { get; set; }
+        public Nullable<decimal> OtherPrice { get; set; }
     }
 }

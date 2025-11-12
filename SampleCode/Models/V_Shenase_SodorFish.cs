@@ -37,5 +37,8 @@ namespace SampleCode.Models
         public Nullable<int> code_tree { get; set; }
         public Nullable<int> idparent { get; set; }
         public bool IsCumulative { get; set; }
+        public Nullable<decimal> khadamat { get; set; }
+        public Nullable<decimal> khoshhesabi { get; set; }
+        public Nullable<decimal> Tax { get; set; }
     }
 }

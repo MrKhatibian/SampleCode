@@ -24,5 +24,12 @@ namespace SampleCode.Models
         public string KarbariSecondary { get; set; }
         public Nullable<double> Area { get; set; }
         public Nullable<bool> BafteFarsodeh { get; set; }
+        public Nullable<long> Price { get; set; }
+        public string LandUseChangeType { get; set; }
+        public string PlannedLandUse { get; set; }
+        public string PlanScale { get; set; }
+        public Nullable<System.DateTime> ApprovalDate { get; set; }
+        public string ApprovalType { get; set; }
+        public Nullable<int> C_ApprovalType { get; set; }
     }
 }

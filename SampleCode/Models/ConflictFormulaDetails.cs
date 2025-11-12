@@ -18,5 +18,8 @@ namespace SampleCode.Models
         public int Code { get; set; }
         public string FormulaEn { get; set; }
         public string FormulaFarsi { get; set; }
+        public int ConflictFormulaId { get; set; }
+    
+        public virtual ConflictFormula ConflictFormula { get; set; }
     }
 }

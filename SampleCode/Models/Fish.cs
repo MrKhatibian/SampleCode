@@ -111,5 +111,6 @@ namespace SampleCode.Models
         public Nullable<long> PlaqueHammering { get; set; }
         public decimal EducationJari { get; set; }
         public Nullable<byte> BillType { get; set; }
+        public Nullable<int> ServiceTax { get; set; }
     }
 }

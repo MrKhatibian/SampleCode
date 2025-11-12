@@ -259,10 +259,16 @@
     <Compile Include="Models\Check.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\CheckList.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\CoefficientBuildingUseType.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\CommonFields.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ConflictFormula.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\ConflictFormulaDetails.cs">
@@ -355,7 +361,7 @@
     <Compile Include="Models\Darkhast.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\darkhastGis.cs">
+    <Compile Include="Models\DarkhastGIS.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Darkhast_Melk.cs">
@@ -982,6 +988,12 @@
     <Compile Include="Models\ProfessionalRank.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PropertyValueFormulas.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\RealEstateExpert.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Reconciliators.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
@@ -1141,6 +1153,9 @@
     <Compile Include="Models\SDE_xml_index_tags.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\SecurityCheck.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Senfi.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
@@ -1148,6 +1163,9 @@
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Set.cs">
+      <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Setting.cs">
       <DependentUpon>AmardShahrsaziMaryanaj.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Shenase.cs">
