@@ -296,15 +296,15 @@ window.GisDarkhast = async function (listDarkhat) {
                 });
 
                 const res = await response.json();
-                if (!res.success) {
-                    console.warn(` Unsuccessful: ${res.message}`);
-                } else {
-                    console.log(`Successful save`);
-                }
+                //if (!res.success) {
+                //    console.warn(` Unsuccessful: ${res.message}`);
+                //} else {
+                //    console.log(`Successful save`);
+                //}
 
             } else {
                 console.warn(`No points found for ${listDarkhat[i].cNosazi}.`);
-            }
+            }            
         } catch (err) {
             console.error(`Error processing:`, err);
         }
@@ -444,7 +444,7 @@ async function loadAllDarkhast() {
 
     const all = await fetchAllBatches(totalCount, 100, 5);
 
-    // ادغام همهٔ دیتای دریافتی
+    // ادغام همه دیتای دریافتی
     let listWithShape = [];
     let listWithoutShape = [];
 
@@ -475,7 +475,7 @@ async function checkInBatches(list, batchSize = 100) {
             else invalid.push(r);
         });        
         UpdateProgressbar(progressbar2, Math.round((valid.length + invalid.length) / list.length * 100));
-        console.log(`Batch ${Math.floor(i / batchSize) + 1} processed (${batch.length} items)`);
+        //console.log(`Batch ${Math.floor(i / batchSize) + 1} processed (${batch.length} items)`);
     }
 
     return { valid, invalid };
@@ -491,7 +491,8 @@ async function processBatches(list, batchSize, processorFn) {
         if (Array.isArray(batchResult)) {
             results = results.concat(batchResult);
         }
-
+        UpdateProgressbar(progressbar3, ((i / batchSize) + 1) / Math.round(list.length / batchSize) * 100)
+        //console.log(`L: ${list.length}  BatchResult:${batchResult.length}  result: ${results.length}  Peresent: ${((i / batchSize) + 1) / Math.round(list.length / batchSize) * 100}`);
         console.log(`Processed batch ${Math.floor(i / batchSize) + 1}`);
     }
 
@@ -576,7 +577,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ----------------------------------------------------------
         const { valid, invalid } = await checkInBatches(listWithShape, 100);
         console.log(`Inside parcel: ${valid.length}, Outside parcel: ${invalid.length}`);
-        return;
+        
         // نمایش red point فقط برای invalid‌ها
         invalid.forEach(d => {
             const point = ParselWKTPoint(d.shape);
@@ -585,14 +586,13 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
                     geometry: point,
                     symbol: {
                         type: "simple-marker",
-                        color: [0, 255, 0, 0.8],
+                        color: [0, 0, 255, 0.8],
                         size: 6,
                         outline: { color: "white", width: 0.5 }
                     }
                 }));
             }
-        });
-
+        });        
         // ----------------------------------------------------------
         // ✅ STEP B — Merge invalid-with-shape with no-shape list
         // ----------------------------------------------------------
@@ -603,6 +603,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // ✅ STEP C — Generate new points in batches (100 by 100)
         // ----------------------------------------------------------
         if (reprocessList.length > 0) {
+            RestProgressbar(progressbar3);
             const results = await processBatches(reprocessList, 100, GisDarkhast);
             console.log(`New points created: ${results.length}/${reprocessList.length}`);
         }
