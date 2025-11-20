@@ -176,7 +176,7 @@ namespace SampleCode.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetAllDarkhastBatch(int skip = 0, int batchSize = 100)
+        public JsonResult GetAllDarkhastBatch2(int skip = 0, int batchSize = 100)
         {
             try
             {
@@ -237,6 +237,190 @@ namespace SampleCode.Controllers
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+        [HttpGet]
+        public JsonResult GetAllDarkhastBatch3(int skip = 0, int batchSize = 100)
+        {
+            try
+            {
+                var query = _dbContext.DarkhastGIS
+                    .OrderBy(d => d.shodarkhast)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        shParvandeh = d.shop,
+                        cNosazi = d.codeN,
+                        shape = d.Shape
+                    })
+                    .ToList();
+
+                var listWithShape = query
+                    .Where(x => x.shape != null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = d.shape.AsText()
+                    })
+                    .ToList();
+
+                var listWithoutShape = query
+                    .Where(x => x.shape == null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = (string)null
+                    })
+                    .ToList();
+
+                // گرفتن تعداد کل فقط یک بار
+                var totalCount = _dbContext.DarkhastGIS.Count();
+
+                return Json(new
+                {
+                    success = true,
+                    skip,
+                    batchSize,
+                    totalCount,
+                    countWithShape = listWithShape.Count,
+                    countWithoutShape = listWithoutShape.Count,
+                    listWithShape,
+                    listWithoutShape
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+        [HttpGet]
+        public JsonResult GetAllDarkhastBatch(int skip = 0, int batchSize = 100)
+        {
+            try
+            {
+                // 🚨 ۱) حداکثر رکورد مجاز
+                const int MAX_BATCH = 500;
+
+                // اگر کاربر مقدار غیرمجاز ارسال کرد
+                if (batchSize > MAX_BATCH)
+                    return Json(new { success = false, message = "the batch value is too large." }, JsonRequestBehavior.AllowGet);
+
+                // 🚨 ۲) جلوگیری از مقادیر منفی (دستکاری URL)
+                if (skip < 0 || skip > 5_000_000)
+                    return Json(new { sucess = false, message = "the skip value is not valid." }, JsonRequestBehavior.AllowGet);
+
+
+                // ✨ ۴) Query امن و سریع
+                var query = _dbContext.DarkhastGIS
+                    .OrderBy(d => d.shodarkhast)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        shParvandeh = d.shop,
+                        cNosazi = d.codeN,
+                        shape = d.Shape
+                    })
+                    .ToList();
+
+                var listWithShape = query
+                    .Where(x => x.shape != null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = d.shape.AsText()
+                    })
+                    .ToList();
+
+                var listWithoutShape = query
+                    .Where(x => x.shape == null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = (string)null
+                    })
+                    .ToList();
+
+                // ✨ ۵) گرفتن تعداد کل فقط یکبار
+                var totalCount = _dbContext.DarkhastGIS.Count();
+
+                return Json(new
+                {
+                    success = true,
+                    skip,
+                    batchSize,
+                    totalCount,
+                    listWithShape,
+                    listWithoutShape
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message },
+                    JsonRequestBehavior.AllowGet);
+            }
+        }
+
+
+        //public async Task<List<dynamic>> GetAllDarkhastData()
+        //{
+        //    int batchSize = 5000;
+        //    int maxParallel = 5;
+        //    int skip = 0;
+        //    bool hasMore = true;
+
+        //    var allData = new List<dynamic>();
+
+        //    while (hasMore)
+        //    {
+        //        var tasks = new List<Task<List<dynamic>>>();
+
+        //        for (int i = 0; i < maxParallel; i++)
+        //        {
+        //            int localSkip = skip;
+        //            skip += batchSize;
+
+        //            tasks.Add(Task.Run(async () =>
+        //            {
+        //                using (var client = new HttpClient())
+        //                {
+        //                    string url = $"https://your-api/GetAllDarkhastBatch?skip={localSkip}&batchSize={batchSize}";
+        //                    var response = await client.GetAsync(url);
+        //                    var json = await response.Content.ReadAsAsync<dynamic>();
+
+        //                    var withShape = (IEnumerable<dynamic>)json.listWithShape;
+        //                    var withoutShape = (IEnumerable<dynamic>)json.listWithoutShape;
+
+        //                    var total = withShape.Concat(withoutShape).ToList();
+
+        //                    return total; // یک batch
+        //                }
+        //            }));
+        //        }
+
+        //        var results = await Task.WhenAll(tasks);
+
+        //        foreach (var batch in results)
+        //        {
+        //            if (batch.Count == 0)
+        //                hasMore = false;
+        //            else
+        //                allData.AddRange(batch);
+        //        }
+        //    }
+
+        //    return allData;
+        //}
 
 
         [HttpGet]

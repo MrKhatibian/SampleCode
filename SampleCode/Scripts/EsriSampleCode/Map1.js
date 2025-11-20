@@ -390,7 +390,7 @@ function ParselWKTPoint(wkt) {
     }
 }
 
-async function fetchBatch(skip, batchSize = 100) {
+async function fetchBatch1(skip, batchSize = 100) {
     const response = await fetch(`/Home/GetAllDarkhastBatch?skip=${skip}&batchSize=${batchSize}`);
     return response.json();
 }
@@ -613,6 +613,43 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
     }
 });
 
+
+
+async function fetchBatch(skip, size = 5000) {
+    const res = await fetch(`/Home/GetAllDarkhastBatch?skip=${skip}&batchSize=${size}`);
+    const data = await res.json();
+    return [...data.listWithShape, ...data.listWithoutShape];
+}
+
+async function fetchAll() {
+    let skip = 0;
+    const batchSize = 50;
+    const maxParallel = 5;
+    let all = [];
+    let hasMore = true;
+
+    while (hasMore) {
+        const tasks = [];
+
+        for (let i = 0; i < maxParallel; i++) {
+            let localSkip = skip;
+            skip += batchSize;
+            tasks.push(fetchBatch(localSkip, batchSize));
+        }
+
+        const results = await Promise.all(tasks);
+        console.log(results);
+        for (const batch of results) {
+            if (batch.length === 0) hasMore = false;
+            else all.push(...batch);
+        }
+    }
+    console.log("all: ",all);
+    return all;
+}
+
+
+
 // =============== Progressbar hanlder ===============
 const divprogressbar = document.getElementById("divProgressbar");
 const btnStartProgressbar = document.getElementById("btnStartProgressbar");
@@ -699,6 +736,9 @@ document.getElementById("btnSabtDarkhast").addEventListener("click", async () =>
 });
 
 document.getElementById("testConnection").addEventListener("click", async () => {
+    const fetch = fetchAll();
+    console.log("Final: ", fetch);
+    return;
     try {
         const res = await fetch("/Home/testConnection");
         const data = await res.json();
