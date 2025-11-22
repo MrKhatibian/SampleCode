@@ -12,7 +12,7 @@ import Extent from "../../EsriAPI/4.30/@arcgis/core/geometry/Extent.js";
 import Sketch from "../../EsriAPI/4.30/@arcgis/core/widgets/Sketch.js";
 import * as reactiveUtils from "../../EsriAPI/4.30/@arcgis/core/core/reactiveUtils.js";
 import Polygon from "../../EsriAPI/4.30/@arcgis/core/geometry/Polygon.js";
-
+import Editor from "../../EsriAPI/4.30/@arcgis/core/widgets/Editor.js";
 
 // === Map Init ===
 const map = new Map({
@@ -44,10 +44,14 @@ const darkhastFLayer = new FeatureLayer({
     },
 });
 
+const darkhastEditedFLayer = new FeatureLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajF/FeatureServer/0",
+});
+
 const arseFLayer = new FeatureLayer({ url: `${url}/9` });
 const graphicsLayer = new GraphicsLayer();
 
-map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
+map.addMany([arseFLayer, darkhastFLayer, graphicsLayer, darkhastEditedFLayer]);
 
 // === Add Home Widget ===
 // Wait until the layer is loaded before creating Home widget
@@ -748,3 +752,66 @@ document.getElementById("testConnection").addEventListener("click", async () => 
     }
 });
 
+// #region Editor
+const editableButton = document.getElementById("editable");
+view.ui.add(editableButton, "top-right");
+let isEditing = false;
+let editor = null;
+editableButton.onclick = () => {
+    isEditing ? stopEdit() : startEdit(darkhastEditedFLayer);
+};
+
+function stopEdit() {
+    if (!editor) {
+        console.warn("Editor is not initialized.");
+        return;
+    }
+
+    isEditing = false;
+    editor.visible = false;
+
+    if (typeof featureTable !== "undefined") {
+        featureTable.editingEnabled = false;
+    }
+
+    editor.destroy();
+    editor = null; // Ensure proper cleanup
+}
+
+function startEdit(featureLayer) {
+    if (!editableButton.active) {
+        editableButton.active = true;
+    }
+    if (!featureLayer) {
+        console.error("Feature layer is not defined.");
+        return;
+    }
+
+    if (!isEditing) {
+        isEditing = true;
+
+        editor = new Editor({
+            view: view,
+            layerInfos: [{ layer: featureLayer }],
+            snappingOptions: {
+                enabled: true,
+                featureSources: [{ layer: featureLayer }],
+            },
+        });
+
+        view.ui.add(editor, "top-right");
+
+        if (typeof featureTable !== "undefined") {
+            featureTable.editingEnabled = true;
+        }
+
+        // Handle sketch updates
+        editor.on("sketch-update", (evt) => {
+            const { tool, graphics, state } = evt.detail;
+            if (state === "complete") {
+                console.log("Sketch update complete:", tool, graphics);
+            }
+        });
+    }
+}
+// #endregion Editor

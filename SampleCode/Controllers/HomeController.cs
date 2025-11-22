@@ -44,6 +44,65 @@ namespace SampleCode.Controllers
             _dbContext = new AmardShahrsaziMaryanajEntities();
         }
 
+
+
+        [HttpGet]
+        public JsonResult testConnection()
+        {
+            string connString = ConfigurationManager.ConnectionStrings["AmardShahrsaziMaryanaj"].ConnectionString;
+            string message;
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connString))
+                {
+                    conn.Open();
+                    message = "Connection Successful: " + conn.ServerVersion;
+                }
+            }
+            catch (Exception ex)
+            {
+                message = "Connection failed: " + ex.Message;
+            }
+
+            return Json(new { result = message }, JsonRequestBehavior.AllowGet);
+
+        }
+
+        public class darkhastValues
+        {
+            public int Shod { get; set; }
+            public string wkt { get; set; }
+            public int wkid { get; set; }
+        }
+
+        // Update Darkhast Value
+        [HttpPost]
+        public ActionResult updateDarkhast(darkhastValues darkhastNewValue)
+        {
+            if (darkhastNewValue is null)
+                return Json(new { success = false, message = "Invalid Data" });
+
+            try
+            {
+                // Your update logic here
+                var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.Shod);
+                if (feature == null)
+                    return Json(new { success = false, message = "Not find Darkhast" });
+
+                // Convert string WKT into DbGeometry
+                feature.Shape = DbGeometry.FromText(darkhastNewValue.wkt, darkhastNewValue.wkid);
+
+                _dbContext.SaveChanges();
+
+                return Json(new { success = true, message = "Successful" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet]
         public JsonResult GetAllDarkhast1()
         {
@@ -299,7 +358,7 @@ namespace SampleCode.Controllers
             }
         }
         [HttpGet]
-        public JsonResult GetAllDarkhastBatch(int skip = 0, int batchSize = 100)
+        public JsonResult GetAllDarkhastBatch4(int skip = 0, int batchSize = 100)
         {
             try
             {
@@ -371,7 +430,6 @@ namespace SampleCode.Controllers
             }
         }
 
-
         //public async Task<List<dynamic>> GetAllDarkhastData()
         //{
         //    int batchSize = 5000;
@@ -422,62 +480,93 @@ namespace SampleCode.Controllers
         //    return allData;
         //}
 
-
         [HttpGet]
-        public JsonResult testConnection()
+        public JsonResult GetAllDarkhastBatch(int skip = 0, int batchSize = 100)
         {
-            string connString = ConfigurationManager.ConnectionStrings["AmardShahrsaziMaryanaj"].ConnectionString;
-            string message;
-
             try
             {
-                using (SqlConnection conn = new SqlConnection(connString))
+                // ۱) بررسی ورودی‌ها با Validator
+                var validation = DarkhastValidator.ValidateBatchParams(skip, batchSize);
+                if (!validation.IsValid)
                 {
-                    conn.Open();
-                    message = "Connection Successful: " + conn.ServerVersion;
+                    return Json(new { success = false, message = validation.ErrorMessage }, JsonRequestBehavior.AllowGet);
                 }
+
+                // ۲) Query امن و سریع
+                var query = _dbContext.DarkhastGIS
+                    .OrderBy(d => d.shodarkhast)
+                    .Skip(skip)
+                    .Take(batchSize)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        shParvandeh = d.shop,
+                        cNosazi = d.codeN,
+                        shape = d.Shape
+                    })
+                    .ToList();
+
+                var listWithShape = query
+                    .Where(x => x.shape != null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = d.shape.AsText()
+                    })
+                    .ToList();
+
+                var listWithoutShape = query
+                    .Where(x => x.shape == null)
+                    .Select(d => new
+                    {
+                        d.shodarkhast,
+                        d.shParvandeh,
+                        d.cNosazi,
+                        shape = (string)null
+                    })
+                    .ToList();
+
+                // ۳) گرفتن تعداد کل فقط یکبار
+                var totalCount = _dbContext.DarkhastGIS.Count();
+
+                return Json(new
+                {
+                    success = true,
+                    skip,
+                    batchSize,
+                    totalCount,
+                    listWithShape,
+                    listWithoutShape
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                message = "Connection failed: " + ex.Message;
+                // Log کردن خطا برای Debug
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
-
-            return Json(new { result = message }, JsonRequestBehavior.AllowGet);
-
         }
 
-        public class darkhastValues
+        public static class DarkhastValidator
         {
-            public int Shod { get; set; }
-            public string wkt { get; set; }
-            public int wkid { get; set; }
-        }
+            public const int MaxBatch = 500;
+            public const int MaxSkip = 5_000_000;
 
-        // Update Darkhast Value
-        [HttpPost]
-        public ActionResult updateDarkhast(darkhastValues darkhastNewValue)
-        {
-            if (darkhastNewValue is null)
-                return Json(new { success = false, message = "Invalid Data" });
-
-            try
+            public static (bool IsValid, string ErrorMessage) ValidateBatchParams(int skip, int batchSize)
             {
-                // Your update logic here
-                var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.Shod);
-                if (feature == null)
-                    return Json(new { success = false, message = "Not find Darkhast" });
+                if (batchSize <= 0)
+                    return (false, "batchSize must be greater than 0.");
 
-                // Convert string WKT into DbGeometry
-                feature.Shape = DbGeometry.FromText(darkhastNewValue.wkt, darkhastNewValue.wkid);
+                if (batchSize > MaxBatch)
+                    return (false, $"batchSize cannot exceed {MaxBatch}.");
 
-                _dbContext.SaveChanges();
+                if (skip < 0 || skip > MaxSkip)
+                    return (false, $"skip must be between 0 and {MaxSkip}.");
 
-                return Json(new { success = true, message = "Successful" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
+                return (true, null);
             }
         }
+
     }
 }
