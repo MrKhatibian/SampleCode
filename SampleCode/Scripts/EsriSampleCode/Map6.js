@@ -81,6 +81,11 @@ view.whenLayerView(ArseFLayer)
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
+        // 03 - Created Graphicslayer
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+        graphicsLayer.removeAll();
+
         // 01 - Finded Parsel
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
@@ -93,22 +98,40 @@ btnFindStreets.addEventListener("click", async () => {
 
         const selectedParsel = resultArse.features[0];
         const geoSelectParsel = selectedParsel.geometry;
+        graphicsLayer.add(new Graphic({
+            geometry: geoSelectParsel,
+            symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green"} }
+        }));
 
         // 02 - created buffer
         const buffParsel = geometryEngine.buffer(geoSelectParsel, 10, "meters");
 
-        // 03 - Created Graphicslayer
-        const graghicsLayer = new GraphicsLayer();
-        map.add(graghicsLayer);
-        graghicsLayer.add(new Graphic({
+        // 03 - 
+        graphicsLayer.add(new Graphic({
             geometry: buffParsel,
             symbol: {
                 type: "simple-fill", color: [0, 0, 255, 0.1], outline: {color: "blue"} }
-        }));
-        view.goTo(buffParsel);
+        }));        
         
-        // 03 - 
+        // 04 - Finded Street
+        const mabarQuery = MabarFLayer.createQuery();
+        mabarQuery.returnGeometry = true;
+        mabarQuery.outFields = ["*"];
+        mabarQuery.geometry = buffParsel;
+        mabarQuery.spatialRelationship = "intersects";
+
+        const selectedMabar = await MabarFLayer.queryFeatures(mabarQuery);
+
+        selectedMabar.features.forEach((features) => {
+            graphicsLayer.add(new Graphic({
+                geometry: features.geometry,
+                symbol: { type: "simple-line", width: 3, color: "red" }
+            }));
+        });
+        view.goTo(geoSelectParsel);
+
     } catch (err) {
         console.error(err);
     }
 });
+
