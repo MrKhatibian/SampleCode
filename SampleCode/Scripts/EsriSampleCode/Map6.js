@@ -80,11 +80,21 @@ view.whenLayerView(ArseFLayer)
 
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
-    //alert("Hii");    
-    let arseQuery = ArseFLayer.createQuery();
-    arseQuery.returnGeometry = true;
-    arseQuery.outFields = ["*"];
-    arseQuery.where = `Code_nosazi = '1-17-12-1-0-0-0'`;
-    const resultArse = await ArseFLayer.queryFeatures(arseQuery);
-    console.log("Find Parsel: ", resultArse.features.length);
+    try {
+        // 01 - Find Parsel
+        let arseQuery = ArseFLayer.createQuery();
+        arseQuery.returnGeometry = true;
+        arseQuery.outFields = ["*"];
+        arseQuery.where = `Code_nosazi = '1-17-12-1-0-0-0'`;
+
+        const resultArse = await ArseFLayer.queryFeatures(arseQuery);
+        //console.log("Find Parsel: ", resultArse.features.length);
+        if (resultArse.features.length < 1) { throw new Error("Not features found"); }
+
+        const selectedParsel = resultArse.features[0];
+        
+    } catch (err) {
+        console.error(err);
+    }
 });
+
