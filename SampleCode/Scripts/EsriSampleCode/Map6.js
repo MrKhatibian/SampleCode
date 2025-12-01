@@ -81,20 +81,34 @@ view.whenLayerView(ArseFLayer)
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
-        // 01 - Find Parsel
+        // 01 - Finded Parsel
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-17-12-1-0-0-0'`;
+        arseQuery.where = `Code_nosazi = '1-16-39-9-0-0-0'`;
 
         const resultArse = await ArseFLayer.queryFeatures(arseQuery);
         //console.log("Find Parsel: ", resultArse.features.length);
-        if (resultArse.features.length < 1) { throw new Error("Not features found"); }
+        if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
 
         const selectedParsel = resultArse.features[0];
+        const geoSelectParsel = selectedParsel.geometry;
+
+        // 02 - created buffer
+        const buffParsel = geometryEngine.buffer(geoSelectParsel, 10, "meters");
+
+        // 03 - Created Graphicslayer
+        const graghicsLayer = new GraphicsLayer();
+        map.add(graghicsLayer);
+        graghicsLayer.add(new Graphic({
+            geometry: buffParsel,
+            symbol: {
+                type: "simple-fill", color: [0, 0, 255, 0.1], outline: {color: "blue"} }
+        }));
+        view.goTo(buffParsel);
         
+        // 03 - 
     } catch (err) {
         console.error(err);
     }
 });
-
