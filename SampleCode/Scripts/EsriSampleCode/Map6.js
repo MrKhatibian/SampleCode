@@ -60,6 +60,7 @@ const ArseFLayer = new FeatureLayer({
     },
 });
 
+// =============== Add layer ===============
 map.addMany([MabarFLayer, ArseFLayer]);
 ArseFLayer.when(() => {
     const homeWidget = new Home({
@@ -71,3 +72,9 @@ ArseFLayer.when(() => {
 
     view.ui.add(homeWidget, "top-left");    
 });
+
+view.whenLayerView(ArseFLayer)
+    .then(() => {
+        view.goTo(ArseFLayer.fullExtent);
+    });
+
