@@ -303,7 +303,7 @@ window.GisDarkhast = async function (listDarkhat) {
                 //if (!res.success) {
                 //    console.warn(` Unsuccessful: ${res.message}`);
                 //} else {
-                //    console.log(`Successful save`);
+                //    console.log(`Successful save`); 
                 //}
 
             } else {
@@ -437,7 +437,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
     });
 }
 
-async function loadAllDarkhast() {
+async function loadAllDarkhast1() {
     RestProgressbar(progressbar1);
     // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
     const first = await fetchBatch(0, 1);
@@ -463,6 +463,52 @@ async function loadAllDarkhast() {
 
     return { listWithShape, listWithoutShape };
 }
+async function loadAllDarkhast() {
+    const listWithShape = [];
+    const listWithoutShape = [];
+
+    let offset = 0;
+    const pageSize = 2000; // safe for ArcGIS Server 10.x
+
+    while (true) {
+        const q = darkhastFLayer.createQuery();
+        q.where = "1=1";
+        q.outFields = ["*"];
+        q.returnGeometry = true;
+        q.resultOffset = offset;
+        q.resultRecordCount = pageSize;
+
+        const res = await darkhastFLayer.queryFeatures(q);
+
+        if (!res.features.length) break;
+
+        res.features.forEach(f => {
+            const shape = f.geometry;
+            const row = {
+                ...f.attributes,
+                shape: shape ? shapeToWKTPoint(shape) : null
+            };
+            //console.log("row is: ", row);
+            if (shape) listWithShape.push(row);
+            else listWithoutShape.push(row);
+        });
+
+        offset += res.features.length;
+        console.log("offcet: ", offset)
+    }
+
+    return { listWithShape, listWithoutShape };
+}
+
+function shapeToWKTPoint(point) {
+    try {
+        return `POINT(${point.x} ${point.y})`;
+    } catch {
+        return null;
+    }
+}
+
+
 
 async function checkInBatches(list, batchSize = 100) {
     const valid = [];
@@ -575,7 +621,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // دریافت لیست‌ها
         const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
-        
+        return;
         // ----------------------------------------------------------
         // ✅ STEP A — Batch check “with shape” data (100 by 100)
         // ----------------------------------------------------------

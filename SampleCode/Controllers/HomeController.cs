@@ -37,6 +37,10 @@ namespace SampleCode.Controllers
         {
             return View();
         }
+        public ActionResult Map6()
+        {
+            return View();
+        }
 
         private readonly AmardShahrsaziMaryanajEntities _dbContext;
         public HomeController()
