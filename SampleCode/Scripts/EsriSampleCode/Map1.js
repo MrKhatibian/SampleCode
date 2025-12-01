@@ -12,7 +12,7 @@ import Extent from "../../EsriAPI/4.30/@arcgis/core/geometry/Extent.js";
 import Sketch from "../../EsriAPI/4.30/@arcgis/core/widgets/Sketch.js";
 import * as reactiveUtils from "../../EsriAPI/4.30/@arcgis/core/core/reactiveUtils.js";
 import Polygon from "../../EsriAPI/4.30/@arcgis/core/geometry/Polygon.js";
-
+import Editor from "../../EsriAPI/4.30/@arcgis/core/widgets/Editor.js";
 
 // === Map Init ===
 const map = new Map({
@@ -44,10 +44,14 @@ const darkhastFLayer = new FeatureLayer({
     },
 });
 
+const darkhastEditedFLayer = new FeatureLayer({
+    url: "http://localhost:6080/arcgis/rest/services/Maryanaj/MaryanajF/FeatureServer/0",
+});
+
 const arseFLayer = new FeatureLayer({ url: `${url}/9` });
 const graphicsLayer = new GraphicsLayer();
 
-map.addMany([arseFLayer, darkhastFLayer, graphicsLayer]);
+map.addMany([arseFLayer, darkhastFLayer, graphicsLayer, darkhastEditedFLayer]);
 
 // === Add Home Widget ===
 // Wait until the layer is loaded before creating Home widget
@@ -299,7 +303,7 @@ window.GisDarkhast = async function (listDarkhat) {
                 //if (!res.success) {
                 //    console.warn(` Unsuccessful: ${res.message}`);
                 //} else {
-                //    console.log(`Successful save`);
+                //    console.log(`Successful save`); 
                 //}
 
             } else {
@@ -390,7 +394,7 @@ function ParselWKTPoint(wkt) {
     }
 }
 
-async function fetchBatch(skip, batchSize = 100) {
+async function fetchBatch1(skip, batchSize = 100) {
     const response = await fetch(`/Home/GetAllDarkhastBatch?skip=${skip}&batchSize=${batchSize}`);
     return response.json();
 }
@@ -433,7 +437,7 @@ async function fetchAllBatches(totalCount, batchSize = 100, concurrency = 5) {
     });
 }
 
-async function loadAllDarkhast() {
+async function loadAllDarkhast1() {
     RestProgressbar(progressbar1);
     // اول یک Batch کوچک می‌گیریم تا totalCount را بفهمیم
     const first = await fetchBatch(0, 1);
@@ -459,6 +463,52 @@ async function loadAllDarkhast() {
 
     return { listWithShape, listWithoutShape };
 }
+async function loadAllDarkhast() {
+    const listWithShape = [];
+    const listWithoutShape = [];
+
+    let offset = 0;
+    const pageSize = 2000; // safe for ArcGIS Server 10.x
+
+    while (true) {
+        const q = darkhastFLayer.createQuery();
+        q.where = "1=1";
+        q.outFields = ["*"];
+        q.returnGeometry = true;
+        q.resultOffset = offset;
+        q.resultRecordCount = pageSize;
+
+        const res = await darkhastFLayer.queryFeatures(q);
+
+        if (!res.features.length) break;
+
+        res.features.forEach(f => {
+            const shape = f.geometry;
+            const row = {
+                ...f.attributes,
+                shape: shape ? shapeToWKTPoint(shape) : null
+            };
+            //console.log("row is: ", row);
+            if (shape) listWithShape.push(row);
+            else listWithoutShape.push(row);
+        });
+
+        offset += res.features.length;
+        console.log("offcet: ", offset)
+    }
+
+    return { listWithShape, listWithoutShape };
+}
+
+function shapeToWKTPoint(point) {
+    try {
+        return `POINT(${point.x} ${point.y})`;
+    } catch {
+        return null;
+    }
+}
+
+
 
 async function checkInBatches(list, batchSize = 100) {
     const valid = [];
@@ -571,7 +621,7 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         // دریافت لیست‌ها
         const { listWithShape, listWithoutShape } = await loadAllDarkhast();
         console.log(`With shape: ${listWithShape.length}, Without shape: ${listWithoutShape.length}`);
-        
+        return;
         // ----------------------------------------------------------
         // ✅ STEP A — Batch check “with shape” data (100 by 100)
         // ----------------------------------------------------------
@@ -612,6 +662,43 @@ btnUpdateXYDarkhast.addEventListener("click", async () => {
         console.error("Error in the XY Darkhast update process:", err);
     }
 });
+
+
+
+async function fetchBatch(skip, size = 5000) {
+    const res = await fetch(`/Home/GetAllDarkhastBatch?skip=${skip}&batchSize=${size}`);
+    const data = await res.json();
+    return [...data.listWithShape, ...data.listWithoutShape];
+}
+
+async function fetchAll() {
+    let skip = 0;
+    const batchSize = 50;
+    const maxParallel = 5;
+    let all = [];
+    let hasMore = true;
+
+    while (hasMore) {
+        const tasks = [];
+
+        for (let i = 0; i < maxParallel; i++) {
+            let localSkip = skip;
+            skip += batchSize;
+            tasks.push(fetchBatch(localSkip, batchSize));
+        }
+
+        const results = await Promise.all(tasks);
+        console.log(results);
+        for (const batch of results) {
+            if (batch.length === 0) hasMore = false;
+            else all.push(...batch);
+        }
+    }
+    console.log("all: ",all);
+    return all;
+}
+
+
 
 // =============== Progressbar hanlder ===============
 const divprogressbar = document.getElementById("divProgressbar");
@@ -699,6 +786,9 @@ document.getElementById("btnSabtDarkhast").addEventListener("click", async () =>
 });
 
 document.getElementById("testConnection").addEventListener("click", async () => {
+    const fetch = fetchAll();
+    console.log("Final: ", fetch);
+    return;
     try {
         const res = await fetch("/Home/testConnection");
         const data = await res.json();
@@ -708,3 +798,66 @@ document.getElementById("testConnection").addEventListener("click", async () => 
     }
 });
 
+// #region Editor
+const editableButton = document.getElementById("editable");
+view.ui.add(editableButton, "top-right");
+let isEditing = false;
+let editor = null;
+editableButton.onclick = () => {
+    isEditing ? stopEdit() : startEdit(darkhastEditedFLayer);
+};
+
+function stopEdit() {
+    if (!editor) {
+        console.warn("Editor is not initialized.");
+        return;
+    }
+
+    isEditing = false;
+    editor.visible = false;
+
+    if (typeof featureTable !== "undefined") {
+        featureTable.editingEnabled = false;
+    }
+
+    editor.destroy();
+    editor = null; // Ensure proper cleanup
+}
+
+function startEdit(featureLayer) {
+    if (!editableButton.active) {
+        editableButton.active = true;
+    }
+    if (!featureLayer) {
+        console.error("Feature layer is not defined.");
+        return;
+    }
+
+    if (!isEditing) {
+        isEditing = true;
+
+        editor = new Editor({
+            view: view,
+            layerInfos: [{ layer: featureLayer }],
+            snappingOptions: {
+                enabled: true,
+                featureSources: [{ layer: featureLayer }],
+            },
+        });
+
+        view.ui.add(editor, "top-right");
+
+        if (typeof featureTable !== "undefined") {
+            featureTable.editingEnabled = true;
+        }
+
+        // Handle sketch updates
+        editor.on("sketch-update", (evt) => {
+            const { tool, graphics, state } = evt.detail;
+            if (state === "complete") {
+                console.log("Sketch update complete:", tool, graphics);
+            }
+        });
+    }
+}
+// #endregion Editor
