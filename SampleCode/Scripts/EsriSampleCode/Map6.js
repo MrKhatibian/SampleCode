@@ -90,10 +90,9 @@ btnFindStreets.addEventListener("click", async () => {
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-16-39-9-0-0-0'`;
+        arseQuery.where = `Code_nosazi = '1-16-39-23-0-0-0'`;
 
-        const resultArse = await ArseFLayer.queryFeatures(arseQuery);
-        //console.log("Find Parsel: ", resultArse.features.length);
+        const resultArse = await ArseFLayer.queryFeatures(arseQuery);        
         if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
 
         const selectedParsel = resultArse.features[0];
@@ -121,17 +120,20 @@ btnFindStreets.addEventListener("click", async () => {
         mabarQuery.spatialRelationship = "intersects";
 
         const selectedMabar = await MabarFLayer.queryFeatures(mabarQuery);
-
-        selectedMabar.features.forEach((features) => {
+        
+        selectedMabar.features.forEach((features) => {            
             graphicsLayer.add(new Graphic({
                 geometry: features.geometry,
                 symbol: { type: "simple-line", width: 3, color: "red" }
             }));
         });
+        
+        const maxArzeMabar = Math.max(...selectedMabar.features.map(f => f.attributes.street_len));
+        console.log("Max: ", maxArzeMabar);
+        // Zoom to parcel
         view.goTo(geoSelectParsel);
 
     } catch (err) {
         console.error(err);
     }
 });
-
