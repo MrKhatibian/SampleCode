@@ -139,6 +139,11 @@ btnFindStreets.addEventListener("click", async () => {
         const featureMaxObjArzeMabar = maxObjArzeMabar.attributes;
         console.log(`Max Object Name: ${featureMaxObjArzeMabar.NAME}, Street length: ${featureMaxObjArzeMabar.street_len}, Street99: ${featureMaxObjArzeMabar.street_99}`);
 
+        const buffMabar = geometryEngine.buffer(maxObjArzeMabar.geometry, 10, "meters");
+        graphicsLayer.add(new Graphic({
+            geometry: buffMabar,
+            symbol: { type: "simple-fill", color: [25, 250, 2, 0.2], outline: {color: "black"} }
+        }))
 
         // Zoom to parcel
         view.goTo(geoSelectParsel);
