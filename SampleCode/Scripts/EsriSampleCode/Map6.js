@@ -130,6 +130,16 @@ btnFindStreets.addEventListener("click", async () => {
         
         const maxArzeMabar = Math.max(...selectedMabar.features.map(f => f.attributes.street_len));
         console.log("Max: ", maxArzeMabar);
+
+        const maxObjArzeMabar = selectedMabar.features.reduce((prev, current) => {
+            return (current.attributes.street_len > prev.attributes.street_len)
+                ? current
+                : prev;
+        });
+        const featureMaxObjArzeMabar = maxObjArzeMabar.attributes;
+        console.log(`Max Object Name: ${featureMaxObjArzeMabar.NAME}, Street length: ${featureMaxObjArzeMabar.street_len}, Street99: ${featureMaxObjArzeMabar.street_99}`);
+
+
         // Zoom to parcel
         view.goTo(geoSelectParsel);
 
