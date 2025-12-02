@@ -81,12 +81,12 @@ view.whenLayerView(ArseFLayer)
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
-        // 03 - Created Graphicslayer
+        // 01 - Created Graphicslayer
         const graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
         graphicsLayer.removeAll();
 
-        // 01 - Finded Parsel
+        // 02 - Finded Parsel
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
@@ -101,18 +101,19 @@ btnFindStreets.addEventListener("click", async () => {
             geometry: geoSelectParsel,
             symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green"} }
         }));
+        // Zoom to parcel
+        view.goTo(geoSelectParsel);
+        await sleep(2000);
 
-        // 02 - created buffer
-        const buffParsel = geometryEngine.buffer(geoSelectParsel, 10, "meters");
-
-        // 03 - 
+        // 03 - created buffer
+        const buffParsel = geometryEngine.buffer(geoSelectParsel, 10, "meters");        
         graphicsLayer.add(new Graphic({
             geometry: buffParsel,
             symbol: {
                 type: "simple-fill", color: [0, 0, 255, 0.1], outline: {color: "blue"} }
         }));        
         
-        // 04 - Finded Street
+        // 04 - Finded Streets
         const mabarQuery = MabarFLayer.createQuery();
         mabarQuery.returnGeometry = true;
         mabarQuery.outFields = ["*"];
@@ -127,7 +128,8 @@ btnFindStreets.addEventListener("click", async () => {
                 symbol: { type: "simple-line", width: 3, color: "red" }
             }));
         });
-        
+
+        // 05 - Finded Maximum Street Length
         const maxArzeMabar = Math.max(...selectedMabar.features.map(f => f.attributes.street_len));
         console.log("Max: ", maxArzeMabar);
 
@@ -136,19 +138,58 @@ btnFindStreets.addEventListener("click", async () => {
                 ? current
                 : prev;
         });
+        graphicsLayer.add(new Graphic({
+            geometry: maxObjArzeMabar.geometry,
+            symbol: {
+                type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0}
+            }
+        }));
+
         const featureMaxObjArzeMabar = maxObjArzeMabar.attributes;
         console.log(`Max Object Name: ${featureMaxObjArzeMabar.NAME}, Street length: ${featureMaxObjArzeMabar.street_len}, Street99: ${featureMaxObjArzeMabar.street_99}`);
 
-        const buffMabar = geometryEngine.buffer(maxObjArzeMabar.geometry, 10, "meters");
+        // 06 - Creating buffer for Maximum Street length
+        const distansBuffMabar = featureMaxObjArzeMabar.street_len / 2 + 2;
+        console.log("distance maxBuffer", distansBuffMabar);
+        //const buffMabar = geometryEngine.buffer(maxObjArzeMabar.geometry, distansBuffMabar, "meters");
+        const buffMabar = createFlatBuffer(maxObjArzeMabar.geometry, distansBuffMabar, "meters");
+
         graphicsLayer.add(new Graphic({
             geometry: buffMabar,
-            symbol: { type: "simple-fill", color: [25, 250, 2, 0.2], outline: {color: "black"} }
+            symbol: { type: "simple-fill", color: [245, 110, 0, 0.5], outline: {color: "red"} }
         }))
 
-        // Zoom to parcel
-        view.goTo(geoSelectParsel);
+        
 
     } catch (err) {
         console.error(err);
     }
 });
+
+function createFlatBuffer(lineGeom, distance, unit = "meters") {
+    // Create left offset
+    const left = geometryEngine.offset(
+        lineGeom,
+        distance,
+        unit,
+        "butt",   // endType → flat
+        "miter"   // joinType → sharp edges
+    );
+
+    // Create right offset
+    const right = geometryEngine.offset(
+        lineGeom,
+        -distance,
+        unit,
+        "butt",
+        "miter"
+    );
+
+    // Union both sides → polygon
+    return geometryEngine.union([left, right]);
+}
+
+
+
+// Sleep 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
