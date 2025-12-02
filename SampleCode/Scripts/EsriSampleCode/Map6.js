@@ -90,7 +90,7 @@ btnFindStreets.addEventListener("click", async () => {
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-16-39-23-0-0-0'`;
+        arseQuery.where = `Code_nosazi = '1-16-1-10-0-0-0'`;
 
         const resultArse = await ArseFLayer.queryFeatures(arseQuery);        
         if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
@@ -106,7 +106,7 @@ btnFindStreets.addEventListener("click", async () => {
         await sleep(2000);
 
         // 03 - created buffer
-        const buffParsel = geometryEngine.buffer(geoSelectParsel, 10, "meters");        
+        const buffParsel = geometryEngine.buffer(geoSelectParsel, 35, "meters");        
         graphicsLayer.add(new Graphic({
             geometry: buffParsel,
             symbol: {
@@ -128,12 +128,25 @@ btnFindStreets.addEventListener("click", async () => {
                 symbol: { type: "simple-line", width: 3, color: "red" }
             }));
         });
+        await sleep(2000);
+
+        // 05 - Validation Mabars
+        const validListMabar = await ValidationMabar(selectedMabar.features, selectedParsel)
+        validListMabar.map((mabar) => {
+            graphicsLayer.add(new Graphic({
+                geometry: mabar.geometry,
+                symbol: {
+                    type: "simple-line", width: 2, color: "blue", outline: { width: 0 }
+                }
+            }));
+        });
+        await sleep(2000);
 
         // 05 - Finded Maximum Street Length
-        const maxArzeMabar = Math.max(...selectedMabar.features.map(f => f.attributes.street_len));
+        const maxArzeMabar = Math.max(...validListMabar.map(f => f.attributes.street_len));
         console.log("Max: ", maxArzeMabar);
 
-        const maxObjArzeMabar = selectedMabar.features.reduce((prev, current) => {
+        const maxObjArzeMabar = validListMabar.reduce((prev, current) => {
             return (current.attributes.street_len > prev.attributes.street_len)
                 ? current
                 : prev;
@@ -148,37 +161,44 @@ btnFindStreets.addEventListener("click", async () => {
         const featureMaxObjArzeMabar = maxObjArzeMabar.attributes;
         console.log(`Max Object Name: ${featureMaxObjArzeMabar.NAME}, Street length: ${featureMaxObjArzeMabar.street_len}, Street99: ${featureMaxObjArzeMabar.street_99}`);
 
-        // 06 - Creating buffer for Maximum Street length
-        const distansBuffMabar = featureMaxObjArzeMabar.street_len / 2 + 2;
-        console.log("distance maxBuffer", distansBuffMabar);
-        //const buffMabar = geometryEngine.buffer(maxObjArzeMabar.geometry, distansBuffMabar, "meters");
-        const buffMabar = createFlatBuffer(maxObjArzeMabar.geometry, distansBuffMabar, "meters");
-
-        graphicsLayer.add(new Graphic({
-            geometry: buffMabar,
-            symbol: { type: "simple-fill", color: [245, 110, 0, 0.5], outline: {color: "red"} }
-        }))
-
-        // 07 - Finded parsels from maximum mabars length
-        const queryValidPasel = ArseFLayer.createQuery();
-        queryValidPasel.outFields = ["*"];
-        queryValidPasel.geometry = buffMabar;
-        queryValidPasel.spatialRelationship = "intersects"
-
-        const findedParselMabar = await ArseFLayer.queryFeatures(queryValidPasel);
-        debugger;
-        const haveSelectPacel = findedParselMabar.features.map(parcel => {
-            if (parcel.attributes = "1-16-39-23-0-0-0")
-                return true;
-            else
-                return false
-        })
-        console.log("Have parsel: ", haveSelectPacel);
-
+        
     } catch (err) {
         console.error(err);
     }
 });
+
+async function ValidationMabar(listMabar, selectedParcel) {
+
+    let validListMabar = [];
+
+    for (const mabar of listMabar) {
+
+        // Create flat buffer
+        const distansBuffMabar = mabar.attributes.street_len / 2 + 2;
+        const buffMabar = createFlatBuffer(mabar.geometry, distansBuffMabar, "meters");
+
+        // Query parcels inside buffer
+        const query = ArseFLayer.createQuery();
+        query.outFields = ["Code_nosazi"];
+        query.geometry = buffMabar;
+        query.spatialRelationship = "intersects";
+
+        const result = await ArseFLayer.queryFeatures(query);
+
+        const isSelectedParcelInside = result.features.some(parcel =>
+            parcel.attributes.Code_nosazi === selectedParcel.attributes.Code_nosazi
+        );
+
+        console.log("Have parcel:", isSelectedParcelInside);
+
+        if (isSelectedParcelInside) {
+            validListMabar.push(mabar);
+        }
+    }
+
+    return validListMabar;
+}
+
 
 function createFlatBuffer(lineGeom, distance, unit = "meters") {
     // Create left offset
