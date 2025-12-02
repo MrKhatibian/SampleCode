@@ -159,7 +159,21 @@ btnFindStreets.addEventListener("click", async () => {
             symbol: { type: "simple-fill", color: [245, 110, 0, 0.5], outline: {color: "red"} }
         }))
 
-        
+        // 07 - Finded parsels from maximum mabars length
+        const queryValidPasel = ArseFLayer.createQuery();
+        queryValidPasel.outFields = ["*"];
+        queryValidPasel.geometry = buffMabar;
+        queryValidPasel.spatialRelationship = "intersects"
+
+        const findedParselMabar = await ArseFLayer.queryFeatures(queryValidPasel);
+        debugger;
+        const haveSelectPacel = findedParselMabar.features.map(parcel => {
+            if (parcel.attributes = "1-16-39-23-0-0-0")
+                return true;
+            else
+                return false
+        })
+        console.log("Have parsel: ", haveSelectPacel);
 
     } catch (err) {
         console.error(err);
