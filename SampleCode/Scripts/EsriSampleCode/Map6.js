@@ -113,18 +113,16 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
         map.add(graphicsLayer);
         graphicsLayer.removeAll();
 
-        // 02 - Finded Parsel
-        const selectMelk = resultArse.features[0];
+        // 02 - Finded Melk
+        const selectMelk = await FindFeature(fLayerMelk, "Code_nosazi", "1-17-56-4-0-0-0");
         const geoSelectMelk = selectMelk.geometry;
         graphicsLayer.add(new Graphic({
             geometry: geoSelectMelk,
             symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green" } }
         }));
-        // Zoom to parcel
-        view.goTo(geoSelectMelk);
 
-        
-        await sleep(1000);
+        // Zoom to Melk
+        view.goTo(geoSelectMelk);                
 
 
 
@@ -135,21 +133,22 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
 }
 
 /**
- * Find property features in a map service
- * @param {object} fLayerProperty FeatureLayer
- * @param {string} fieldProperty 
- * @param {string} valueProperty
+ * Find Feature in a Feature Layer
+ * @param {object} featureLayer FeatureLayer
+ * @param {string} field 
+ * @param {string} value
  * @returns {object} Feature 
  */
-async function FindProperty(fLayerProperty, fieldProperty, valueProperty) {    
-    let queryProperty = fLayerProperty.createQuery();
-    queryProperty.returnGeometry = true;
-    queryProperty.outFields = ["*"];
-    queryProperty.where = `'${fieldProperty}' = '${valueProperty}'`;
-    const resultProperty = await fLayerProperty.queryFeatures(queryProperty);
-    if (resultProperty.features.length < 1) { throw new Error("Property not found."); } //En
-    //if (resultProperty.features.length < 1) { throw new Error("ملک مورد نظر یافت نشد."); } //Pr    
-    return resultProperty.Features[0];
+async function FindFeature(featureLayer, field, value) {
+    let query = featureLayer.createQuery();
+    query.returnGeometry = true;
+    query.outFields = ["*"];
+    debugger;
+    query.where = `${field} = '${value}'`;
+    const result = await featureLayer.queryFeatures(query);
+    if (result.features.length < 1) { throw new Error("Feature not found."); } //En
+    //if (result.features.length < 1) { throw new Error("عارضه مورد نظر یافت نشد."); } //Pr        
+    return result.features[0];
 }
 
 function urlMapServiceValidation(url) {
