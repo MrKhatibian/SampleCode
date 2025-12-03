@@ -28,7 +28,7 @@ view.ui.remove("attribution");
 // =============== Layers URL ===============
 const url = "http://localhost:6080/arcgis/rest/services/Sabzevar/SabzevarDevelop/MapServer";
 
-const MabarFLayer = new FeatureLayer({
+const fLayerMabar = new FeatureLayer({
     url: `${url}/0`,
     popupTemplate: {
         title: "Mabar",
@@ -45,7 +45,7 @@ const MabarFLayer = new FeatureLayer({
     },
 });
 
-const ArseFLayer = new FeatureLayer({
+const fLayerMelk = new FeatureLayer({
     url: `${url}/1`,
     popupTemplate: {
         title: "Arse",
@@ -61,26 +61,28 @@ const ArseFLayer = new FeatureLayer({
 });
 
 // =============== Add layer ===============
-map.addMany([MabarFLayer, ArseFLayer]);
-ArseFLayer.when(() => {
+map.addMany([fLayerMabar, fLayerMelk]);
+fLayerMelk.when(() => {
     const homeWidget = new Home({
         view: view,
         viewpoint: {
-            targetGeometry: ArseFLayer.fullExtent
+            targetGeometry: fLayerMelk.fullExtent
         }
     });
 
     view.ui.add(homeWidget, "top-left");    
 });
 
-view.whenLayerView(ArseFLayer)
+view.whenLayerView(fLayerMelk)
     .then(() => {
-        view.goTo(ArseFLayer.fullExtent);
+        view.goTo(fLayerMelk.fullExtent);
     });
+
+// ============== Core Logic ===============
 
 const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
 btnFindNearestParcel.addEventListener("click", async () => {
-    findMaxWidthStreet(ArseFLayer, MabarFLayer, "1-2-149-40-0-0-0");
+    findMaxWidthStreet(fLayerMelk, fLayerMabar, "1-17-56-4-0-0-0");
 });
 
 /**
@@ -91,6 +93,7 @@ btnFindNearestParcel.addEventListener("click", async () => {
  */
 async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
     try {
+        // ============== Validation ===============
         // Validation for feature layer Melk URL
         if (!urlMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
         //if (!urlValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
@@ -103,8 +106,35 @@ async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
         if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
         //if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
 
+        // ============== Initialization ===============
+
+        // 01 - Created Graphicslayer
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+        graphicsLayer.removeAll();
+
+        // 02 - Finded Parsel
+        let queryMelk = fLayerMelk.createQuery();
+        queryMelk.returnGeometry = true;
+        queryMelk.outFields = ["*"];
+        queryMelk.where = `Code_nosazi = '${cNosaziMelk}'`;
+        const resultArse = await fLayerMelk.queryFeatures(queryMelk);
+        if (resultArse.features.length < 1) { throw new Error("Parcel not found."); } //En
+        //if (resultArse.features.length < 1) { throw new Error("ملک مورد نظر یافت نشد."); } //Pr
+
+        const selectParsel = resultArse.features[0];
+        const geoSelectParsel = selectParsel.geometry;
+        graphicsLayer.add(new Graphic({
+            geometry: geoSelectParsel,
+            symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green" } }
+        }));
+        // Zoom to parcel
+        view.goTo(geoSelectParsel);
+        await sleep(1000);
+
     } catch (err) {
-        console.error(`There is an Error in finding the maximum width of Street.`, err)
+        console.error(`There is an Error in finding the maximum width of Street.`, err); //En
+        //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
     }
 }
 
@@ -149,16 +179,16 @@ btnFindStreets.addEventListener("click", async () => {
         graphicsLayer.removeAll();
 
         // 02 - Finded Parsel
-        let arseQuery = ArseFLayer.createQuery();
+        let arseQuery = fLayerMelk.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
         arseQuery.where = `Code_nosazi = '1-25-149-40-0-0-0'`;
 
-        const resultArse = await ArseFLayer.queryFeatures(arseQuery);        
+        const resultArse = await fLayerMelk.queryFeatures(arseQuery);        
         if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
 
-        const selectedParsel = resultArse.features[0];
-        const geoSelectParsel = selectedParsel.geometry;
+        const selectParsel = resultArse.features[0];
+        const geoSelectParsel = selectParsel.geometry;
         graphicsLayer.add(new Graphic({
             geometry: geoSelectParsel,
             symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green"} }
@@ -176,13 +206,13 @@ btnFindStreets.addEventListener("click", async () => {
         }));        
         
         // 04 - Finded Streets
-        const mabarQuery = MabarFLayer.createQuery();
+        const mabarQuery = fLayerMabar.createQuery();
         mabarQuery.returnGeometry = true;
         mabarQuery.outFields = ["*"];
         mabarQuery.geometry = buffParsel;
         mabarQuery.spatialRelationship = "intersects";
 
-        const selectedMabar = await MabarFLayer.queryFeatures(mabarQuery);
+        const selectedMabar = await fLayerMabar.queryFeatures(mabarQuery);
         
         selectedMabar.features.forEach((features) => {            
             graphicsLayer.add(new Graphic({
@@ -193,7 +223,7 @@ btnFindStreets.addEventListener("click", async () => {
         await sleep(2000);
         debugger
         // 05 - Validation Mabars
-        const validListMabar = await ValidationMabar(selectedMabar.features, selectedParsel)
+        const validListMabar = await ValidationMabar(selectedMabar.features, selectParsel)
         validListMabar.map((mabar) => {
             graphicsLayer.add(new Graphic({
                 geometry: mabar.geometry,
@@ -240,12 +270,12 @@ async function ValidationMabar(listMabar, selectedParcel) {
         const buffMabar = createFlatBuffer(mabar.geometry, distansBuffMabar, "meters");
 
         // Query parcels inside buffer
-        const query = ArseFLayer.createQuery();
+        const query = fLayerMelk.createQuery();
         query.outFields = ["Code_nosazi"];
         query.geometry = buffMabar;
         query.spatialRelationship = "intersects";
 
-        const result = await ArseFLayer.queryFeatures(query);
+        const result = await fLayerMelk.queryFeatures(query);
 
         const isSelectedParcelInside = result.features.some(parcel =>
             parcel.attributes.Code_nosazi === selectedParcel.attributes.Code_nosazi
