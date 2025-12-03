@@ -78,45 +78,72 @@ view.whenLayerView(ArseFLayer)
         view.goTo(ArseFLayer.fullExtent);
     });
 
-const btnFindStreets = document.getElementById("btnFindStreets");
+const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
+btnFindNearestParcel.addEventListener("click", async () => {
+    findMaxWidthStreet(ArseFLayer, MabarFLayer, "1-2-149-40-0-0-0");
+});
 
+/**
+ * 
+ * @param {string} fLayerMelk
+ * @param {string} fLayerMabar
+ * @param {string} cNosaziMelk
+ */
 async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
     try {
-        if (!urlValidation(fLayerMelk.url))
-            throw new Error("آدرس سرویس نقشه صحیح نیست.");
+        // Validation for feature layer Melk URL
+        if (!urlMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
+        //if (!urlValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
+
+        // Validation for feature layer Mabar URL
+        if (!urlMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
+        //if (!urlValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
+
+        // Validation for Code Nosazi Melk
+        if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
+        //if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
+
     } catch (err) {
         console.error(`There is an Error in finding the maximum width of Street.`, err)
     }
 }
 
-function urlValidation(url) {
+function urlMapServiceValidation(url) {
     // The type of URL must be String
-    if (!url || typeof url !== "string") return false;    
+    if (!url || typeof url !== "string") throw new Error("The type of URL must be String."); //En
+    //if (!url || typeof url !== "string") throw new Error("نوع آدرس سرویس نقشه باید رشته‌ای باشد."); //Pr
+    return true;
 }
 
-function cNosaziValidation(cNosazi) {
+function cNosaziMelkValidation(cNosazi) {
     // The type of Code Nosazi must be String
-    if (!cNosazi || typeof cNosazi !== "string") return false;
+    if (!cNosazi || typeof cNosazi !== "string") throw new Error("The type of Code Nosazi must be String."); //En
+    //if (!cNosazi || typeof cNosazi !== "string") throw new Error("نوع کد نوسازی باید رشته‌ای باشد."); //Pr
 
-    // The length of Code Nosazi must be exactly seven
+    // The length of Code Nosazi must be exactly seven parts
     const parts = cNosazi.trim().split('-');
-    if (parts.length !== 7) return false;
+    if (parts.length !== 7) throw new Error("The length of Code Nosazi must be exactly seven."); //En
+    //if (parts.length !== 7) throw new Error("طول کد نوسازی باید دقیقاً هفت باشد."); //Pr
 
     // All Parts must be numeric
-    if (parts.some(p => !/^\d+$/.test(p))) return false;
+    if (parts.some(p => !/^\d+$/.test(p))) throw new Error("All Parts must be numeric."); //En
+    //if (parts.some(p => !/^\d+$/.test(p))) throw new Error("تمام قسمت‌ها باید عددی باشند."); //Pr
 
     // The last three parts must be exactly zero
-    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") return false;
+    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") throw new Error("The last three parts must be exactly zero."); //En
+    //if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") throw new Error("سه بخش آخر باید دقیقاً صفر باشند."); //Pr
 
-    // Sections 1, 2, 3, and 4 must not be blank or zero
-    if (parts.slice(0, 4).some(p => p === "")) return false;
+    // Sections 1, 2, 3, and 4 must not be blank or zero    
+    if (parts.slice(0, 4).some(p => p === "0")) throw new Error("Sections 1, 2, 3, and 4 must not be zero."); //En
+    //if (parts.slice(0, 4).some(p => p === "0")) throw new Error("بخش‌های ۱، ۲، ۳ و ۴ نباید صفر باشند."); //Pr
 
     return true;
 }
 
+const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
-        // 01 - Created Graphicslayer
+        // 01 - Created Graphicslayer        
         const graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
         graphicsLayer.removeAll();
@@ -164,7 +191,7 @@ btnFindStreets.addEventListener("click", async () => {
             }));
         });
         await sleep(2000);
-
+        debugger
         // 05 - Validation Mabars
         const validListMabar = await ValidationMabar(selectedMabar.features, selectedParsel)
         validListMabar.map((mabar) => {
@@ -207,7 +234,7 @@ async function ValidationMabar(listMabar, selectedParcel) {
     let validListMabar = [];
 
     for (const mabar of listMabar) {
-
+        debugger
         // Create flat buffer
         const distansBuffMabar = mabar.attributes.street_len / 2 + 2;
         const buffMabar = createFlatBuffer(mabar.geometry, distansBuffMabar, "meters");
