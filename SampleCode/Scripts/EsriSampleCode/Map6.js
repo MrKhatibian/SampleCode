@@ -82,7 +82,7 @@ view.whenLayerView(fLayerMelk)
 
 const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
 btnFindNearestParcel.addEventListener("click", async () => {
-    findMaxWidthStreet(fLayerMelk, fLayerMabar, "1-17-56-4-0-0-0");
+    FindMaxWidthStreet(fLayerMelk, fLayerMabar, "1-17-56-4-0-0-0");
 });
 
 /**
@@ -91,7 +91,7 @@ btnFindNearestParcel.addEventListener("click", async () => {
  * @param {string} fLayerMabar
  * @param {string} cNosaziMelk
  */
-async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
@@ -114,28 +114,42 @@ async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
         graphicsLayer.removeAll();
 
         // 02 - Finded Parsel
-        let queryMelk = fLayerMelk.createQuery();
-        queryMelk.returnGeometry = true;
-        queryMelk.outFields = ["*"];
-        queryMelk.where = `Code_nosazi = '${cNosaziMelk}'`;
-        const resultArse = await fLayerMelk.queryFeatures(queryMelk);
-        if (resultArse.features.length < 1) { throw new Error("Parcel not found."); } //En
-        //if (resultArse.features.length < 1) { throw new Error("ملک مورد نظر یافت نشد."); } //Pr
-
-        const selectParsel = resultArse.features[0];
-        const geoSelectParsel = selectParsel.geometry;
+        const selectMelk = resultArse.features[0];
+        const geoSelectMelk = selectMelk.geometry;
         graphicsLayer.add(new Graphic({
-            geometry: geoSelectParsel,
+            geometry: geoSelectMelk,
             symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green" } }
         }));
         // Zoom to parcel
-        view.goTo(geoSelectParsel);
+        view.goTo(geoSelectMelk);
+
+        
         await sleep(1000);
+
+
 
     } catch (err) {
         console.error(`There is an Error in finding the maximum width of Street.`, err); //En
         //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
     }
+}
+
+/**
+ * Find property features in a map service
+ * @param {object} fLayerProperty FeatureLayer
+ * @param {string} fieldProperty 
+ * @param {string} valueProperty
+ * @returns {object} Feature 
+ */
+async function FindProperty(fLayerProperty, fieldProperty, valueProperty) {    
+    let queryProperty = fLayerProperty.createQuery();
+    queryProperty.returnGeometry = true;
+    queryProperty.outFields = ["*"];
+    queryProperty.where = `'${fieldProperty}' = '${valueProperty}'`;
+    const resultProperty = await fLayerProperty.queryFeatures(queryProperty);
+    if (resultProperty.features.length < 1) { throw new Error("Property not found."); } //En
+    //if (resultProperty.features.length < 1) { throw new Error("ملک مورد نظر یافت نشد."); } //Pr    
+    return resultProperty.Features[0];
 }
 
 function urlMapServiceValidation(url) {
