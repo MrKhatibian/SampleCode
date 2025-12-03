@@ -95,16 +95,16 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
-        if (!urlMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
+        if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
         //if (!urlValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
 
         // Validation for feature layer Mabar URL
-        if (!urlMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
+        if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
         //if (!urlValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
 
         // Validation for Code Nosazi Melk
-        if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
-        //if (!cNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
+        if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
+        //if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
 
         // ============== Initialization ===============
 
@@ -118,7 +118,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
         const geoSelectMelk = selectMelk.geometry;
         graphicsLayer.add(new Graphic({
             geometry: geoSelectMelk,
-            symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green" } }
+            symbol: { type: "simple-fill", color: [0, 255, 0, 0.2], outline: { color: "green" } }
         }));
 
         // Zoom to Melk
@@ -151,14 +151,24 @@ async function FindFeature(featureLayer, field, value) {
     return result.features[0];
 }
 
-function urlMapServiceValidation(url) {
+/**
+ * Validation for map service URL
+ * @param {string} url
+ * @returns {boolean}
+ */
+function URLMapServiceValidation(url) {
     // The type of URL must be String
     if (!url || typeof url !== "string") throw new Error("The type of URL must be String."); //En
     //if (!url || typeof url !== "string") throw new Error("نوع آدرس سرویس نقشه باید رشته‌ای باشد."); //Pr
     return true;
 }
 
-function cNosaziMelkValidation(cNosazi) {
+/**
+ * Validation for Code Nosazi Melk
+ * @param {string} cNosazi
+ * @returns {boolean}
+ */
+function CNosaziMelkValidation(cNosazi) {
     // The type of Code Nosazi must be String
     if (!cNosazi || typeof cNosazi !== "string") throw new Error("The type of Code Nosazi must be String."); //En
     //if (!cNosazi || typeof cNosazi !== "string") throw new Error("نوع کد نوسازی باید رشته‌ای باشد."); //Pr
