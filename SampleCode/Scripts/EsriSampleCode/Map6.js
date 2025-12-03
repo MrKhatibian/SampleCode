@@ -79,6 +79,41 @@ view.whenLayerView(ArseFLayer)
     });
 
 const btnFindStreets = document.getElementById("btnFindStreets");
+
+async function findMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
+    try {
+        if (!urlValidation(fLayerMelk.url))
+            throw new Error("آدرس سرویس نقشه صحیح نیست.");
+    } catch (err) {
+        console.error(`There is an Error in finding the maximum width of Street.`, err)
+    }
+}
+
+function urlValidation(url) {
+    // The type of URL must be String
+    if (!url || typeof url !== "string") return false;    
+}
+
+function cNosaziValidation(cNosazi) {
+    // The type of Code Nosazi must be String
+    if (!cNosazi || typeof cNosazi !== "string") return false;
+
+    // The length of Code Nosazi must be exactly seven
+    const parts = cNosazi.trim().split('-');
+    if (parts.length !== 7) return false;
+
+    // All Parts must be numeric
+    if (parts.some(p => !/^\d+$/.test(p))) return false;
+
+    // The last three parts must be exactly zero
+    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") return false;
+
+    // Sections 1, 2, 3, and 4 must not be blank or zero
+    if (parts.slice(0, 4).some(p => p === "")) return false;
+
+    return true;
+}
+
 btnFindStreets.addEventListener("click", async () => {
     try {
         // 01 - Created Graphicslayer
@@ -90,7 +125,7 @@ btnFindStreets.addEventListener("click", async () => {
         let arseQuery = ArseFLayer.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-16-1-10-0-0-0'`;
+        arseQuery.where = `Code_nosazi = '1-25-149-40-0-0-0'`;
 
         const resultArse = await ArseFLayer.queryFeatures(arseQuery);        
         if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
