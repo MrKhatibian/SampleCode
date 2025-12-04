@@ -125,7 +125,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
         view.goTo(geoSelectMelk);                
 
         await sleep(1000); 
-        // 02 - Create buffer for Melk
+        // 02 - Create Buffer for Melk
         const buffMelk = geometryEngine.buffer(geoSelectMelk, 35, "meters");
         graphicsLayer.add(new Graphic({
             geometry: buffMelk,
@@ -137,7 +137,9 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
         await sleep(1000); 
         // 03 - Find Mabars        
         const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
-
+        if (!selectMabars)        
+            console.log(`Not found any Mabar.`); //En
+            //console.log(`هیچی معبری یافت نشد.`); //Pr
         selectMabars.forEach((features) => {
             graphicsLayer.add(new Graphic({
                 geometry: features.geometry,
@@ -149,6 +151,9 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
         await sleep(1000); 
         // 04 - Validation Mabars
         const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
+        if (!validListMabar)
+            console.log("Not found any mabar."); return; //En
+            //console.log("هیچ معبری یافت نشد."); return; //Pr
         validListMabar.map((mabar) => {
             graphicsLayer.add(new Graphic({
                 geometry: mabar.geometry,
@@ -157,6 +162,28 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
                 }
             }));
         });
+
+        await sleep(1000);         
+        // 05 - Finded Maximum Street Width
+        const maxWidthMabarLength = Math.max(...validListMabar.map(f => f.attributes.street_len));
+        console.log("Max: ", maxWidthMabarLength);
+
+        const maxObjWidthMabar = validListMabar.reduce((prev, current) => {
+            return (current.attributes.street_len > prev.attributes.street_len)
+                ? current
+                : prev;
+        });
+        graphicsLayer.add(new Graphic({
+            geometry: maxObjWidthMabar.geometry,
+            symbol: {
+                type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0 }
+            }
+        }));
+
+        const fMaxObjWidthMabar = maxObjWidthMabar.attributes;
+        console.log(`Max Object Name: ${fMaxObjWidthMabar.NAME}, Street length: ${fMaxObjWidthMabar.street_len}, Street99: ${fMaxObjWidthMabar.street_99}`);
+
+
     } catch (err) {
         console.error(`There is an Error in finding the maximum width of Street.`, err); //En
         //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
@@ -383,20 +410,20 @@ btnFindStreets.addEventListener("click", async () => {
         const maxArzeMabar = Math.max(...validListMabar.map(f => f.attributes.street_len));
         console.log("Max: ", maxArzeMabar);
 
-        const maxObjArzeMabar = validListMabar.reduce((prev, current) => {
+        const maxObjWidthMabar = validListMabar.reduce((prev, current) => {
             return (current.attributes.street_len > prev.attributes.street_len)
                 ? current
                 : prev;
         });
         graphicsLayer.add(new Graphic({
-            geometry: maxObjArzeMabar.geometry,
+            geometry: maxObjWidthMabar.geometry,
             symbol: {
                 type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0}
             }
         }));
 
-        const featureMaxObjArzeMabar = maxObjArzeMabar.attributes;
-        console.log(`Max Object Name: ${featureMaxObjArzeMabar.NAME}, Street length: ${featureMaxObjArzeMabar.street_len}, Street99: ${featureMaxObjArzeMabar.street_99}`);
+        const fMaxObjWidthMabar = maxObjWidthMabar.attributes;
+        console.log(`Max Object Name: ${fMaxObjWidthMabar.NAME}, Street length: ${fMaxObjWidthMabar.street_len}, Street99: ${fMaxObjWidthMabar.street_99}`);
 
         
     } catch (err) {
