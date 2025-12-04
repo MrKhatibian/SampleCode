@@ -241,6 +241,12 @@ function CNosaziMelkValidation(cNosazi) {
     return true;
 }
 
+/**
+ * Finding the right Mabar
+ * @param {object} listMabar
+ * @param {object} melk
+ * @returns {features}
+ */
 async function MabarValidation(listMabar, melk) {
 
     let validListMabar = [];
