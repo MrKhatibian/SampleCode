@@ -82,7 +82,7 @@ view.whenLayerView(fLayerMelk)
 
 const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
 btnFindNearestParcel.addEventListener("click", async () => {
-    FindMaxWidthStreet(fLayerMelk, fLayerMabar, "1-17-56-4-0-0-0");
+    FindMaxWidthStreet(fLayerMelk, fLayerMabar, "Code_nosazi", "1-25-149-40-0-0-0");
 });
 
 /**
@@ -91,16 +91,16 @@ btnFindNearestParcel.addEventListener("click", async () => {
  * @param {string} fLayerMabar
  * @param {string} cNosaziMelk
  */
-async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
         if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
-        //if (!urlValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
+        //if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
 
         // Validation for feature layer Mabar URL
         if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
-        //if (!urlValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
+        //if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
 
         // Validation for Code Nosazi Melk
         if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
@@ -108,14 +108,14 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
 
         // ============== Initialization ===============
 
-        // 01 - Created Graphicslayer
+        // Create a Graphicslayer
         const graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
         graphicsLayer.removeAll();
 
-        // 02 - Finded Melk
-        const selectMelk = await FindFeature(fLayerMelk, "Code_nosazi", "1-17-56-4-0-0-0");
-        const geoSelectMelk = selectMelk.geometry;
+        // 01 - Finded Melk
+        const selectMelks = await SelectByAttribute(fLayerMelk, fieldMelk, cNosaziMelk);
+        const geoSelectMelk = selectMelks[0].geometry;
         graphicsLayer.add(new Graphic({
             geometry: geoSelectMelk,
             symbol: { type: "simple-fill", color: [0, 255, 0, 0.2], outline: { color: "green" } }
@@ -124,8 +124,39 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
         // Zoom to Melk
         view.goTo(geoSelectMelk);                
 
+        await sleep(1000); 
+        // 02 - Create buffer for Melk
+        const buffMelk = geometryEngine.buffer(geoSelectMelk, 35, "meters");
+        graphicsLayer.add(new Graphic({
+            geometry: buffMelk,
+            symbol: {
+                type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: "blue" }
+            }
+        })); 
 
+        await sleep(1000); 
+        // 03 - Find Mabars        
+        const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
 
+        selectMabars.forEach((features) => {
+            graphicsLayer.add(new Graphic({
+                geometry: features.geometry,
+                symbol: {
+                    type: "simple-line", width: 2, color: "red", outLine: {width: 0} }
+            }));
+        });
+
+        await sleep(1000); 
+        // 04 - Validation Mabars
+        const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
+        validListMabar.map((mabar) => {
+            graphicsLayer.add(new Graphic({
+                geometry: mabar.geometry,
+                symbol: {
+                    type: "simple-line", width: 2, color: "blue", outline: { width: 0 }
+                }
+            }));
+        });
     } catch (err) {
         console.error(`There is an Error in finding the maximum width of Street.`, err); //En
         //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
@@ -133,22 +164,39 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, cNosaziMelk = "") {
 }
 
 /**
- * Find Feature in a Feature Layer
+ * Find Feature in a Feature Layer with field & value
  * @param {object} featureLayer FeatureLayer
  * @param {string} field 
  * @param {string} value
  * @returns {object} Feature 
  */
-async function FindFeature(featureLayer, field, value) {
+async function SelectByAttribute(featureLayer, field, value) {
     let query = featureLayer.createQuery();
     query.returnGeometry = true;
-    query.outFields = ["*"];
-    debugger;
+    query.outFields = ["*"];    
     query.where = `${field} = '${value}'`;
     const result = await featureLayer.queryFeatures(query);
     if (result.features.length < 1) { throw new Error("Feature not found."); } //En
     //if (result.features.length < 1) { throw new Error("عارضه مورد نظر یافت نشد."); } //Pr        
-    return result.features[0];
+    return result.features;
+}
+
+/**
+ * Find Feature in a Feature Layer with relationship
+ * @param {object} featureLayer FeatureLayer
+ * @param {object} geometry 
+ * @param {string} relationship
+ * @returns {object} Feature 
+ */
+async function SelectByLocation(featureLayer, geometry, relationship) {
+    let query = featureLayer.createQuery();
+    query.returnGeometry = true;
+    query.geometry = geometry;
+    query.spatialRelationship = relationship;
+    const result = await featureLayer.queryFeatures(query);
+    if (result.features.length < 1) { throw new Error("Feature not found."); } //En
+    //if (result.features.length < 1) { throw new Error("عارضه مورد نظر یافت نشد."); } //Pr        
+    return result.features;
 }
 
 /**
@@ -193,6 +241,75 @@ function CNosaziMelkValidation(cNosazi) {
     return true;
 }
 
+async function MabarValidation(listMabar, melk) {
+
+    let validListMabar = [];
+
+    for (const mabar of listMabar) {
+        // Create flat buffer
+        const widthMabar = mabar.attributes.street_len;
+        if (!widthMabar || widthMabar === 0 || widthMabar == undefined || widthMabar == "")
+            console.warn(`The width of Street{${mabar.attributes.OBJECTID}} is not ture.`); //En
+            //console.warn(`عرض معبر {${mabar.attributes.OBJECTID}} صحیح نیست.`); //Pr
+        
+
+        const distansBuffMabar = widthMabar / 2 + 2;
+        const buffMabar = FlatBuffer(mabar.geometry, distansBuffMabar, "meters");
+
+        // Query parcels inside buffer
+        //const query = fLayerMelk.createQuery();
+        //query.outFields = ["Code_nosazi"];
+        //query.geometry = buffMabar;
+        //query.spatialRelationship = "intersects";
+
+        //const result = await fLayerMelk.queryFeatures(query);
+        const result = await SelectByLocation(fLayerMelk, buffMabar, "intersects");
+
+        const isSelectedMelkInside = result.some(f =>
+            f.attributes.Code_nosazi === melk.attributes.Code_nosazi
+        );
+
+        console.log("Have parcel:", isSelectedMelkInside);
+
+        if (isSelectedMelkInside) validListMabar.push(mabar);
+    }
+    return validListMabar;
+}
+/**
+ * Create flat buffer
+ * @param {object} line
+ * @param {number} distance
+ * @param {string} unit
+ * @returns {feature} Polygon
+ */
+function FlatBuffer(line, distance, unit = "meters") {
+    // Create left offset
+    const left = geometryEngine.offset(
+        line,
+        distance,
+        unit,
+        "butt",   // endType: flat
+        "miter"   // joinType: sharp edges
+    );
+
+    // Create right offset
+    const right = geometryEngine.offset(
+        line,
+        -distance,
+        unit,
+        "butt",
+        "miter"
+    );
+
+    // Union both sides: polygon
+    return geometryEngine.union([left, right]);
+}
+
+
+
+// Sleep 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
@@ -205,7 +322,7 @@ btnFindStreets.addEventListener("click", async () => {
         let arseQuery = fLayerMelk.createQuery();
         arseQuery.returnGeometry = true;
         arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-25-149-40-0-0-0'`;
+        arseQuery.where = `Code_nosazi = '1-16-28-2-0-0-0'`;
 
         const resultArse = await fLayerMelk.queryFeatures(arseQuery);        
         if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
@@ -243,10 +360,9 @@ btnFindStreets.addEventListener("click", async () => {
                 symbol: { type: "simple-line", width: 3, color: "red" }
             }));
         });
-        await sleep(2000);
-        debugger
+        await sleep(2000);        
         // 05 - Validation Mabars
-        const validListMabar = await ValidationMabar(selectedMabar.features, selectParsel)
+        const validListMabar = await MabarValidation(selectedMabar.features, selectParsel)
         validListMabar.map((mabar) => {
             graphicsLayer.add(new Graphic({
                 geometry: mabar.geometry,
@@ -282,63 +398,3 @@ btnFindStreets.addEventListener("click", async () => {
     }
 });
 
-async function ValidationMabar(listMabar, selectedParcel) {
-
-    let validListMabar = [];
-
-    for (const mabar of listMabar) {
-        debugger
-        // Create flat buffer
-        const distansBuffMabar = mabar.attributes.street_len / 2 + 2;
-        const buffMabar = createFlatBuffer(mabar.geometry, distansBuffMabar, "meters");
-
-        // Query parcels inside buffer
-        const query = fLayerMelk.createQuery();
-        query.outFields = ["Code_nosazi"];
-        query.geometry = buffMabar;
-        query.spatialRelationship = "intersects";
-
-        const result = await fLayerMelk.queryFeatures(query);
-
-        const isSelectedParcelInside = result.features.some(parcel =>
-            parcel.attributes.Code_nosazi === selectedParcel.attributes.Code_nosazi
-        );
-
-        console.log("Have parcel:", isSelectedParcelInside);
-
-        if (isSelectedParcelInside) {
-            validListMabar.push(mabar);
-        }
-    }
-
-    return validListMabar;
-}
-
-
-function createFlatBuffer(lineGeom, distance, unit = "meters") {
-    // Create left offset
-    const left = geometryEngine.offset(
-        lineGeom,
-        distance,
-        unit,
-        "butt",   // endType → flat
-        "miter"   // joinType → sharp edges
-    );
-
-    // Create right offset
-    const right = geometryEngine.offset(
-        lineGeom,
-        -distance,
-        unit,
-        "butt",
-        "miter"
-    );
-
-    // Union both sides → polygon
-    return geometryEngine.union([left, right]);
-}
-
-
-
-// Sleep 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
