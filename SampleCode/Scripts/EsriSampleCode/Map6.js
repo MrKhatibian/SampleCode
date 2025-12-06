@@ -86,10 +86,22 @@ btnFindNearestParcel.addEventListener("click", async () => {
     const graphicsLayer = new GraphicsLayer();
     map.add(graphicsLayer);
     graphicsLayer.removeAll();
-
-    FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, "Code_nosazi", "1-16-28-2-0-0-0");
 });
 
+// Button Find Maximum length of Street for Melk
+const btnFindStreets = document.getElementById("btnFindStreets");
+btnFindStreets.addEventListener("click", async () => {
+    try {
+        // 01 - Created Graphicslayer        
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+        graphicsLayer.removeAll();
+
+        FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, "Code_nosazi", "1-16-11-2-0-0-0");
+    } catch (err) {
+        console.error(err);
+    }
+});
 /**
  * 
  * @param {string} fLayerMelk
@@ -347,91 +359,4 @@ function FlatBuffer(line, distance, unit = "meters") {
 // Sleep 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-const btnFindStreets = document.getElementById("btnFindStreets");
-btnFindStreets.addEventListener("click", async () => {
-    try {
-        // 01 - Created Graphicslayer        
-        const graphicsLayer = new GraphicsLayer();
-        map.add(graphicsLayer);
-        graphicsLayer.removeAll();
-
-        // 02 - Finded Parsel
-        let arseQuery = fLayerMelk.createQuery();
-        arseQuery.returnGeometry = true;
-        arseQuery.outFields = ["*"];
-        arseQuery.where = `Code_nosazi = '1-16-28-2-0-0-0'`;
-
-        const resultArse = await fLayerMelk.queryFeatures(arseQuery);        
-        if (resultArse.features.length < 1) { throw new Error("Parcel not found"); }
-
-        const selectParsel = resultArse.features[0];
-        const geoSelectParsel = selectParsel.geometry;
-        graphicsLayer.add(new Graphic({
-            geometry: geoSelectParsel,
-            symbol: { type: "simple-fill", color: [0, 255, 0, 0.1], outline: { color: "green"} }
-        }));
-        // Zoom to parcel
-        view.goTo(geoSelectParsel);
-        await sleep(2000);
-
-        // 03 - created buffer
-        const buffParsel = geometryEngine.buffer(geoSelectParsel, 35, "meters");        
-        graphicsLayer.add(new Graphic({
-            geometry: buffParsel,
-            symbol: {
-                type: "simple-fill", color: [0, 0, 255, 0.1], outline: {color: "blue"} }
-        }));        
-        
-        // 04 - Finded Streets
-        const mabarQuery = fLayerMabar.createQuery();
-        mabarQuery.returnGeometry = true;
-        mabarQuery.outFields = ["*"];
-        mabarQuery.geometry = buffParsel;
-        mabarQuery.spatialRelationship = "intersects";
-
-        const selectedMabar = await fLayerMabar.queryFeatures(mabarQuery);
-        
-        selectedMabar.features.forEach((features) => {            
-            graphicsLayer.add(new Graphic({
-                geometry: features.geometry,
-                symbol: { type: "simple-line", width: 3, color: "red" }
-            }));
-        });
-        await sleep(2000);        
-        // 05 - Validation Mabars
-        const validListMabar = await MabarValidation(selectedMabar.features, selectParsel)
-        validListMabar.map((mabar) => {
-            graphicsLayer.add(new Graphic({
-                geometry: mabar.geometry,
-                symbol: {
-                    type: "simple-line", width: 2, color: "blue", outline: { width: 0 }
-                }
-            }));
-        });
-        await sleep(2000);
-
-        // 05 - Finded Maximum Street Length
-        const maxArzeMabar = Math.max(...validListMabar.map(f => f.attributes.street_len));
-        console.log("Max: ", maxArzeMabar);
-
-        const maxObjWidthMabar = validListMabar.reduce((prev, current) => {
-            return (current.attributes.street_len > prev.attributes.street_len)
-                ? current
-                : prev;
-        });
-        graphicsLayer.add(new Graphic({
-            geometry: maxObjWidthMabar.geometry,
-            symbol: {
-                type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0}
-            }
-        }));
-
-        const fMaxObjWidthMabar = maxObjWidthMabar.attributes;
-        console.log(`Max Object Name: ${fMaxObjWidthMabar.NAME}, Street length: ${fMaxObjWidthMabar.street_len}, Street99: ${fMaxObjWidthMabar.street_99}`);
-
-        
-    } catch (err) {
-        console.error(err);
-    }
-});
 
