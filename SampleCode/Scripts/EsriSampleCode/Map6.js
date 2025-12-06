@@ -82,7 +82,12 @@ view.whenLayerView(fLayerMelk)
 
 const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
 btnFindNearestParcel.addEventListener("click", async () => {
-    FindMaxWidthStreet(fLayerMelk, fLayerMabar, "Code_nosazi", "1-25-149-40-0-0-0");
+    // 01 - Created Graphicslayer        
+    const graphicsLayer = new GraphicsLayer();
+    map.add(graphicsLayer);
+    graphicsLayer.removeAll();
+
+    FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, "Code_nosazi", "1-16-28-2-0-0-0");
 });
 
 /**
@@ -91,7 +96,7 @@ btnFindNearestParcel.addEventListener("click", async () => {
  * @param {string} fLayerMabar
  * @param {string} cNosaziMelk
  */
-async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMelk = "") {
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMelk, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
@@ -107,11 +112,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
         //if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
 
         // ============== Initialization ===============
-
-        // Create a Graphicslayer
-        const graphicsLayer = new GraphicsLayer();
-        map.add(graphicsLayer);
-        graphicsLayer.removeAll();
+        
 
         // 01 - Finded Melk
         const selectMelks = await SelectByAttribute(fLayerMelk, fieldMelk, cNosaziMelk);
@@ -132,8 +133,8 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
             symbol: {
                 type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: "blue" }
             }
-        })); 
-
+        }));
+        
         await sleep(1000); 
         // 03 - Find Mabars        
         const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
@@ -147,13 +148,14 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
                     type: "simple-line", width: 2, color: "red", outLine: {width: 0} }
             }));
         });
-
+        
         await sleep(1000); 
         // 04 - Validation Mabars
         const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
-        if (!validListMabar)
-            console.log("Not found any mabar."); return; //En
-            //console.log("هیچ معبری یافت نشد."); return; //Pr
+        if (validListMabar.length < 1) { 
+            console.Error("Not found any mabar."); return; //En
+            //console.Error("هیچ معبری یافت نشد."); return; //Pr
+        }
         validListMabar.map((mabar) => {
             graphicsLayer.add(new Graphic({
                 geometry: mabar.geometry,
@@ -162,7 +164,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMel
                 }
             }));
         });
-
+        
         await sleep(1000);         
         // 05 - Finded Maximum Street Width
         const maxWidthMabarLength = Math.max(...validListMabar.map(f => f.attributes.street_len));
@@ -202,9 +204,10 @@ async function SelectByAttribute(featureLayer, field, value) {
     query.returnGeometry = true;
     query.outFields = ["*"];    
     query.where = `${field} = '${value}'`;
-    const result = await featureLayer.queryFeatures(query);
-    if (result.features.length < 1) { throw new Error("Feature not found."); } //En
-    //if (result.features.length < 1) { throw new Error("عارضه مورد نظر یافت نشد."); } //Pr        
+    const result = await featureLayer.queryFeatures(query);    
+    if (result.features.length < 1)
+        console.log("Feature not found."); //En
+        //console.log("عارضه مورد نظر یافت نشد."); //Pr    
     return result.features;
 }
 
@@ -221,8 +224,9 @@ async function SelectByLocation(featureLayer, geometry, relationship) {
     query.geometry = geometry;
     query.spatialRelationship = relationship;
     const result = await featureLayer.queryFeatures(query);
-    if (result.features.length < 1) { throw new Error("Feature not found."); } //En
-    //if (result.features.length < 1) { throw new Error("عارضه مورد نظر یافت نشد."); } //Pr        
+    if (result.features.length < 1)
+        console.log("Feature not found."); //En
+        //console.log("عارضه مورد نظر یافت نشد."); //Pr
     return result.features;
 }
 
@@ -275,7 +279,7 @@ function CNosaziMelkValidation(cNosazi) {
  * @returns {features}
  */
 async function MabarValidation(listMabar, melk) {
-
+    
     let validListMabar = [];
 
     for (const mabar of listMabar) {
