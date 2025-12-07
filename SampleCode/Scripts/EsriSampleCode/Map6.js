@@ -63,20 +63,14 @@ const fLayerMelk = new FeatureLayer({
 const fLayerMahdodeh = new FeatureLayer({
     url: `${url}/2`,
     popupTemplate: {
-        title: "Mahdodeh",
-        content: {
-            type: "fields"
-        }
+        title: "Mahdodeh"       
     }
 });
 
 const fLayerHarim = new FeatureLayer({
     url: `${url}/3`,
     popupTemplate: {
-        title: "Harim",
-        content: [{
-            type: "fields"            
-        }]
+        title: "Harim",        
     }
 });
 
@@ -100,24 +94,40 @@ view.whenLayerView(fLayerMelk)
 
 // ============== Core Logic ===============
 
-const btnFindNearestParcel = document.getElementById("btnFindNearestParcel");
-btnFindNearestParcel.addEventListener("click", async () => {
+const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
+btnFindNearestMelk.addEventListener("click", async () => {
     // 01 - Created Graphicslayer        
-    const graphicsLayer = new GraphicsLayer();
-    map.add(graphicsLayer);
-    graphicsLayer.removeAll();
+    const gLayerFindNearestMelk = new GraphicsLayer();
+    map.add(gLayerFindNearestMelk);
+    gLayerFindNearestMelk.removeAll();
+    FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
+
 });
+
+async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
+    const selectFeatures = await SelectByAttribute(featureLayer, "Code_nosazi", "1-25-156-15-0-0-0");
+    const geoSelectFeature = selectFeatures[0].geometry;
+    view.goTo(geoSelectFeature);
+    graphicslayer.add(new Graphic({
+        geometry: geoSelectFeature,
+        symbol: {
+            type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: [39, 235, 245] }
+        }
+    }));
+
+}
+
 
 // Button Find Maximum length of Street for Melk
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
-        // 01 - Created Graphicslayer        
-        const graphicsLayer = new GraphicsLayer();
-        map.add(graphicsLayer);
-        graphicsLayer.removeAll();
+        // 01 - Created gLayerFindNearestMelk        
+        const gLayerFindStreet = new GraphicsLayer();
+        map.add(gLayerFindStreet);
+        gLayerFindStreet.removeAll();
 
-        FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, "Code_nosazi", "1-16-11-2-0-0-0");
+        FindMaxWidthStreet(fLayerMelk, fLayerMabar, gLayerFindStreet, "Code_nosazi", "1-16-11-2-0-0-0");
     } catch (err) {
         console.error(err);
     }
@@ -338,7 +348,7 @@ async function MabarValidation(listMabar, melk) {
             f.attributes.Code_nosazi === melk.attributes.Code_nosazi
         );
 
-        console.log("Have parcel:", isSelectedMelkInside);
+        console.log("Have Melk:", isSelectedMelkInside);
 
         if (isSelectedMelkInside) validListMabar.push(mabar);
     }
