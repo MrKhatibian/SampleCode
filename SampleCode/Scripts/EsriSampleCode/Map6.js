@@ -60,8 +60,28 @@ const fLayerMelk = new FeatureLayer({
     },
 });
 
+const fLayerMahdodeh = new FeatureLayer({
+    url: `${url}/2`,
+    popupTemplate: {
+        title: "Mahdodeh",
+        content: {
+            type: "fields"
+        }
+    }
+});
+
+const fLayerHarim = new FeatureLayer({
+    url: `${url}/3`,
+    popupTemplate: {
+        title: "Harim",
+        content: [{
+            type: "fields"            
+        }]
+    }
+});
+
 // =============== Add layer ===============
-map.addMany([fLayerMabar, fLayerMelk]);
+map.addMany([fLayerHarim, fLayerMahdodeh, fLayerMabar, fLayerMelk]);
 fLayerMelk.when(() => {
     const homeWidget = new Home({
         view: view,
