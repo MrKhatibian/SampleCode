@@ -54,8 +54,9 @@ const fLayerMelk = new FeatureLayer({
                 type: "fields",
                 fieldInfos: [
                     { fieldName: "Code_nosazi", label: "کدنوسازی" },
+                    { fieldName: "Max_price_", label: "قیمت" },
                 ],
-            },
+            }
         ],
     },
 });
@@ -105,7 +106,7 @@ btnFindNearestMelk.addEventListener("click", async () => {
 });
 
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
-    const selectFeatures = await SelectByAttribute(featureLayer, "Code_nosazi", "1-25-156-15-0-0-0");
+    const selectFeatures = await SelectByAttribute(featureLayer, "Code_nosazi", "1-25-159-2-0-0-0");
     const geoSelectFeature = selectFeatures[0].geometry;
     //view.goTo(geoSelectFeature);
     view.goTo({
@@ -147,12 +148,14 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     console.log(top5MinDistance);
 
     top5MinDistance.forEach(f => {
-        graphicslayer.add(new Graphic({
-            geometry: f.feature.geometry,
-            symbol: {
-                type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
-            }
-        }));
+        if (f.feature.attributes.Max_price_ > 0) {
+            graphicslayer.add(new Graphic({
+                geometry: f.feature.geometry,
+                symbol: {
+                    type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
+                }
+            }));
+        }
     });
 
     
