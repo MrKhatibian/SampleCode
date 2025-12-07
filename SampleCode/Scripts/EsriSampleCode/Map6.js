@@ -107,7 +107,12 @@ btnFindNearestMelk.addEventListener("click", async () => {
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
     const selectFeatures = await SelectByAttribute(featureLayer, "Code_nosazi", "1-25-156-15-0-0-0");
     const geoSelectFeature = selectFeatures[0].geometry;
-    view.goTo(geoSelectFeature);
+    //view.goTo(geoSelectFeature);
+    view.goTo({
+        target: geoSelectFeature,
+        zoom: 17
+    })
+
     graphicslayer.add(new Graphic({
         geometry: geoSelectFeature,
         symbol: {
@@ -122,8 +127,22 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
             type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
         }
     }));
-    
 
+    let top5Candidatefeatures = [];
+    const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
+    if (candidateFeatures.length === 0) return null;
+    console.log(candidateFeatures);
+
+    let distance = [];
+    candidateFeatures.forEach(f => {
+        if (f.geometry.extent === geoSelectFeature.extent) return;
+        const d = geometryEngine.distance(geoSelectFeature, f.geometry, "meters");
+        distance.push({
+            distance: d,
+            feature: f
+        });
+    });
+    console.log(distance);
 }
 
 
