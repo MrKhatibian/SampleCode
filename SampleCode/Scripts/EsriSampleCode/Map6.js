@@ -115,6 +115,15 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         }
     }));
 
+    const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
+    graphicslayer.add(new Graphic({
+        geometry: buffSelectFeature,
+        symbol: {
+            type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
+        }
+    }));
+    
+
 }
 
 
