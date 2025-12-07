@@ -127,22 +127,37 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
             type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
         }
     }));
-
-    let top5Candidatefeatures = [];
+    
     const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
     if (candidateFeatures.length === 0) return null;
-    console.log(candidateFeatures);
-
+    
     let distance = [];
     candidateFeatures.forEach(f => {
-        if (f.geometry.extent === geoSelectFeature.extent) return;
+        if (f.geometry.extent.equals(geoSelectFeature.extent) ) return;
         const d = geometryEngine.distance(geoSelectFeature, f.geometry, "meters");
         distance.push({
             distance: d,
             feature: f
         });
     });
-    console.log(distance);
+
+    //
+    distance.sort((a, b) => a.distance - b.distance);    
+    let top5MinDistance = distance.slice(0, counter);
+    console.log(top5MinDistance);
+
+    top5MinDistance.forEach(f => {
+        graphicslayer.add(new Graphic({
+            geometry: f.feature.geometry,
+            symbol: {
+                type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
+            }
+        }));
+    });
+
+    
+
+
 }
 
 
