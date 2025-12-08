@@ -152,11 +152,11 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
             type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: [39, 235, 245] }
         }
     }));
-    view.goTo({
-        target: geoSelectFeature,
-        zoom: 17
-    });
-    //view.goTo(geoSelectFeature);
+    //view.goTo({
+    //    target: geoSelectFeature,
+    //    zoom: 17
+    //});
+    view.goTo(geoSelectFeature);
 
     await sleep(1000);
     // 06 - Create buffer around of Selected melk
@@ -168,23 +168,13 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         }
     }));
     view.goTo(buffSelectFeature);
-
-
-
-
-
-    // 05 - Find nearest Melk
-    const melksInMahdodeh = await SelectByLocation(fLayerMelk, geoMahdodeh, "intersects");
-    if (melkInMahdodeh.length < 1) return console.error("Error in get feature from Mahdodeh.")
-
-
-
     
-   
-
+    // 07 - Get candidate Melks
     const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
-    if (candidateFeatures.length === 0) return null;
-    
+    if (candidateFeatures.length < 1) return console.error("Not find any Candidate Melk.");
+    candidateFeatures.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
+
+    // 
     let distance = [];
     candidateFeatures.forEach(f => {
         if (f.geometry.extent.equals(geoSelectFeature.extent) ) return;
