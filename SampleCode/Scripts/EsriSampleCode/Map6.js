@@ -155,26 +155,11 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     view.goTo({
         target: geoSelectFeature,
         zoom: 17
-    })
-
-    // 05 - Find nearest Melk
-    const melkInMahdodeh = await SelectByLocation(fLayerMelk, geoMahdodeh, "intersects");
-    if (melkInMahdodeh.length < 1) return console.error("Error in get feature from Mahdodeh.")
-
-
-    // View Filter
-    const viewMelk = await view.whenLayerView(fLayerMelk);
-    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
-   
-
-    
-        
-    //const selectFeatures = MelkInHarim.features.find(f => f.attributes.Code_nosazi === "1-25-156-15-0-0-0");
-    //const geoSelectFeature = selectFeatures?.geometry;
+    });
     //view.goTo(geoSelectFeature);
 
-    
-
+    await sleep(1000);
+    // 06 - Create buffer around of Selected melk
     const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
     graphicslayer.add(new Graphic({
         geometry: buffSelectFeature,
@@ -183,6 +168,19 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         }
     }));
     view.goTo(buffSelectFeature);
+
+
+
+
+
+    // 05 - Find nearest Melk
+    const melksInMahdodeh = await SelectByLocation(fLayerMelk, geoMahdodeh, "intersects");
+    if (melkInMahdodeh.length < 1) return console.error("Error in get feature from Mahdodeh.")
+
+
+
+    
+   
 
     const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
     if (candidateFeatures.length === 0) return null;
@@ -223,8 +221,10 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     //    }
     //});
 
-    
 
+    // View Filter
+    //const viewMelk = await view.whenLayerView(fLayerMelk);
+    //viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
 
 }
 
