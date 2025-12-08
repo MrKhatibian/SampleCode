@@ -185,7 +185,8 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         });
     });
 
-    //
+
+    // 09 - Find minimum distance
     distance.sort((a, b) => a.distance - b.distance);    
 
     let nearestMelk = distance[0];
