@@ -174,7 +174,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     if (candidateFeatures.length < 1) return console.error("Not find any Candidate Melk.");
     candidateFeatures.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
 
-    // 
+    // 08 - Calculation distance between selected Melk and candidate Melks
     let distance = [];
     candidateFeatures.forEach(f => {
         if (f.geometry.extent.equals(geoSelectFeature.extent) ) return;
