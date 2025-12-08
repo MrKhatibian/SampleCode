@@ -110,12 +110,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     
     const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-156-15-0-0-0");
     if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
-    const geoSelectFeature = selectFeatures[0].geometry;
-      
-    const locationValidCodenosazi = await SelectByLocation(fLayerHarim, geoSelectFeature, "intersects")
-    if (locationValidCodenosazi.length < 1) return console.error("Melk is outside of Harim's boudary");    
-
-    
+    const geoSelectFeature = selectFeatures[0].geometry;                  
 
     // 01 - Get geometry Harim
     const queryHarim = fLayerHarim.createQuery();
@@ -143,10 +138,14 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
 
     // 03 - Get geometry between in Harim and Mahdodeh
     const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
-    graphicslayer.add(new Graphic({
-        geometry: geoBetween,
-        symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
-    }));
+    //graphicslayer.add(new Graphic({
+    //    geometry: geoBetween,
+    //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
+    //})); // for Show in Webgis
+    debugger
+    // 04 - Location validation for selected Melk
+    const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
+    if (!locationValidSelectedMelk) return console.error("Melk is outside of Harim's boudary");
 
     //view.when(fLayerMelk).then(viewMelk => {
     //    //viewMelk.effect = {
