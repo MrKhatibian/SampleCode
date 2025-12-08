@@ -122,9 +122,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     const geoHarim = resultHarim.features.length === 1
         ? resultHarim.features[0].geometry
         : geometryEngine.union(resultHarim.features.map(f => f.geometry));
-    // View Filter
-    const viewMelk = await view.whenLayerView(fLayerMelk);
-    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
+    
 
     // 02 - Get geometry Mahdodeh
     const queryMahdodeh = fLayerMahdodeh.createQuery();
@@ -142,40 +140,40 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     //    geometry: geoBetween,
     //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
     //})); // for Show in Webgis
-    debugger
+    
     // 04 - Location validation for selected Melk
     const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
     if (!locationValidSelectedMelk) return console.error("Melk is outside of Harim's boudary");
 
-    //view.when(fLayerMelk).then(viewMelk => {
-    //    //viewMelk.effect = {
-    //    //    filter: { geometry: geoHarim, },
-    //    //    //includedEffect: "opacity(100%)",
-    //    //    //excludedEffect: "opacity(20%) blur(2px)"
-    //    //};
-    //    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "intersects" }
-
-    //})
-
-    const queryMelk = fLayerMelk.createQuery();
-    queryMelk.geometry = geoHarim;
-    queryMelk.spatialRelationship = "contains";
-    const MelkInHarim = await fLayerMelk.queryFeatures(queryMelk);
-        
-    //const selectFeatures = MelkInHarim.features.find(f => f.attributes.Code_nosazi === "1-25-156-15-0-0-0");
-    //const geoSelectFeature = selectFeatures?.geometry;
-    //view.goTo(geoSelectFeature);
-    //view.goTo({
-    //    target: geoSelectFeature,
-    //    zoom: 17
-    //})// have bugs
-
+    // 05 - Show Selected Melk in Map
     graphicslayer.add(new Graphic({
         geometry: geoSelectFeature,
         symbol: {
             type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: [39, 235, 245] }
         }
     }));
+    view.goTo({
+        target: geoSelectFeature,
+        zoom: 17
+    })
+
+    // 05 - Find nearest Melk
+    const melkInMahdodeh = await SelectByLocation(fLayerMelk, geoMahdodeh, "intersects");
+    if (melkInMahdodeh.length < 1) return console.error("Error in get feature from Mahdodeh.")
+
+
+    // View Filter
+    const viewMelk = await view.whenLayerView(fLayerMelk);
+    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
+   
+
+    
+        
+    //const selectFeatures = MelkInHarim.features.find(f => f.attributes.Code_nosazi === "1-25-156-15-0-0-0");
+    //const geoSelectFeature = selectFeatures?.geometry;
+    //view.goTo(geoSelectFeature);
+
+    
 
     const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
     graphicslayer.add(new Graphic({
