@@ -101,18 +101,61 @@ btnFindNearestMelk.addEventListener("click", async () => {
     const gLayerFindNearestMelk = new GraphicsLayer();
     map.add(gLayerFindNearestMelk);
     gLayerFindNearestMelk.removeAll();
-    FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
 
+    fLayerMelk.definitionExpression = `Max_price_ > 0`;
+    FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
 });
 
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
-    const selectFeatures = await SelectByAttribute(featureLayer, "Code_nosazi", "1-25-159-2-0-0-0");
+    
+    const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-156-15-0-0-0");
+    if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
     const geoSelectFeature = selectFeatures[0].geometry;
+      
+    const locationValidCodenosazi = await SelectByLocation(fLayerHarim, geoSelectFeature, "intersects")
+    if (locationValidCodenosazi.length < 1) return console.error("Melk is outside of Harim's boudary");    
+
+    
+
+    // 01 - Get geometry Harim
+    const queryHarim = fLayerHarim.createQuery();
+    queryHarim.returnGeometry = true;
+    const resultHarim = await fLayerHarim.queryFeatures(queryHarim);
+    if (resultHarim.features.length < 1) return console.error("Not find any Harim.")
+
+    // if Harim have a multi features
+    const geoHarim = resultHarim.features.length === 1
+        ? resultHarim.features[0].geometry
+        : geometryEngine.union(resultHarim.features.map(f => f.geometry));
+    // View Filter
+    const viewMelk = await view.whenLayerView(fLayerMelk);
+    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
+
+    
+    
+
+    //view.when(fLayerMelk).then(viewMelk => {
+    //    //viewMelk.effect = {
+    //    //    filter: { geometry: geoHarim, },
+    //    //    //includedEffect: "opacity(100%)",
+    //    //    //excludedEffect: "opacity(20%) blur(2px)"
+    //    //};
+    //    viewMelk.filter = { geometry: geoHarim, spatialRelationship: "intersects" }
+
+    //})
+
+    const queryMelk = fLayerMelk.createQuery();
+    queryMelk.geometry = geoHarim;
+    queryMelk.spatialRelationship = "contains";
+    const MelkInHarim = await fLayerMelk.queryFeatures(queryMelk);
+        
+    //const selectFeatures = MelkInHarim.features.find(f => f.attributes.Code_nosazi === "1-25-156-15-0-0-0");
+    //const geoSelectFeature = selectFeatures?.geometry;
     //view.goTo(geoSelectFeature);
-    view.goTo({
-        target: geoSelectFeature,
-        zoom: 17
-    })
+    //view.goTo({
+    //    target: geoSelectFeature,
+    //    zoom: 17
+    //})// have bugs
 
     graphicslayer.add(new Graphic({
         geometry: geoSelectFeature,
@@ -128,8 +171,9 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
             type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
         }
     }));
-    
-    const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
+    view.goTo(buffSelectFeature);
+
+    const candidateFeatures = await SelectByLocation(MelkInHarim, buffSelectFeature, "intersects");
     if (candidateFeatures.length === 0) return null;
     
     let distance = [];
@@ -144,19 +188,29 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
 
     //
     distance.sort((a, b) => a.distance - b.distance);    
-    let top5MinDistance = distance.slice(0, counter);
-    console.log(top5MinDistance);
 
-    top5MinDistance.forEach(f => {
-        if (f.feature.attributes.Max_price_ > 0) {
-            graphicslayer.add(new Graphic({
-                geometry: f.feature.geometry,
-                symbol: {
-                    type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
-                }
-            }));
+    let nearestMelk = distance[0];
+    graphicslayer.add(new Graphic({
+        geometry: nearestMelk.feature.geometry,
+        symbol: {
+            type: "simple-fill", color: [0, 255, 0, 0.2], outline: "green"
         }
-    });
+    }));
+    console.log(nearestMelk);
+
+    //let top5MinDistance = distance.slice(0, counter);
+    //console.log(top5MinDistance);
+
+    //top5MinDistance.forEach(f => {
+    //    if (f.feature.attributes.Max_price_ > 0) {
+    //        graphicslayer.add(new Graphic({
+    //            geometry: f.feature.geometry,
+    //            symbol: {
+    //                type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
+    //            }
+    //        }));
+    //    }
+    //});
 
     
 
