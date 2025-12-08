@@ -131,7 +131,17 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     const viewMelk = await view.whenLayerView(fLayerMelk);
     viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
 
-    
+    // 02 - Get geometry Mahdodeh
+    const queryMahdodeh = fLayerMahdodeh.createQuery();
+    queryMahdodeh.returnGeometry = true;
+    const resultMahdodeh = await fLayerMahdodeh.queryFeatures(queryMahdodeh);
+    if (resultMahdodeh.features.length < 1) return console.error("Not find any Mahdodeh.")
+
+    const geoMahdodeh = resultMahdodeh.features.length === 1
+        ? resultMahdodeh.features[0].geometry
+        : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
+
+    // 03 - Get geometry between in Harim and Mahdodeh
     
 
     //view.when(fLayerMelk).then(viewMelk => {
