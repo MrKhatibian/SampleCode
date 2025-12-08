@@ -142,7 +142,11 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
 
     // 03 - Get geometry between in Harim and Mahdodeh
-    
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
+    graphicslayer.add(new Graphic({
+        geometry: geoBetween,
+        symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
+    }));
 
     //view.when(fLayerMelk).then(viewMelk => {
     //    //viewMelk.effect = {
@@ -183,7 +187,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     }));
     view.goTo(buffSelectFeature);
 
-    const candidateFeatures = await SelectByLocation(MelkInHarim, buffSelectFeature, "intersects");
+    const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
     if (candidateFeatures.length === 0) return null;
     
     let distance = [];
