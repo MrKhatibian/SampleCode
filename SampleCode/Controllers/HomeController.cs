@@ -552,6 +552,31 @@ namespace SampleCode.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult SetNearestArzeshAmlak(string cNosazi, int arzeshMelk)
+        {
+            if (arzeshMelk.Equals(null) || cNosazi is null)
+                return Json(new { success = false, message = "Invalid Data" });
+
+            try
+            {
+                //// Your update logic here
+                //var feature = _dbContext.Darkhast.FirstOrDefault(f => f.shodarkhast == darkhastNewValue.Shod);
+                //if (feature == null)
+                //    return Json(new { success = false, message = "Not find Darkhast" });
+
+                //// Convert string WKT into DbGeometry
+                //feature.Shape = DbGeometry.FromText(darkhastNewValue.wkt, darkhastNewValue.wkid);
+
+                //_dbContext.SaveChanges();
+
+                return Json(new { success = true, message = "Successful" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
         public static class DarkhastValidator
         {
             public const int MaxBatch = 500;
