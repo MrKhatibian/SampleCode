@@ -94,8 +94,14 @@ view.whenLayerView(fLayerMelk)
     });
 
 // ============== Core Logic ===============
-async function FindNearestMelkAPI(cNosazi) {
 
+/**
+ * Find nearest Melk price
+ * @param {string} cNosazi
+ */
+async function FindNearestMelkAPI(cNosazi) {
+    if (!CNosaziMelkValidation(cNosazi)) return null;
+    
     // 01 - Created graphicslayer        
     const gLayerFindNearestMelk = new GraphicsLayer();
     map.add(gLayerFindNearestMelk);
