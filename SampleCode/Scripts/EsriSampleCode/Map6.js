@@ -102,10 +102,12 @@ btnFindNearestMelk.addEventListener("click", async () => {
     map.add(gLayerFindNearestMelk);
     gLayerFindNearestMelk.removeAll();
     
-    // Filter feature layer Melk for have a price
+    // 02 - Filter feature layer Melk for have a price
     fLayerMelk.definitionExpression = `Max_price_ > 0`;   
 
-    FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
+    // 03 - Find nearest Melk
+    const fnearestMelk = await FindNearestMelk(fLayerMelk, gLayerFindNearestMelk);
+    console.log("Price nearest Melk: ", fnearestMelk.attributes.Max_price_);
 });
 
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
@@ -239,7 +241,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         }
     }));
     console.log(nearestMelk);
-
+    return nearestMelk.feature;
     //let top5MinDistance = distance.slice(0, counter);
     //console.log(top5MinDistance);
 
