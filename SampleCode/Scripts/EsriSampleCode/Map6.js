@@ -94,20 +94,39 @@ view.whenLayerView(fLayerMelk)
     });
 
 // ============== Core Logic ===============
+async function FindNearestMelkAPI(cNosazi) {
 
-const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
-btnFindNearestMelk.addEventListener("click", async () => {
     // 01 - Created graphicslayer        
     const gLayerFindNearestMelk = new GraphicsLayer();
     map.add(gLayerFindNearestMelk);
     gLayerFindNearestMelk.removeAll();
-    
+
     // 02 - Filter feature layer Melk for have a price
-    fLayerMelk.definitionExpression = `Max_price_ > 0`;   
+    fLayerMelk.definitionExpression = `Max_price_ > 0`;
 
     // 03 - Find nearest Melk
     const fnearestMelk = await FindNearestMelk(fLayerMelk, gLayerFindNearestMelk);
+    const arzeshMelk = fnearestMelk.attributes.Max_price_;
     console.log("Price nearest Melk: ", fnearestMelk.attributes.Max_price_);
+
+    const response = await fetch('/Home/SetNearestArzeshAmlak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cNosazi, arzeshMelk })
+    });
+
+    const res = await response.json();
+    if (!res.success) {
+        console.warn(` Unsuccessful: ${res.message}`);
+    } else {
+        console.log(`Successful save`);
+    }
+}
+
+
+const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
+btnFindNearestMelk.addEventListener("click", async () => {
+    FindNearestMelkAPI("1-25-156-15-0-0-0");
 });
 
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
