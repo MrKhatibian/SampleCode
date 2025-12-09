@@ -97,12 +97,14 @@ view.whenLayerView(fLayerMelk)
 
 const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
 btnFindNearestMelk.addEventListener("click", async () => {
-    // 01 - Created Graphicslayer        
+    // 01 - Created graphicslayer        
     const gLayerFindNearestMelk = new GraphicsLayer();
     map.add(gLayerFindNearestMelk);
     gLayerFindNearestMelk.removeAll();
     
-    fLayerMelk.definitionExpression = `Max_price_ > 0`;
+    // Filter feature layer Melk for have a price
+    fLayerMelk.definitionExpression = `Max_price_ > 0`;   
+
     FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
 });
 
