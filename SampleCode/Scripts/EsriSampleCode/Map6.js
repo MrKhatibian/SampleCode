@@ -101,12 +101,12 @@ btnFindNearestMelk.addEventListener("click", async () => {
     const gLayerFindNearestMelk = new GraphicsLayer();
     map.add(gLayerFindNearestMelk);
     gLayerFindNearestMelk.removeAll();
-
+    
     fLayerMelk.definitionExpression = `Max_price_ > 0`;
     FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
 });
 
-async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
+async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 20) {
     
     const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-156-15-0-0-0");
     if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
@@ -135,7 +135,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
 
     // 03 - Get geometry between in Harim and Mahdodeh
-    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);    
     //graphicslayer.add(new Graphic({
     //    geometry: geoBetween,
     //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
@@ -159,20 +159,59 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     view.goTo(geoSelectFeature);
 
     await sleep(1000);
-    // 06 - Create buffer around of Selected melk
-    const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
-    graphicslayer.add(new Graphic({
-        geometry: buffSelectFeature,
-        symbol: {
-            type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
-        }
-    }));
-    view.goTo(buffSelectFeature);
+
+    // 06 - Create buffer around of Selected melk    
+    let bufferDistance = searchDistance;
+    const maxDistance = 5 * searchDistance;
+    let candidateFeatures = [];
+
+    while (candidateFeatures.length < 1 && bufferDistance <= maxDistance) {
+
+        console.log("Searching with buffer:", bufferDistance);
+        // Create buffer
+        const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, bufferDistance, "meters");        
+        graphicslayer.add(new Graphic({
+            geometry: buffSelectFeature,
+            symbol: {
+                type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
+            }
+        }));
+        view.goTo(buffSelectFeature);
+
+        // Get candidate Melks
+        let result = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");        
+        result = result.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
+        candidateFeatures = result;
+
+        // Loop
+        if (candidateFeatures.length < 1) { bufferDistance += searchDistance; }
+        await sleep(100);
+    }
+        
+    if (candidateFeatures.length < 1) {
+        return console.error("Not find any Candidate Melk even with max buffer.");        
+    } else {
+        console.log("Found candidates:", candidateFeatures.length);
+    }
+
+
+    //// 06 - Create buffer around of Selected melk
+    //const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
+    //graphicslayer.add(new Graphic({
+    //    geometry: buffSelectFeature,
+    //    symbol: {
+    //        type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
+    //    }
+    //}));
+    //view.goTo(buffSelectFeature);
     
-    // 07 - Get candidate Melks
-    const candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
-    if (candidateFeatures.length < 1) return console.error("Not find any Candidate Melk.");
-    candidateFeatures.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
+    //// 07 - Get candidate Melks
+    //let candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
+    //if (candidateFeatures.length < 1) return console.error("Not find any Candidate Melk.");
+    //candidateFeatures = candidateFeatures.filter(f => {
+    //    const insideMahdode = geometryEngine.intersects(f.geometry, geoMahdodeh);
+    //    return insideMahdode === true;
+    //});
 
     // 08 - Calculation distance between selected Melk and candidate Melks
     let distance = [];
