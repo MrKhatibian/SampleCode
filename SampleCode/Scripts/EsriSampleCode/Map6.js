@@ -106,7 +106,7 @@ btnFindNearestMelk.addEventListener("click", async () => {
     FindNearestMelk(fLayerMelk, gLayerFindNearestMelk)
 });
 
-async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 20) {
+async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
     
     const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-156-15-0-0-0");
     if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
@@ -135,7 +135,8 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
 
     // 03 - Get geometry between in Harim and Mahdodeh
-    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);    
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);  
+    searchDistance = Math.round(FindMaxDistanceInPolygon(geoBetween) / 5);
     //graphicslayer.add(new Graphic({
     //    geometry: geoBetween,
     //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
@@ -525,7 +526,76 @@ function FlatBuffer(line, distance, unit = "meters") {
     return geometryEngine.union([left, right]);
 }
 
+const btnPolygonDistance = document.getElementById("btnPolygonDistance");
+btnPolygonDistance.addEventListener("click", async() => {    
 
+    // 01 - Get geometry Harim
+    const queryHarim = fLayerHarim.createQuery();
+    queryHarim.returnGeometry = true;
+    const resultHarim = await fLayerHarim.queryFeatures(queryHarim);
+    if (resultHarim.features.length < 1) return console.error("Not find any Harim.")
+
+    // if Harim have a multi features
+    const geoHarim = resultHarim.features.length === 1
+        ? resultHarim.features[0].geometry
+        : geometryEngine.union(resultHarim.features.map(f => f.geometry));
+
+
+    // 02 - Get geometry Mahdodeh
+    const queryMahdodeh = fLayerMahdodeh.createQuery();
+    queryMahdodeh.returnGeometry = true;
+    const resultMahdodeh = await fLayerMahdodeh.queryFeatures(queryMahdodeh);
+    if (resultMahdodeh.features.length < 1) return console.error("Not find any Mahdodeh.")
+
+    const geoMahdodeh = resultMahdodeh.features.length === 1
+        ? resultMahdodeh.features[0].geometry
+        : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
+
+    // 03 - Get geometry between in Harim and Mahdodeh
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);  
+    
+    console.log(FindMaxDistanceInPolygon(geoBetween));
+})
+function FindMaxDistanceInPolygon(polygon) {
+    // 04 - Calculate convex hull
+    const hull = geometryEngine.convexHull(polygon);
+
+    // 05 - Convert to Points
+    const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
+
+    // 06 - Calculate maximum distance
+    const maxDistance = PolygonDiameter(hullPoints);
+    return maxDistance;
+}
+function PolygonDiameter(points) {
+    
+    const n = points.length;
+    if (n < 2) return 0;
+
+    let k = 1
+    let maxDistance = 0;
+
+    for (let i = 0; i < n; i++) {
+        let next_i = (i + 1) % n;
+
+        while (true) {
+            let next_k = (k + 1) % n;
+            const area = Math.abs(
+                (points[next_i].x - points[i].x) * (points[next_k].y - points[k].y) -
+                (points[next_i].y - points[i].y) * (points[next_k].x - points[k].x)
+            );
+            if (area > 0) k = next_k;
+            else break;
+        }
+        let d = Distance(points[i], points[k])
+        if (d > maxDistance) maxDistance = d;
+    }
+    return maxDistance;
+}
+
+function Distance(p1, p2) {
+    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+}
 
 // Sleep 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
