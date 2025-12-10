@@ -136,32 +136,16 @@ btnFindNearestMelk.addEventListener("click", async () => {
 });
 
 async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
-    try {
-        const selectFeatures = await SelectByAttribute(featureLayer, "Code_Nosaz", targetFeature);
-        //if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
-        const geoSelectFeature = selectFeatures[0].geometry;
-
+    try {        
         // 01 - Get geometry Harim
-        const queryHarim = fLayerHarim.createQuery();
-        queryHarim.returnGeometry = true;
-        const resultHarim = await fLayerHarim.queryFeatures(queryHarim);
-        if (resultHarim.features.length < 1) return console.error("Not find any Harim.")
-
+        const resultHarim = await SelectByAttribute(fLayerHarim);       
         // if Harim have a multi features
-        const geoHarim = resultHarim.features.length === 1
-            ? resultHarim.features[0].geometry
-            : geometryEngine.union(resultHarim.features.map(f => f.geometry));
-
+        const geoHarim = geometryEngine.union(resultHarim.map(f => f.geometry)); 
 
         // 02 - Get geometry Mahdodeh
-        const queryMahdodeh = fLayerMahdodeh.createQuery();
-        queryMahdodeh.returnGeometry = true;
-        const resultMahdodeh = await fLayerMahdodeh.queryFeatures(queryMahdodeh);
-        if (resultMahdodeh.features.length < 1) return console.error("Not find any Mahdodeh.")
-
-        const geoMahdodeh = resultMahdodeh.features.length === 1
-            ? resultMahdodeh.features[0].geometry
-            : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
+        const resultMahdodeh = await SelectByAttribute(fLayerMahdodeh);        
+        // if Mahdodeh have a multi features
+        const geoMahdodeh = geometryEngine.union(resultMahdodeh.map(f => f.geometry)); 
 
         // 03 - Get geometry between in Harim and Mahdodeh
         const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
@@ -171,11 +155,14 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
         //})); // for Show in Webgis
 
-        // 04 - Location validation for selected Melk
-        const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
-        if (!locationValidSelectedMelk) return console.error("Melk is outside of Harim's boudary");
+        // 04 - Find target feature and Location validation for it
+        const selectFeatures = await SelectByAttribute(featureLayer, "Code_Nosazi", targetFeature);
+        const geoSelectFeature = selectFeatures[0].geometry;
 
-        // 05 - Show Selected Melk in Map
+        // Location validation for it
+        const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
+        if (!locationValidSelectedMelk) { throw new Error("Melk is outside of Harim's boudary."); }
+        // Show Selected Melk in Map
         graphicslayer.add(new Graphic({
             geometry: geoSelectFeature,
             symbol: {
@@ -207,7 +194,7 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
                 }
             }));
             view.goTo(buffSelectFeature);
-
+            await sleep(1000)
             // Get candidate Melks
             let result = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
             result = result.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
@@ -416,7 +403,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
  * @param {string} value
  * @returns {object} Feature 
  */
-async function SelectByAttribute(featureLayer, field = "1", value = "1", operation = "=", returnGeo = true, outFields = ["*"]) {
+async function SelectByAttribute(featureLayer, field = "1", value = 1, operation = "=", returnGeo = true, outFields = ["*"]) {
     try {
         let query = featureLayer.createQuery();
         query.returnGeometry = returnGeo;
@@ -449,15 +436,23 @@ async function SelectByAttribute(featureLayer, field = "1", value = "1", operati
  * @returns {object} Feature 
  */
 async function SelectByLocation(featureLayer, geometry, relationship) {
-    let query = featureLayer.createQuery();
-    query.returnGeometry = true;
-    query.geometry = geometry;
-    query.spatialRelationship = relationship;
-    const result = await featureLayer.queryFeatures(query);
-    if (result.features.length < 1)
-        console.log("Feature not found."); //En
-        //console.log("عارضه مورد نظر یافت نشد."); //Pr
-    return result.features;
+    try {
+        let query = featureLayer.createQuery();
+        query.returnGeometry = true;
+        query.geometry = geometry;
+        query.spatialRelationship = relationship;
+        const result = await featureLayer.queryFeatures(query);        
+        
+        if (!result.features || result.features.length < 1) {
+            throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
+            //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+        }
+        return result.features;
+    } catch (err) {
+        console.error(`Error in SelectByLocation() for layer (${featureLayer.title}):`, err);
+        throw err;
+    }
+    
 }
 
 /**
