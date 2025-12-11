@@ -133,9 +133,7 @@ async function FindNearestMelkAPI(cNosazi) {
 
         // 06 - Return the Melk layer filter
         fLayerMelk.definitionExpression = `1=1`;
-    } catch (err) {        
-        console.error("Sorry, we can't find any Melk.", err)
-    }    
+    } catch (err) { console.error("Sorry, we can't find any Melk.", err) }
 }
 
 const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
@@ -375,28 +373,23 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
  * @returns {object} Feature 
  */
 async function SelectByAttribute(featureLayer, field = "1", value = 1, operation = "=", returnGeo = true, outFields = ["*"]) {
-    try {
-        let query = featureLayer.createQuery();
-        query.returnGeometry = returnGeo;
-        query.outFields = outFields;
+    let query = featureLayer.createQuery();
+    query.returnGeometry = returnGeo;
+    query.outFields = outFields;
 
-        // === Handle number vs string ===
-        const isNumber = typeof value === "number";
-        const formattedValue = isNumber ? value : `'${value}'`;
+    // === Handle number vs string ===
+    const isNumber = typeof value === "number";
+    const formattedValue = isNumber ? value : `'${value}'`;
 
-        query.where = `${field} ${operation} ${formattedValue}`;
+    query.where = `${field} ${operation} ${formattedValue}`;
 
-        const result = await featureLayer.queryFeatures(query);
+    const result = await featureLayer.queryFeatures(query);
 
-        if (!result.features || result.features.length < 1) {
-            throw new Error(`Feature not found with condition: ${query.where}`); //En
-            //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
-        }
-        return result.features;
-    } catch (err) {
-        //console.error(`Error in SelectByAttribute() for layer (${featureLayer.title}).`, err);
-        throw err;
-    }    
+    if (!result.features || result.features.length < 1) {
+        throw new Error(`Feature not found with condition: ${query.where}`); //En
+        //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    }
+    return result.features;
 }
 
 /**
@@ -407,22 +400,17 @@ async function SelectByAttribute(featureLayer, field = "1", value = 1, operation
  * @returns {object} Feature 
  */
 async function SelectByLocation(featureLayer, geometry, relationship) {
-    try {
-        let query = featureLayer.createQuery();
-        query.returnGeometry = true;
-        query.geometry = geometry;
-        query.spatialRelationship = relationship;
-        const result = await featureLayer.queryFeatures(query);        
-        
-        if (!result.features || result.features.length < 1) {
-            throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
-            //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
-        }
-        return result.features;
-    } catch (err) {
-        //console.error(`Error in SelectByLocation() for layer (${featureLayer.title}).`, err);
-        throw err;
-    }    
+    let query = featureLayer.createQuery();
+    query.returnGeometry = true;
+    query.geometry = geometry;
+    query.spatialRelationship = relationship;
+    const result = await featureLayer.queryFeatures(query);
+
+    if (!result.features || result.features.length < 1) {
+        throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
+        //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    }
+    return result.features;
 }
 
 /**
@@ -476,33 +464,20 @@ function CNosaziMelkValidation(cNosazi) {
 async function MabarValidation(listMabar, melk) {
     
     let validListMabar = [];
-
     for (const mabar of listMabar) {
         // Create flat buffer
         const widthMabar = mabar.attributes.street_len;
         if (!widthMabar || widthMabar === 0 || widthMabar == undefined || widthMabar == "")
             console.warn(`The width of Street{${mabar.attributes.OBJECTID}} is not ture.`); //En
-            //console.warn(`عرض معبر {${mabar.attributes.OBJECTID}} صحیح نیست.`); //Pr
-        
+            //console.warn(`عرض معبر {${mabar.attributes.OBJECTID}} صحیح نیست.`); //Pr        
 
         const distansBuffMabar = widthMabar / 2 + 2;
-        const buffMabar = FlatBuffer(mabar.geometry, distansBuffMabar, "meters");
-
-        // Query parcels inside buffer
-        //const query = fLayerMelk.createQuery();
-        //query.outFields = ["Code_nosazi"];
-        //query.geometry = buffMabar;
-        //query.spatialRelationship = "intersects";
-
-        //const result = await fLayerMelk.queryFeatures(query);
+        const buffMabar = FlatBuffer(mabar.geometry, distansBuffMabar, "meters");        
         const result = await SelectByLocation(fLayerMelk, buffMabar, "intersects");
-
         const isSelectedMelkInside = result.some(f =>
             f.attributes.Code_nosazi === melk.attributes.Code_nosazi
         );
-
         console.log("Have Melk:", isSelectedMelkInside);
-
         if (isSelectedMelkInside) validListMabar.push(mabar);
     }
     return validListMabar;
@@ -568,17 +543,32 @@ btnPolygonDistance.addEventListener("click", async() => {
     
     console.log(FindMaxDistanceInPolygon(geoBetween));
 })
+
+/**
+ * Find maximum distance in polygon
+ * @param {object} polygon
+ * @returns
+ */
 function FindMaxDistanceInPolygon(polygon) {
-    // 04 - Calculate convex hull
+    debugger;
+    if (!polygon.geometry.type === "polygon" || polygon.type)
+    // Calculate convex hull
     const hull = geometryEngine.convexHull(polygon);
 
-    // 05 - Convert to Points
+    // Convert to Points
     const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
 
-    // 06 - Calculate maximum distance
+    // Calculate maximum distance
     const maxDistance = PolygonDiameter(hullPoints);
     return maxDistance;
 }
+
+/**
+ * Calculate Diameter of polygon
+ * @param {object} points
+ * @returns
+ */
+
 function PolygonDiameter(points) {
     
     const n = points.length;
@@ -605,11 +595,21 @@ function PolygonDiameter(points) {
     return maxDistance;
 }
 
+/**
+ * Calculate distance between in two points
+ * @param {object} p1
+ * @param {object} p2
+ * @returns
+ */
 function Distance(p1, p2) {
     return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
 }
 
-// Sleep 
+/**
+ * Sleep 
+ * @param {number} ms
+ * @returns
+ */
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 
