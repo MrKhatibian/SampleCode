@@ -248,123 +248,6 @@ async function FindNearestMelk(targetFeature, searchDistance = 100, counter = 10
     return nearestMelk;
 }
 
-
-// Button Find Maximum length of Street for Melk
-const btnFindStreets = document.getElementById("btnFindStreets");
-btnFindStreets.addEventListener("click", async () => {
-    try {
-        // 01 - Created gLayerFindNearestMelk        
-        const gLayerFindStreet = new GraphicsLayer();
-        map.add(gLayerFindStreet);
-        gLayerFindStreet.removeAll();
-
-        FindMaxWidthStreet(fLayerMelk, fLayerMabar, gLayerFindStreet, "Code_nosazi", "1-16-11-2-0-0-0");
-    } catch (err) {
-        console.error(err);
-    }
-});
-/**
- * 
- * @param {string} fLayerMelk
- * @param {string} fLayerMabar
- * @param {string} cNosaziMelk
- */
-async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMelk, cNosaziMelk = "") {
-    try {
-        // ============== Validation ===============
-        // Validation for feature layer Melk URL
-        if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
-        //if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
-
-        // Validation for feature layer Mabar URL
-        if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
-        //if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
-
-        // Validation for Code Nosazi Melk
-        if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
-        //if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
-
-        // ============== Initialization ===============
-        
-
-        // 01 - Finded Melk
-        const selectMelks = await SelectByAttribute(fLayerMelk, fieldMelk, cNosaziMelk);
-        const geoSelectMelk = selectMelks[0].geometry;
-        graphicsLayer.add(new Graphic({
-            geometry: geoSelectMelk,
-            symbol: { type: "simple-fill", color: [0, 255, 0, 0.2], outline: { color: "green" } }
-        }));
-
-        // Zoom to Melk
-        view.goTo(geoSelectMelk);                
-
-        await sleep(1000); 
-        // 02 - Create Buffer for Melk
-        const buffMelk = geometryEngine.buffer(geoSelectMelk, 35, "meters");
-        graphicsLayer.add(new Graphic({
-            geometry: buffMelk,
-            symbol: {
-                type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: "blue" }
-            }
-        }));
-        
-        await sleep(1000); 
-        // 03 - Find Mabars        
-        const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
-        if (!selectMabars)        
-            console.log(`Not found any Mabar.`); //En
-            //console.log(`هیچی معبری یافت نشد.`); //Pr
-        selectMabars.forEach((features) => {
-            graphicsLayer.add(new Graphic({
-                geometry: features.geometry,
-                symbol: {
-                    type: "simple-line", width: 2, color: "red", outLine: {width: 0} }
-            }));
-        });
-        
-        await sleep(1000); 
-        // 04 - Validation Mabars
-        const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
-        if (validListMabar.length < 1) { 
-            console.Error("Not found any mabar."); return; //En
-            //console.Error("هیچ معبری یافت نشد."); return; //Pr
-        }
-        validListMabar.map((mabar) => {
-            graphicsLayer.add(new Graphic({
-                geometry: mabar.geometry,
-                symbol: {
-                    type: "simple-line", width: 2, color: "blue", outline: { width: 0 }
-                }
-            }));
-        });
-        
-        await sleep(1000);         
-        // 05 - Finded Maximum Street Width
-        const maxWidthMabarLength = Math.max(...validListMabar.map(f => f.attributes.street_len));
-        console.log("Max: ", maxWidthMabarLength);
-
-        const maxObjWidthMabar = validListMabar.reduce((prev, current) => {
-            return (current.attributes.street_len > prev.attributes.street_len)
-                ? current
-                : prev;
-        });
-        graphicsLayer.add(new Graphic({
-            geometry: maxObjWidthMabar.geometry,
-            symbol: {
-                type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0 }
-            }
-        }));
-
-        const fMaxObjWidthMabar = maxObjWidthMabar.attributes;
-        console.log(`Max Object Name: ${fMaxObjWidthMabar.NAME}, Street length: ${fMaxObjWidthMabar.street_len}, Street99: ${fMaxObjWidthMabar.street_99}`);
-
-
-    } catch (err) {
-        console.error(`There is an Error in finding the maximum width of Street.`, err); //En
-        //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
-    }
-}
-
 /**
  * Find Feature in a Feature Layer with field & value
  * @param {object} featureLayer FeatureLayer
@@ -411,6 +294,185 @@ async function SelectByLocation(featureLayer, geometry, relationship) {
         //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
     }
     return result.features;
+}
+
+/**
+ * Find maximum distance in polygon
+ * @param {object} polygon
+ * @returns
+ */
+function FindMaxDistanceInPolygon(polygon) {
+    if (!polygon || polygon.type !== "polygon")
+        throw new error("Error in function FindMaxDistanceInPolygon(). the type of polygon is not true.");
+    // Calculate convex hull
+    const hull = geometryEngine.convexHull(polygon);
+
+    // Convert to Points
+    const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
+
+    // Calculate maximum distance
+    const maxDistance = PolygonDiameter(hullPoints);
+    return maxDistance;
+}
+
+/**
+ * Calculate Diameter of polygon
+ * @param {object} points
+ * @returns
+ */
+function PolygonDiameter(points) {
+
+    const n = points.length;
+    if (n < 2) return 0;
+
+    let k = 1
+    let maxDistance = 0;
+
+    for (let i = 0; i < n; i++) {
+        let next_i = (i + 1) % n;
+
+        while (true) {
+            let next_k = (k + 1) % n;
+            const area = Math.abs(
+                (points[next_i].x - points[i].x) * (points[next_k].y - points[k].y) -
+                (points[next_i].y - points[i].y) * (points[next_k].x - points[k].x)
+            );
+            if (area > 0) k = next_k;
+            else break;
+        }
+        let d = Distance(points[i], points[k])
+        if (d > maxDistance) maxDistance = d;
+    }
+    return maxDistance;
+}
+
+/**
+ * Calculate distance between in two points
+ * @param {object} p1
+ * @param {object} p2
+ * @returns
+ */
+function Distance(p1, p2) {
+    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+}
+
+
+// Button Find Maximum length of Street for Melk
+const btnFindStreets = document.getElementById("btnFindStreets");
+btnFindStreets.addEventListener("click", async () => {
+    try {
+        // 01 - Created gLayerFindNearestMelk        
+        const gLayerFindStreet = new GraphicsLayer();
+        map.add(gLayerFindStreet);
+        gLayerFindStreet.removeAll();
+
+        FindMaxWidthStreet(fLayerMelk, fLayerMabar, gLayerFindStreet, "Code_nosazi", "1-16-11-2-0-0-0");
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+/**
+ * 
+ * @param {string} fLayerMelk
+ * @param {string} fLayerMabar
+ * @param {string} cNosaziMelk
+ */
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, fieldMelk, cNosaziMelk = "") {
+    try {
+        // ============== Validation ===============
+        // Validation for feature layer Melk URL
+        if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("The URL of the Melk map service is not correct."); //En
+        //if (!URLMapServiceValidation(fLayerMelk.url)) throw new Error("آدرس سرویس نقشه عرصه صحیح نیست."); //Pr
+
+        // Validation for feature layer Mabar URL
+        if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("The URL of the Mabar map service is not correct."); //En
+        //if (!URLMapServiceValidation(fLayerMabar.url)) throw new Error("آدرس سرویس نقشه معبر صحیح نیست."); //Pr
+
+        // Validation for Code Nosazi Melk
+        if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("The Melk code nosazi is not correct."); //En
+        //if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
+
+        // ============== Initialization ===============
+
+
+        // 01 - Finded Melk
+        const selectMelks = await SelectByAttribute(fLayerMelk, fieldMelk, cNosaziMelk);
+        const geoSelectMelk = selectMelks[0].geometry;
+        graphicsLayer.add(new Graphic({
+            geometry: geoSelectMelk,
+            symbol: { type: "simple-fill", color: [0, 255, 0, 0.2], outline: { color: "green" } }
+        }));
+
+        // Zoom to Melk
+        view.goTo(geoSelectMelk);
+
+        await sleep(1000);
+        // 02 - Create Buffer for Melk
+        const buffMelk = geometryEngine.buffer(geoSelectMelk, 35, "meters");
+        graphicsLayer.add(new Graphic({
+            geometry: buffMelk,
+            symbol: {
+                type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: "blue" }
+            }
+        }));
+
+        await sleep(1000);
+        // 03 - Find Mabars        
+        const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
+        if (!selectMabars)
+            console.log(`Not found any Mabar.`); //En
+        //console.log(`هیچی معبری یافت نشد.`); //Pr
+        selectMabars.forEach((features) => {
+            graphicsLayer.add(new Graphic({
+                geometry: features.geometry,
+                symbol: {
+                    type: "simple-line", width: 2, color: "red", outLine: { width: 0 }
+                }
+            }));
+        });
+
+        await sleep(1000);
+        // 04 - Validation Mabars
+        const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
+        if (validListMabar.length < 1) {
+            console.Error("Not found any mabar."); return; //En
+            //console.Error("هیچ معبری یافت نشد."); return; //Pr
+        }
+        validListMabar.map((mabar) => {
+            graphicsLayer.add(new Graphic({
+                geometry: mabar.geometry,
+                symbol: {
+                    type: "simple-line", width: 2, color: "blue", outline: { width: 0 }
+                }
+            }));
+        });
+
+        await sleep(1000);
+        // 05 - Finded Maximum Street Width
+        const maxWidthMabarLength = Math.max(...validListMabar.map(f => f.attributes.street_len));
+        console.log("Max: ", maxWidthMabarLength);
+
+        const maxObjWidthMabar = validListMabar.reduce((prev, current) => {
+            return (current.attributes.street_len > prev.attributes.street_len)
+                ? current
+                : prev;
+        });
+        graphicsLayer.add(new Graphic({
+            geometry: maxObjWidthMabar.geometry,
+            symbol: {
+                type: "simple-line", width: 3, color: [121, 245, 39], outline: { width: 0 }
+            }
+        }));
+
+        const fMaxObjWidthMabar = maxObjWidthMabar.attributes;
+        console.log(`Max Object Name: ${fMaxObjWidthMabar.NAME}, Street length: ${fMaxObjWidthMabar.street_len}, Street99: ${fMaxObjWidthMabar.street_99}`);
+
+
+    } catch (err) {
+        console.error(`There is an Error in finding the maximum width of Street.`, err); //En
+        //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
+    }
 }
 
 /**
@@ -543,67 +605,6 @@ btnPolygonDistance.addEventListener("click", async() => {
     
     console.log(FindMaxDistanceInPolygon(geoBetween));
 })
-
-/**
- * Find maximum distance in polygon
- * @param {object} polygon
- * @returns
- */
-function FindMaxDistanceInPolygon(polygon) {
-    debugger;
-    if (!polygon.geometry.type === "polygon" || polygon.type)
-    // Calculate convex hull
-    const hull = geometryEngine.convexHull(polygon);
-
-    // Convert to Points
-    const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
-
-    // Calculate maximum distance
-    const maxDistance = PolygonDiameter(hullPoints);
-    return maxDistance;
-}
-
-/**
- * Calculate Diameter of polygon
- * @param {object} points
- * @returns
- */
-
-function PolygonDiameter(points) {
-    
-    const n = points.length;
-    if (n < 2) return 0;
-
-    let k = 1
-    let maxDistance = 0;
-
-    for (let i = 0; i < n; i++) {
-        let next_i = (i + 1) % n;
-
-        while (true) {
-            let next_k = (k + 1) % n;
-            const area = Math.abs(
-                (points[next_i].x - points[i].x) * (points[next_k].y - points[k].y) -
-                (points[next_i].y - points[i].y) * (points[next_k].x - points[k].x)
-            );
-            if (area > 0) k = next_k;
-            else break;
-        }
-        let d = Distance(points[i], points[k])
-        if (d > maxDistance) maxDistance = d;
-    }
-    return maxDistance;
-}
-
-/**
- * Calculate distance between in two points
- * @param {object} p1
- * @param {object} p2
- * @returns
- */
-function Distance(p1, p2) {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-}
 
 /**
  * Sleep 
