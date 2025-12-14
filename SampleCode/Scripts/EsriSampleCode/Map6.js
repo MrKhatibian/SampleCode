@@ -87,14 +87,9 @@ fLayerMelk.when(() => {
             targetGeometry: fLayerMelk.fullExtent
         }
     });
-
+    view.goTo(fLayerMelk.fullExtent);
     view.ui.add(homeWidget, "top-left");    
 });
-
-view.whenLayerView(fLayerMelk)
-    .then(() => {
-        view.goTo(fLayerMelk.fullExtent);
-    });
 
 // ============== Core Logic ===============
 
@@ -130,15 +125,17 @@ async function FindNearestMelkAPI(cNosazi) {
         } else {
             console.log(`Successful save`);
         }
-
-        // 06 - Return the Melk layer filter
+    }
+    catch (err) { console.error("Sorry, we can't find any Melk.", err) }
+    finally {
+        // Return the Melk layer filter
         fLayerMelk.definitionExpression = `1=1`;
-    } catch (err) { console.error("Sorry, we can't find any Melk.", err) }
+    }
 }
 
 const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
 btnFindNearestMelk.addEventListener("click", async () => {    
-    FindNearestMelkAPI("1-25-159-2-0-0-0");
+    FindNearestMelkAPI("1-25-193-1-0-0-0");
 });
 
 /**
@@ -228,6 +225,8 @@ async function FindNearestMelk(targetFeature, searchDistance = 100, counter = 10
     let distance = [];
     candidateFeatures.forEach(f => {
         if (f.geometry.extent.equals(geoSelectFeature.extent)) return;
+        //if (f.attributes.Code_Nosazi === targetFeature) return;
+
         const d = geometryEngine.distance(geoSelectFeature, f.geometry, "meters");
         distance.push({
             distance: d,
@@ -303,7 +302,7 @@ async function SelectByLocation(featureLayer, geometry, relationship) {
  */
 function FindMaxDistanceInPolygon(polygon) {
     if (!polygon || polygon.type !== "polygon")
-        throw new error("Error in function FindMaxDistanceInPolygon(). the type of polygon is not true.");
+        throw new Error("Error in function FindMaxDistanceInPolygon(). the type of polygon is not true.");
     // Calculate convex hull
     const hull = geometryEngine.convexHull(polygon);
 
