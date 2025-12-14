@@ -61,15 +61,29 @@ const fLayerMelk = new FeatureLayer({
     },
 });
 
-const fLayerMahdodeh = new FeatureLayer({
+const fLayerBlkDarai = new FeatureLayer({
     url: `${url}/2`,
+    popupTemplate: {
+        title: "Block Darai",
+        content: [{
+            type: "fields",
+            fieldInfos: [
+                { fieldName: "CBDarai1404", label: "کد بلوک دارایی" },
+                { fieldName:"Price1404", lable: "قیمت منطقه ای 1404" }
+            ]
+        }]
+    }
+})
+
+const fLayerMahdodeh = new FeatureLayer({
+    url: `${url}/3`,
     popupTemplate: {
         title: "Mahdodeh"       
     }
 });
 
 const fLayerHarim = new FeatureLayer({
-    url: `${url}/3`,
+    url: `${url}/4`,
     popupTemplate: {
         title: "Harim",        
     }
@@ -78,7 +92,7 @@ const fLayerHarim = new FeatureLayer({
 const graphicsLayer = new GraphicsLayer();
 
 // =============== Add layer ===============
-map.addMany([fLayerHarim, fLayerMahdodeh, fLayerMabar, fLayerMelk, graphicsLayer]);
+map.addMany([fLayerHarim, fLayerMahdodeh, fLayerBlkDarai, fLayerMabar, fLayerMelk, graphicsLayer]);
 
 fLayerMelk.when(() => {
     const homeWidget = new Home({
@@ -135,7 +149,7 @@ async function FindNearestMelkAPI(cNosazi) {
 
 const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
 btnFindNearestMelk.addEventListener("click", async () => {    
-    FindNearestMelkAPI("1-25-193-1-0-0-0");
+    FindNearestMelkAPI("1-25-130-19-0-0-0");
 });
 
 /**
