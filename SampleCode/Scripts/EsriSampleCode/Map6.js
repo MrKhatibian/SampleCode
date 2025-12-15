@@ -281,10 +281,10 @@ async function SelectByAttribute(featureLayer, field = "1", value = 1, operation
 
     const result = await featureLayer.queryFeatures(query);
 
-    if (!result.features || result.features.length < 1) {
-        throw new Error(`Feature not found with condition: ${query.where}`); //En
-        //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
-    }
+    //if (!result.features || result.features.length < 1) {
+    //    throw new Error(`Feature not found with condition: ${query.where}`); //En
+    //    //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    //}
     return result.features;
 }
 
