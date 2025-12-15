@@ -696,11 +696,11 @@ function FlatBuffer(line, distance, unit = "meters") {
  */
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-
+// Checking if Melk is in Layers
 const btnFindLayerHave = document.getElementById("btnFindLayerHave");
 btnFindLayerHave.addEventListener("click", async () => {
     try {
-        let listAlllayers = [fLayerHarim, fLayerMahdodeh];
+        let listAlllayers = [fLayerHarim1, fLayerMahdodeh];
         const listLayers = await FindLayersHaveMelk(listAlllayers, "1-25-159-2-0-0-0");                
         if (listLayers) console.log(listLayers);
     } catch (err) {
@@ -708,6 +708,12 @@ btnFindLayerHave.addEventListener("click", async () => {
     }    
 })
 
+/**
+ * Checking if Melk is in Layers
+ * @param {object} fLayers
+ * @param {string} cNosazi
+ * @returns {object} {feaureLayer and status}
+ */
 async function FindLayersHaveMelk(fLayers = [], cNosazi) {    
     const listlayers = [];
 
