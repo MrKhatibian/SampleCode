@@ -698,17 +698,28 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 const btnFindLayerHave = document.getElementById("btnFindLayerHave");
 btnFindLayerHave.addEventListener("click", async () => {
-    let listAlllayers = [fLayerHarim];
-    const listLayers = FindLayersHaveMelk(listAlllayers, "");
-    console.log(listLayers);
+    try {
+        let listAlllayers = [fLayerHarim, fLayerMahdodeh];
+        const listLayers = await FindLayersHaveMelk(listAlllayers, "1-25-152-39-0-0-0");                
+        if (listLayers) console.log(listLayers);
+    } catch (err) {
+        console.error("Sorry, We can't check this Melk.", err);
+    }    
 })
-async function FindLayersHaveMelk(featureLayers = [], cNosazi) {
-    const listlayers = { featurelayer: "", status: "" };
-    listlayers.featurelayer = featureLayers;
 
-    if (!CNosaziMelkValidation(cNosazi))
-    const melk = await SelectByAttribute(fLayerMelk, "Code_nosazi");
-    listlayers.status = await SelectByLocation(featureLayers,)
+async function FindLayersHaveMelk(fLayers = [], cNosazi) {    
+    const listlayers = [];
+
+    if (!CNosaziMelkValidation(cNosazi)) throw new Error("The code nosazi not Valid.")
+    const melk = await SelectByAttribute(fLayerMelk, "Code_nosazi", cNosazi);
+    if (melk.length < 1) throw new Error("Not found any Melk.");
+    
+    for (const f of fLayers) {
+        debugger;
+        const result = await SelectByLocation(f, melk[0].geometry, "intersects");        
+        const status = result.length ? true : false;
+        listlayers.push({ featurelayer: f.title, status });
+    }    
     return listlayers;
 }
 
