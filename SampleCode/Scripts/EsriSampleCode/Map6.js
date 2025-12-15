@@ -302,10 +302,10 @@ async function SelectByLocation(featureLayer, geometry, relationship) {
     query.spatialRelationship = relationship;
     const result = await featureLayer.queryFeatures(query);
 
-    if (!result.features || result.features.length < 1) {
-        throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
-        //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
-    }
+    //if (!result.features || result.features.length < 1) {
+    //    throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
+    //    //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    //}
     return result.features;
 }
 
@@ -371,6 +371,7 @@ function Distance(p1, p2) {
 
 const btnFindNearestBlock = document.getElementById("btnFindNearestBlock");
 btnFindNearestBlock.addEventListener("click", async () => {
+    graphicsLayer.removeAll();
     // 01 - Get geometry Harim
     const resultHarim = await SelectByAttribute(fLayerHarim);
     // if Harim have a multi features
@@ -475,11 +476,11 @@ const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
         // 01 - Created gLayerFindNearestMelk        
-        const gLayerFindStreet = new GraphicsLayer();
-        map.add(gLayerFindStreet);
-        gLayerFindStreet.removeAll();
+        //const gLayerFindStreet = new GraphicsLayer();
+        //map.add(gLayerFindStreet);
+        graphicsLayer.removeAll();
 
-        FindMaxWidthStreet(fLayerMelk, fLayerMabar, gLayerFindStreet, "Code_nosazi", "1-16-11-2-0-0-0");
+        FindMaxWidthStreet(fLayerMelk, fLayerMabar, "Code_nosazi", "1-16-11-2-0-0-0");
     } catch (err) {
         console.error(err);
     }
@@ -491,7 +492,7 @@ btnFindStreets.addEventListener("click", async () => {
  * @param {string} fLayerMabar
  * @param {string} cNosaziMelk
  */
-async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer, fieldMelk, cNosaziMelk = "") {
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
@@ -700,7 +701,7 @@ const btnFindLayerHave = document.getElementById("btnFindLayerHave");
 btnFindLayerHave.addEventListener("click", async () => {
     try {
         let listAlllayers = [fLayerHarim, fLayerMahdodeh];
-        const listLayers = await FindLayersHaveMelk(listAlllayers, "1-25-152-39-0-0-0");                
+        const listLayers = await FindLayersHaveMelk(listAlllayers, "1-25-159-2-0-0-0");                
         if (listLayers) console.log(listLayers);
     } catch (err) {
         console.error("Sorry, We can't check this Melk.", err);
@@ -714,8 +715,7 @@ async function FindLayersHaveMelk(fLayers = [], cNosazi) {
     const melk = await SelectByAttribute(fLayerMelk, "Code_nosazi", cNosazi);
     if (melk.length < 1) throw new Error("Not found any Melk.");
     
-    for (const f of fLayers) {
-        debugger;
+    for (const f of fLayers) {        
         const result = await SelectByLocation(f, melk[0].geometry, "intersects");        
         const status = result.length ? true : false;
         listlayers.push({ featurelayer: f.title, status });
