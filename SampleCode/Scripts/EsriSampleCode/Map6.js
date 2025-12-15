@@ -61,37 +61,49 @@ const fLayerMelk = new FeatureLayer({
     },
 });
 
-const fLayerMahdodeh = new FeatureLayer({
+const fLayerBlkDarai = new FeatureLayer({
     url: `${url}/2`,
+    popupTemplate: {
+        title: "Block Darai",
+        content: [{
+            type: "fields",
+            fieldInfos: [
+                { fieldName: "CBDarai1404", label: "کد بلوک دارایی" },
+                { fieldName:"Price1404", lable: "قیمت منطقه ای 1404" }
+            ]
+        }]
+    }
+})
+
+const fLayerMahdodeh = new FeatureLayer({
+    url: `${url}/3`,
     popupTemplate: {
         title: "Mahdodeh"       
     }
 });
 
 const fLayerHarim = new FeatureLayer({
-    url: `${url}/3`,
+    url: `${url}/4`,
     popupTemplate: {
         title: "Harim",        
     }
 });
 
+const graphicsLayer = new GraphicsLayer();
+
 // =============== Add layer ===============
-map.addMany([fLayerHarim, fLayerMahdodeh, fLayerMabar, fLayerMelk]);
+map.addMany([fLayerHarim, fLayerMahdodeh, fLayerBlkDarai, fLayerMabar, fLayerMelk, graphicsLayer]);
+
 fLayerMelk.when(() => {
     const homeWidget = new Home({
         view: view,
         viewpoint: {
             targetGeometry: fLayerMelk.fullExtent
         }
-    });
-
+    });    
     view.ui.add(homeWidget, "top-left");    
+    view.goTo(fLayerMelk.fullExtent);
 });
-
-view.whenLayerView(fLayerMelk)
-    .then(() => {
-        view.goTo(fLayerMelk.fullExtent);
-    });
 
 // ============== Core Logic ===============
 
@@ -100,83 +112,83 @@ view.whenLayerView(fLayerMelk)
  * @param {string} cNosazi
  */
 async function FindNearestMelkAPI(cNosazi) {
-    if (!CNosaziMelkValidation(cNosazi)) return null;
-    
-    // 01 - Created graphicslayer        
-    const gLayerFindNearestMelk = new GraphicsLayer();
-    map.add(gLayerFindNearestMelk);
-    gLayerFindNearestMelk.removeAll();
+    try {
+        // 01 - Validation for Melk Code Nosazi
+        if (!CNosaziMelkValidation(cNosazi)) return null;
 
-    // 02 - Filter feature layer Melk for have a price
-    fLayerMelk.definitionExpression = `Max_price_ > 0`;
+        // 02 - Clear graphicsLayer            
+        graphicsLayer.removeAll();
 
-    // 03 - Find nearest Melk
-    const fnearestMelk = await FindNearestMelk(fLayerMelk, gLayerFindNearestMelk);
-    const arzeshMelk = fnearestMelk.attributes.Max_price_;
-    console.log("Price nearest Melk: ", fnearestMelk.attributes.Max_price_);
+        // 03 - Filter the Melk layer based on price
+        fLayerMelk.definitionExpression = `Max_price_ > 0`;
 
-    const response = await fetch('/Home/SetNearestArzeshAmlak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cNosazi, arzeshMelk })
-    });
+        // 04 - Find nearest Melk
+        const fnearestMelk = await FindNearestMelk(cNosazi);
+        const arzeshMelk = fnearestMelk.feature.attributes.Max_price_;
+        console.log("Price nearest Melk: ", fnearestMelk.feature.attributes.Max_price_);
 
-    const res = await response.json();
-    if (!res.success) {
-        console.warn(` Unsuccessful: ${res.message}`);
-    } else {
-        console.log(`Successful save`);
+        // 05 - Send data to Backend
+        const response = await fetch('/Home/SetNearestArzeshAmlak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cNosazi, arzeshMelk })
+        });
+        const res = await response.json();
+        if (!res.success) {
+            console.warn(` Unsuccessful: ${res.message}`);
+        } else {
+            console.log(`Successful save`);
+        }
+    }
+    catch (err) { console.error("Sorry, we can't find any Melk.", err) }
+    finally {
+        // Return the Melk layer filter
+        fLayerMelk.definitionExpression = `1=1`;
     }
 }
 
-
 const btnFindNearestMelk = document.getElementById("btnFindNearestMelk");
-btnFindNearestMelk.addEventListener("click", async () => {
-    FindNearestMelkAPI("1-25-156-15-0-0-0");
+btnFindNearestMelk.addEventListener("click", async () => {    
+    FindNearestMelkAPI("1-25-130-19-0-0-0");
 });
 
-async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, counter = 5, searchDistance = 100) {
-    
-    const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-156-15-0-0-0");
-    if (selectFeatures.length < 1) return console.Error("Not find any Melk.");
-    const geoSelectFeature = selectFeatures[0].geometry;                  
-
+/**
+ * Find nearest Melk in Harim with code nosazi 
+ * this function use a global paramtr:
+ * fLayerMelk, fLayerHarim, fLayerMahdodeh, graphicsLayer
+ * @param {string} targetFeature
+ * @param {number} searchDistance
+ * @param {number} counter
+ * @returns
+ */
+async function FindNearestMelk(targetFeature, searchDistance = 100, counter = 10) {
     // 01 - Get geometry Harim
-    const queryHarim = fLayerHarim.createQuery();
-    queryHarim.returnGeometry = true;
-    const resultHarim = await fLayerHarim.queryFeatures(queryHarim);
-    if (resultHarim.features.length < 1) return console.error("Not find any Harim.")
-
+    const resultHarim = await SelectByAttribute(fLayerHarim);
     // if Harim have a multi features
-    const geoHarim = resultHarim.features.length === 1
-        ? resultHarim.features[0].geometry
-        : geometryEngine.union(resultHarim.features.map(f => f.geometry));
-    
+    const geoHarim = geometryEngine.union(resultHarim.map(f => f.geometry));
 
     // 02 - Get geometry Mahdodeh
-    const queryMahdodeh = fLayerMahdodeh.createQuery();
-    queryMahdodeh.returnGeometry = true;
-    const resultMahdodeh = await fLayerMahdodeh.queryFeatures(queryMahdodeh);
-    if (resultMahdodeh.features.length < 1) return console.error("Not find any Mahdodeh.")
-
-    const geoMahdodeh = resultMahdodeh.features.length === 1
-        ? resultMahdodeh.features[0].geometry
-        : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
+    const resultMahdodeh = await SelectByAttribute(fLayerMahdodeh);
+    // if Mahdodeh have a multi features
+    const geoMahdodeh = geometryEngine.union(resultMahdodeh.map(f => f.geometry));
 
     // 03 - Get geometry between in Harim and Mahdodeh
-    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);  
-    searchDistance = Math.round(FindMaxDistanceInPolygon(geoBetween) / 5);
-    //graphicslayer.add(new Graphic({
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
+    searchDistance = Math.round(FindMaxDistanceInPolygon(geoBetween) / counter);
+    //graphicsLayer.add(new Graphic({
     //    geometry: geoBetween,
     //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
     //})); // for Show in Webgis
-    
-    // 04 - Location validation for selected Melk
-    const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
-    if (!locationValidSelectedMelk) return console.error("Melk is outside of Harim's boudary");
 
-    // 05 - Show Selected Melk in Map
-    graphicslayer.add(new Graphic({
+    // 04 - Find target feature and Location validation for it
+    const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", targetFeature);
+    const geoSelectFeature = selectFeatures[0].geometry;
+
+    // Location validation for it
+    const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
+    if (!locationValidSelectedMelk) throw new Error("Melk is outside of Harim's boudary.");
+    // Show Selected Melk in Map
+    graphicsLayer.add(new Graphic({
         geometry: geoSelectFeature,
         symbol: {
             type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: [39, 235, 245] }
@@ -188,28 +200,28 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
     //});
     view.goTo(geoSelectFeature);
 
-    await sleep(1000);
+    await sleep(100);
 
-    // 06 - Create buffer around of Selected melk    
+    // 05 - Create buffer around of Selected melk    
     let bufferDistance = searchDistance;
-    const maxDistance = 5 * searchDistance;
+    const maxDistance = counter * searchDistance;
     let candidateFeatures = [];
 
     while (candidateFeatures.length < 1 && bufferDistance <= maxDistance) {
-
         console.log("Searching with buffer:", bufferDistance);
         // Create buffer
-        const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, bufferDistance, "meters");        
-        graphicslayer.add(new Graphic({
+        const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, bufferDistance, "meters");
+        graphicsLayer.add(new Graphic({
             geometry: buffSelectFeature,
             symbol: {
-                type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
+                type: "simple-fill", color: [164, 230, 41, 0.1], outline: { color: [31, 100, 50] }
             }
         }));
         view.goTo(buffSelectFeature);
+        await sleep(1);
 
         // Get candidate Melks
-        let result = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");        
+        let result = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
         result = result.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
         candidateFeatures = result;
 
@@ -217,36 +229,18 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         if (candidateFeatures.length < 1) { bufferDistance += searchDistance; }
         await sleep(100);
     }
-        
     if (candidateFeatures.length < 1) {
-        return console.error("Not find any Candidate Melk even with max buffer.");        
+        throw new Error("Not find any Candidate Melk even with max buffer.");
     } else {
         console.log("Found candidates:", candidateFeatures.length);
     }
 
-
-    //// 06 - Create buffer around of Selected melk
-    //const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, searchDistance, "meters");
-    //graphicslayer.add(new Graphic({
-    //    geometry: buffSelectFeature,
-    //    symbol: {
-    //        type: "simple-fill", color: [164, 230, 41, 0.2], outline: { color: [31, 100, 50] }
-    //    }
-    //}));
-    //view.goTo(buffSelectFeature);
-    
-    //// 07 - Get candidate Melks
-    //let candidateFeatures = await SelectByLocation(fLayerMelk, buffSelectFeature, "intersects");
-    //if (candidateFeatures.length < 1) return console.error("Not find any Candidate Melk.");
-    //candidateFeatures = candidateFeatures.filter(f => {
-    //    const insideMahdode = geometryEngine.intersects(f.geometry, geoMahdodeh);
-    //    return insideMahdode === true;
-    //});
-
-    // 08 - Calculation distance between selected Melk and candidate Melks
+    // 06 - Calculation distance between selected Melk and candidate Melks
     let distance = [];
     candidateFeatures.forEach(f => {
-        if (f.geometry.extent.equals(geoSelectFeature.extent) ) return;
+        if (f.geometry.extent.equals(geoSelectFeature.extent)) return;
+        //if (f.attributes.Code_Nosazi === targetFeature) return;
+
         const d = geometryEngine.distance(geoSelectFeature, f.geometry, "meters");
         distance.push({
             distance: d,
@@ -254,62 +248,251 @@ async function FindNearestMelk(featureLayer, graphicslayer, targetFeature, count
         });
     });
 
-
-    // 09 - Find minimum distance
-    distance.sort((a, b) => a.distance - b.distance);    
+    // 07 - Find minimum distance
+    distance.sort((a, b) => a.distance - b.distance);
 
     let nearestMelk = distance[0];
-    graphicslayer.add(new Graphic({
+    graphicsLayer.add(new Graphic({
         geometry: nearestMelk.feature.geometry,
         symbol: {
             type: "simple-fill", color: [0, 255, 0, 0.2], outline: "green"
         }
     }));
-    console.log(nearestMelk);
-    return nearestMelk.feature;
-    //let top5MinDistance = distance.slice(0, counter);
-    //console.log(top5MinDistance);
-
-    //top5MinDistance.forEach(f => {
-    //    if (f.feature.attributes.Max_price_ > 0) {
-    //        graphicslayer.add(new Graphic({
-    //            geometry: f.feature.geometry,
-    //            symbol: {
-    //                type: "simple-fill", color: [255, 0, 0, 0.2], outline: { color: "red" }
-    //            }
-    //        }));
-    //    }
-    //});
-
-
-    // View Filter
-    //const viewMelk = await view.whenLayerView(fLayerMelk);
-    //viewMelk.filter = { geometry: geoHarim, spatialRelationship: "contains" };
-
+    return nearestMelk;
 }
 
+/**
+ * Find Feature in a Feature Layer with field & value
+ * @param {object} featureLayer FeatureLayer
+ * @param {string} field 
+ * @param {string} value
+ * @returns {object} Feature 
+ */
+async function SelectByAttribute(featureLayer, field = "1", value = 1, operation = "=", returnGeo = true, outFields = ["*"]) {
+    let query = featureLayer.createQuery();
+    query.returnGeometry = returnGeo;
+    query.outFields = outFields;
+
+    // === Handle number vs string ===
+    const isNumber = typeof value === "number";
+    const formattedValue = isNumber ? value : `'${value}'`;
+
+    query.where = `${field} ${operation} ${formattedValue}`;
+
+    const result = await featureLayer.queryFeatures(query);
+
+    //if (!result.features || result.features.length < 1) {
+    //    throw new Error(`Feature not found with condition: ${query.where}`); //En
+    //    //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    //}
+    return result.features;
+}
+
+/**
+ * Find Feature in a Feature Layer with relationship
+ * @param {object} featureLayer FeatureLayer
+ * @param {object} geometry 
+ * @param {string} relationship
+ * @returns {object} Feature 
+ */
+async function SelectByLocation(featureLayer, geometry, relationship) {
+    let query = featureLayer.createQuery();
+    query.returnGeometry = true;
+    query.geometry = geometry;
+    query.spatialRelationship = relationship;
+    const result = await featureLayer.queryFeatures(query);
+
+    //if (!result.features || result.features.length < 1) {
+    //    throw new Error(`Feature not found with geometry: ${query.geometry}`); //En
+    //    //throw new Error(`هیچ عارضه ای با شرط: ${query.where} یافت نشد.`); //Pr
+    //}
+    return result.features;
+}
+
+/**
+ * Find maximum distance in polygon
+ * @param {object} polygon
+ * @returns
+ */
+function FindMaxDistanceInPolygon(polygon) {
+    if (!polygon || polygon.type !== "polygon")
+        throw new Error("Error in function FindMaxDistanceInPolygon(). the type of polygon is not true.");
+    // Calculate convex hull
+    const hull = geometryEngine.convexHull(polygon);
+
+    // Convert to Points
+    const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
+
+    // Calculate maximum distance
+    const maxDistance = PolygonDiameter(hullPoints);
+    return maxDistance;
+}
+
+/**
+ * Calculate Diameter of polygon
+ * @param {object} points
+ * @returns
+ */
+function PolygonDiameter(points) {
+
+    const n = points.length;
+    if (n < 2) return 0;
+
+    let k = 1
+    let maxDistance = 0;
+
+    for (let i = 0; i < n; i++) {
+        let next_i = (i + 1) % n;
+
+        while (true) {
+            let next_k = (k + 1) % n;
+            const area = Math.abs(
+                (points[next_i].x - points[i].x) * (points[next_k].y - points[k].y) -
+                (points[next_i].y - points[i].y) * (points[next_k].x - points[k].x)
+            );
+            if (area > 0) k = next_k;
+            else break;
+        }
+        let d = Distance(points[i], points[k])
+        if (d > maxDistance) maxDistance = d;
+    }
+    return maxDistance;
+}
+
+/**
+ * Calculate distance between in two points
+ * @param {object} p1
+ * @param {object} p2
+ * @returns
+ */
+function Distance(p1, p2) {
+    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+}
+
+const btnFindNearestBlock = document.getElementById("btnFindNearestBlock");
+btnFindNearestBlock.addEventListener("click", async () => {
+    graphicsLayer.removeAll();
+    // 01 - Get geometry Harim
+    const resultHarim = await SelectByAttribute(fLayerHarim);
+    // if Harim have a multi features
+    const geoHarim = geometryEngine.union(resultHarim.map(f => f.geometry));
+
+    // 02 - Get geometry Mahdodeh
+    const resultMahdodeh = await SelectByAttribute(fLayerMahdodeh);
+    // if Mahdodeh have a multi features
+    const geoMahdodeh = geometryEngine.union(resultMahdodeh.map(f => f.geometry));
+
+    // 03 - Get geometry between in Harim and Mahdodeh
+    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);
+    let searchDistance = Math.round(FindMaxDistanceInPolygon(geoBetween) / 5);
+    //graphicsLayer.add(new Graphic({
+    //    geometry: geoBetween,
+    //    symbol: { type: "simple-fill", color: [0, 0, 255, 0.5], outline: { color: "blue" } }
+    //})); // for Show in Webgis
+
+    // 04 - Find target feature and Location validation for it
+    const selectFeatures = await SelectByAttribute(fLayerMelk, "Code_Nosazi", "1-25-130-19-0-0-0");
+    const geoSelectFeature = selectFeatures[0].geometry;
+
+    // Location validation for it
+    const locationValidSelectedMelk = geometryEngine.intersects(geoBetween, geoSelectFeature)
+    if (!locationValidSelectedMelk) throw new Error("Melk is outside of Harim's boudary.");
+    // Show Selected Melk in Map
+    graphicsLayer.add(new Graphic({
+        geometry: geoSelectFeature,
+        symbol: {
+            type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: [39, 235, 245] }
+        }
+    }));
+    //view.goTo({
+    //    target: geoSelectFeature,
+    //    zoom: 17
+    //});
+    view.goTo(geoSelectFeature);
+
+    await sleep(100);
+
+    // 05 - Create buffer around of Selected melk    
+    let bufferDistance = searchDistance;
+    const maxDistance = 5 * searchDistance;
+    let candidateFeatures = [];
+
+    while (candidateFeatures.length < 1 && bufferDistance <= maxDistance) {
+        console.log("Searching with buffer:", bufferDistance);
+        // Create buffer
+        const buffSelectFeature = geometryEngine.buffer(geoSelectFeature, bufferDistance, "meters");
+        graphicsLayer.add(new Graphic({
+            geometry: buffSelectFeature,
+            symbol: {
+                type: "simple-fill", color: [164, 230, 41, 0.1], outline: { color: [31, 100, 50] }
+            }
+        }));
+        view.goTo(buffSelectFeature);
+        await sleep(1);
+
+        // Get candidate Melks
+        let result = await SelectByLocation(fLayerBlkDarai, buffSelectFeature, "intersects");
+        result = result.filter(f => geometryEngine.intersects(f.geometry, geoMahdodeh));
+        candidateFeatures = result;
+
+        // Loop
+        if (candidateFeatures.length < 1) { bufferDistance += searchDistance; }
+        await sleep(100);
+    }
+    if (candidateFeatures.length < 1) {
+        throw new Error("Not find any Candidate Block even with max buffer.");
+    } else {
+        console.log("Found candidates:", candidateFeatures.length);
+    }
+
+    // 06 - Calculation distance between selected Melk and candidate Melks
+    let distance = [];
+    candidateFeatures.forEach(f => {
+        if (f.geometry.extent.equals(geoSelectFeature.extent)) return;
+        //if (f.attributes.Code_Nosazi === targetFeature) return;
+
+        const d = geometryEngine.distance(geoSelectFeature, f.geometry, "meters");
+        distance.push({
+            distance: d,
+            feature: f
+        });
+    });
+
+    // 07 - Find minimum distance
+    distance.sort((a, b) => a.distance - b.distance);
+
+    let nearestBlock = distance[0];
+    graphicsLayer.add(new Graphic({
+        geometry: nearestBlock.feature.geometry,
+        symbol: {
+            type: "simple-fill", color: [0, 255, 0, 0.2], outline: "green"
+        }
+    }));
+    console.log(nearestBlock);
+});
 
 // Button Find Maximum length of Street for Melk
 const btnFindStreets = document.getElementById("btnFindStreets");
 btnFindStreets.addEventListener("click", async () => {
     try {
         // 01 - Created gLayerFindNearestMelk        
-        const gLayerFindStreet = new GraphicsLayer();
-        map.add(gLayerFindStreet);
-        gLayerFindStreet.removeAll();
+        //const gLayerFindStreet = new GraphicsLayer();
+        //map.add(gLayerFindStreet);
+        graphicsLayer.removeAll();
 
-        FindMaxWidthStreet(fLayerMelk, fLayerMabar, gLayerFindStreet, "Code_nosazi", "1-16-11-2-0-0-0");
+        FindMaxWidthStreet(fLayerMelk, fLayerMabar, "Code_nosazi", "1-16-11-2-0-0-0");
     } catch (err) {
         console.error(err);
     }
 });
+
 /**
  * 
  * @param {string} fLayerMelk
  * @param {string} fLayerMabar
  * @param {string} cNosaziMelk
  */
-async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMelk, cNosaziMelk = "") {
+async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, fieldMelk, cNosaziMelk = "") {
     try {
         // ============== Validation ===============
         // Validation for feature layer Melk URL
@@ -325,7 +508,7 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
         //if (!CNosaziMelkValidation(cNosaziMelk)) throw new Error("کدنوسازی ملک صحیح نیست."); //Pr
 
         // ============== Initialization ===============
-        
+
 
         // 01 - Finded Melk
         const selectMelks = await SelectByAttribute(fLayerMelk, fieldMelk, cNosaziMelk);
@@ -336,9 +519,9 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
         }));
 
         // Zoom to Melk
-        view.goTo(geoSelectMelk);                
+        view.goTo(geoSelectMelk);
 
-        await sleep(1000); 
+        await sleep(1000);
         // 02 - Create Buffer for Melk
         const buffMelk = geometryEngine.buffer(geoSelectMelk, 35, "meters");
         graphicsLayer.add(new Graphic({
@@ -347,25 +530,26 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
                 type: "simple-fill", color: [0, 0, 255, 0.1], outline: { color: "blue" }
             }
         }));
-        
-        await sleep(1000); 
+
+        await sleep(1000);
         // 03 - Find Mabars        
         const selectMabars = await SelectByLocation(fLayerMabar, buffMelk, "intersects");
-        if (!selectMabars)        
+        if (!selectMabars)
             console.log(`Not found any Mabar.`); //En
-            //console.log(`هیچی معبری یافت نشد.`); //Pr
+        //console.log(`هیچی معبری یافت نشد.`); //Pr
         selectMabars.forEach((features) => {
             graphicsLayer.add(new Graphic({
                 geometry: features.geometry,
                 symbol: {
-                    type: "simple-line", width: 2, color: "red", outLine: {width: 0} }
+                    type: "simple-line", width: 2, color: "red", outLine: { width: 0 }
+                }
             }));
         });
-        
-        await sleep(1000); 
+
+        await sleep(1000);
         // 04 - Validation Mabars
         const validListMabar = await MabarValidation(selectMabars, selectMelks[0])
-        if (validListMabar.length < 1) { 
+        if (validListMabar.length < 1) {
             console.Error("Not found any mabar."); return; //En
             //console.Error("هیچ معبری یافت نشد."); return; //Pr
         }
@@ -377,8 +561,8 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
                 }
             }));
         });
-        
-        await sleep(1000);         
+
+        await sleep(1000);
         // 05 - Finded Maximum Street Width
         const maxWidthMabarLength = Math.max(...validListMabar.map(f => f.attributes.street_len));
         console.log("Max: ", maxWidthMabarLength);
@@ -403,44 +587,6 @@ async function FindMaxWidthStreet(fLayerMelk, fLayerMabar, graphicsLayer,fieldMe
         console.error(`There is an Error in finding the maximum width of Street.`, err); //En
         //console.error(`در یافتن حداکثر عرض خیابان خطایی وجود دارد.`, err); //Pr
     }
-}
-
-/**
- * Find Feature in a Feature Layer with field & value
- * @param {object} featureLayer FeatureLayer
- * @param {string} field 
- * @param {string} value
- * @returns {object} Feature 
- */
-async function SelectByAttribute(featureLayer, field, value) {
-    let query = featureLayer.createQuery();
-    query.returnGeometry = true;
-    query.outFields = ["*"];    
-    query.where = `${field} = '${value}'`;
-    const result = await featureLayer.queryFeatures(query);    
-    if (result.features.length < 1)
-        console.log("Feature not found."); //En
-        //console.log("عارضه مورد نظر یافت نشد."); //Pr    
-    return result.features;
-}
-
-/**
- * Find Feature in a Feature Layer with relationship
- * @param {object} featureLayer FeatureLayer
- * @param {object} geometry 
- * @param {string} relationship
- * @returns {object} Feature 
- */
-async function SelectByLocation(featureLayer, geometry, relationship) {
-    let query = featureLayer.createQuery();
-    query.returnGeometry = true;
-    query.geometry = geometry;
-    query.spatialRelationship = relationship;
-    const result = await featureLayer.queryFeatures(query);
-    if (result.features.length < 1)
-        console.log("Feature not found."); //En
-        //console.log("عارضه مورد نظر یافت نشد."); //Pr
-    return result.features;
 }
 
 /**
@@ -471,15 +617,15 @@ function CNosaziMelkValidation(cNosazi) {
     //if (parts.length !== 7) throw new Error("طول کد نوسازی باید دقیقاً هفت باشد."); //Pr
 
     // All Parts must be numeric
-    if (parts.some(p => !/^\d+$/.test(p))) throw new Error("All Parts must be numeric."); //En
+    if (parts.some(p => !/^\d+$/.test(p))) throw new Error("All Parts of Code Nosazi must be numeric."); //En
     //if (parts.some(p => !/^\d+$/.test(p))) throw new Error("تمام قسمت‌ها باید عددی باشند."); //Pr
 
     // The last three parts must be exactly zero
-    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") throw new Error("The last three parts must be exactly zero."); //En
+    if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") throw new Error("The last three parts of Code Nosazi must be exactly zero."); //En
     //if (parts[4] !== "0" || parts[5] !== "0" || parts[6] !== "0") throw new Error("سه بخش آخر باید دقیقاً صفر باشند."); //Pr
 
     // Sections 1, 2, 3, and 4 must not be blank or zero    
-    if (parts.slice(0, 4).some(p => p === "0")) throw new Error("Sections 1, 2, 3, and 4 must not be zero."); //En
+    if (parts.slice(0, 4).some(p => p === "0")) throw new Error("Sections 1, 2, 3, and 4 of Code Nosazi must not be zero."); //En
     //if (parts.slice(0, 4).some(p => p === "0")) throw new Error("بخش‌های ۱، ۲، ۳ و ۴ نباید صفر باشند."); //Pr
 
     return true;
@@ -494,37 +640,25 @@ function CNosaziMelkValidation(cNosazi) {
 async function MabarValidation(listMabar, melk) {
     
     let validListMabar = [];
-
     for (const mabar of listMabar) {
         // Create flat buffer
         const widthMabar = mabar.attributes.street_len;
         if (!widthMabar || widthMabar === 0 || widthMabar == undefined || widthMabar == "")
             console.warn(`The width of Street{${mabar.attributes.OBJECTID}} is not ture.`); //En
-            //console.warn(`عرض معبر {${mabar.attributes.OBJECTID}} صحیح نیست.`); //Pr
-        
+            //console.warn(`عرض معبر {${mabar.attributes.OBJECTID}} صحیح نیست.`); //Pr        
 
         const distansBuffMabar = widthMabar / 2 + 2;
-        const buffMabar = FlatBuffer(mabar.geometry, distansBuffMabar, "meters");
-
-        // Query parcels inside buffer
-        //const query = fLayerMelk.createQuery();
-        //query.outFields = ["Code_nosazi"];
-        //query.geometry = buffMabar;
-        //query.spatialRelationship = "intersects";
-
-        //const result = await fLayerMelk.queryFeatures(query);
+        const buffMabar = FlatBuffer(mabar.geometry, distansBuffMabar, "meters");        
         const result = await SelectByLocation(fLayerMelk, buffMabar, "intersects");
-
         const isSelectedMelkInside = result.some(f =>
             f.attributes.Code_nosazi === melk.attributes.Code_nosazi
         );
-
         console.log("Have Melk:", isSelectedMelkInside);
-
         if (isSelectedMelkInside) validListMabar.push(mabar);
     }
     return validListMabar;
 }
+
 /**
  * Create flat buffer
  * @param {object} line
@@ -555,78 +689,43 @@ function FlatBuffer(line, distance, unit = "meters") {
     return geometryEngine.union([left, right]);
 }
 
-const btnPolygonDistance = document.getElementById("btnPolygonDistance");
-btnPolygonDistance.addEventListener("click", async() => {    
-
-    // 01 - Get geometry Harim
-    const queryHarim = fLayerHarim.createQuery();
-    queryHarim.returnGeometry = true;
-    const resultHarim = await fLayerHarim.queryFeatures(queryHarim);
-    if (resultHarim.features.length < 1) return console.error("Not find any Harim.")
-
-    // if Harim have a multi features
-    const geoHarim = resultHarim.features.length === 1
-        ? resultHarim.features[0].geometry
-        : geometryEngine.union(resultHarim.features.map(f => f.geometry));
-
-
-    // 02 - Get geometry Mahdodeh
-    const queryMahdodeh = fLayerMahdodeh.createQuery();
-    queryMahdodeh.returnGeometry = true;
-    const resultMahdodeh = await fLayerMahdodeh.queryFeatures(queryMahdodeh);
-    if (resultMahdodeh.features.length < 1) return console.error("Not find any Mahdodeh.")
-
-    const geoMahdodeh = resultMahdodeh.features.length === 1
-        ? resultMahdodeh.features[0].geometry
-        : geometryEngine.union(resultMahdodeh.features(f => f.geometry));
-
-    // 03 - Get geometry between in Harim and Mahdodeh
-    const geoBetween = geometryEngine.difference(geoHarim, geoMahdodeh);  
-    
-    console.log(FindMaxDistanceInPolygon(geoBetween));
-})
-function FindMaxDistanceInPolygon(polygon) {
-    // 04 - Calculate convex hull
-    const hull = geometryEngine.convexHull(polygon);
-
-    // 05 - Convert to Points
-    const hullPoints = hull.rings[0].map(r => ({ x: r[0], y: r[1] }));
-
-    // 06 - Calculate maximum distance
-    const maxDistance = PolygonDiameter(hullPoints);
-    return maxDistance;
-}
-function PolygonDiameter(points) {
-    
-    const n = points.length;
-    if (n < 2) return 0;
-
-    let k = 1
-    let maxDistance = 0;
-
-    for (let i = 0; i < n; i++) {
-        let next_i = (i + 1) % n;
-
-        while (true) {
-            let next_k = (k + 1) % n;
-            const area = Math.abs(
-                (points[next_i].x - points[i].x) * (points[next_k].y - points[k].y) -
-                (points[next_i].y - points[i].y) * (points[next_k].x - points[k].x)
-            );
-            if (area > 0) k = next_k;
-            else break;
-        }
-        let d = Distance(points[i], points[k])
-        if (d > maxDistance) maxDistance = d;
-    }
-    return maxDistance;
-}
-
-function Distance(p1, p2) {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-}
-
-// Sleep 
+/**
+ * Sleep 
+ * @param {number} ms
+ * @returns
+ */
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Checking if Melk is in Layers
+const btnFindLayerHave = document.getElementById("btnFindLayerHave");
+btnFindLayerHave.addEventListener("click", async () => {
+    try {
+        let listAlllayers = [fLayerHarim, fLayerMahdodeh];
+        const listLayers = await FindLayersHaveMelk(listAlllayers, "1-25-159-2-0-0-0");                
+        if (listLayers) console.log(listLayers);
+    } catch (err) {
+        console.error("Sorry, We can't check this Melk.", err);
+    }    
+})
+
+/**
+ * Checking if Melk is in Layers
+ * @param {object} fLayers
+ * @param {string} cNosazi
+ * @returns {object} {feaureLayer and status}
+ */
+async function FindLayersHaveMelk(fLayers = [], cNosazi) {    
+    const listlayers = [];
+
+    if (!CNosaziMelkValidation(cNosazi)) throw new Error("The code nosazi not Valid.")
+    const melk = await SelectByAttribute(fLayerMelk, "Code_nosazi", cNosazi);
+    if (melk.length < 1) throw new Error("Not found any Melk.");
+    
+    for (const f of fLayers) {        
+        const result = await SelectByLocation(f, melk[0].geometry, "intersects");        
+        const status = result.length ? true : false;
+        listlayers.push({ featurelayer: f.title, status });
+    }    
+    return listlayers;
+}
 
