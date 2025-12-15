@@ -696,3 +696,19 @@ function FlatBuffer(line, distance, unit = "meters") {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 
+const btnFindLayerHave = document.getElementById("btnFindLayerHave");
+btnFindLayerHave.addEventListener("click", async () => {
+    let listAlllayers = [fLayerHarim];
+    const listLayers = FindLayersHaveMelk(listAlllayers, "");
+    console.log(listLayers);
+})
+async function FindLayersHaveMelk(featureLayers = [], cNosazi) {
+    const listlayers = { featurelayer: "", status: "" };
+    listlayers.featurelayer = featureLayers;
+
+    if (!CNosaziMelkValidation(cNosazi))
+    const melk = await SelectByAttribute(fLayerMelk, "Code_nosazi");
+    listlayers.status = await SelectByLocation(featureLayers,)
+    return listlayers;
+}
+
